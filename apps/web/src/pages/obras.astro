@@ -1,0 +1,104 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Button from '../components/Button.astro';
+
+const projects = [
+  {
+    title: 'Modernización de Subestación y TDF Principal Planta Alimentos',
+    category: 'Ingeniería & Montaje',
+    location: 'Región de Valparaíso',
+    year: '2024',
+    scope: 'Reemplazo de barrajes principales de 2500A, integración de banco de condensadores automático de 400 kVAr y tramitación de anexo SEC TE1.',
+    tags: ['TDF 2500A', 'SEC TE1', 'CCM Schneider', 'Malla de Tierra']
+  },
+  {
+    title: 'Automatización de Sistema de Bombeo y Telemetría SCADA',
+    category: 'Automatización & Control',
+    location: 'Región Metropolitana',
+    year: '2023',
+    scope: 'Programación de autómatas redundantes Siemens S7-1500, control de 6 bombas centrífugas con variadores de frecuencia y transmisión de datos vía fibra óptica.',
+    tags: ['PLC Siemens S7', 'SCADA', 'Variadores VFD', 'Fibra Óptica']
+  },
+  {
+    title: 'Canalizaciones Pesadas y Malla de Puesta a Tierra Centro Logístico',
+    category: 'Obras Civiles Eléctricas',
+    location: 'San Antonio, V Región',
+    year: '2023',
+    scope: 'Tendido de 2.400 metros lineales de escalerillas portacables galvanizadas en caliente, 18 cámaras de paso y medición de telurómetro bajo 3 ohms.',
+    tags: ['Escalerillas HDG', 'Malla Profunda', 'Cámaras de Hormigón', 'Baja Tensión']
+  },
+  {
+    title: 'Auditoría Termográfica y Plan de Mantención Preventiva Planta Química',
+    category: 'Mantención Industrial',
+    location: 'Concón, V Región',
+    year: '2024',
+    scope: 'Inspección de 32 tableros generales bajo máxima carga productiva, ajuste dinanométrico de terminales y reporte técnico de mitigación de puntos calientes.',
+    tags: ['Termografía Infrarroja', 'Torque Certificado', 'Informe SEC', 'Continuidad']
+  }
+];
+---
+
+<Layout 
+  title="Obras Realizadas y Portafolio Industrial"
+  description="Registro de obras eléctricas, montajes de tableros TDF y automatizaciones industriales ejecutadas por BKB en Chile."
+>
+  <div class="bg-[#FBF8F5] py-16 border-b border-[#E6DDD5]">
+    <div class="container-bkb">
+      <span class="text-xs font-mono font-bold tracking-wider text-[#B4470F] uppercase">Experiencia Comprobada</span>
+      <h1 class="display-lg text-[#1A1513] mt-2 mb-4">Portafolio de Obras Eléctricas</h1>
+      <p class="body-base text-[#7D6F64] max-w-3xl">
+        Proyectos ejecutados con trazabilidad técnica, rigurosidad normativa y cumplimiento de plazos en entornos de operación continua.
+      </p>
+    </div>
+  </div>
+
+  <div class="container-bkb py-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {projects.map(p => (
+        <article class="card-bkb flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div>
+            <div class="flex items-center justify-between text-xs font-mono text-[#7D6F64] mb-3">
+              <span class="bg-[#FFE5D6] text-[#B4470F] px-2 py-0.5 rounded font-semibold">
+                {p.category}
+              </span>
+              <span>{p.location} · {p.year}</span>
+            </div>
+
+            <h2 class="display-md text-[#1A1513] mb-3">{p.title}</h2>
+            <p class="body-sm text-[#7D6F64] mb-6 leading-relaxed">{p.scope}</p>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap gap-1.5 mb-6">
+              {p.tags.map(t => (
+                <span class="bg-[#F0EAE3] text-[#332B26] px-2.5 py-1 rounded text-xs font-mono">
+                  {t}
+                </span>
+              ))}
+            </div>
+
+            <div class="border-t border-[#E6DDD5] pt-4 flex items-center justify-between">
+              <span class="text-xs font-mono text-[#1E6B47] font-semibold flex items-center gap-1">
+                ✓ Obra Entregada & Operativa
+              </span>
+              <a href="/contacto" class="text-xs font-bold text-[#B4470F] hover:underline">
+                Cotizar proyecto similar →
+              </a>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <!-- NOTA SOBRE DOCUMENTACIÓN EN PORTAL -->
+    <div class="mt-16 card-bkb bg-[#FAF6F2] border-dashed border-[#BDB0A4] text-center p-8">
+      <h3 class="display-md text-[#1A1513] mb-2">¿Eres mandante o inspector técnico de estas obras?</h3>
+      <p class="body-sm text-[#7D6F64] max-w-xl mx-auto mb-6">
+        Accede al portal de clientes para descargar los planos As-Built en PDF/DWG, carpetas de calidad, certificados de ensaye y declaraciones TE1 asociadas.
+      </p>
+      <a href="https://portal.bkb.cl" class="btn btn-primary !h-11">
+        Ir al Portal Documental BKB
+      </a>
+    </div>
+  </div>
+</Layout>

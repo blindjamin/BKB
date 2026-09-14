@@ -1,0 +1,149 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Button from '../components/Button.astro';
+
+const roles = [
+  {
+    title: 'Técnico / Ingeniero en Automatización y PLC',
+    type: 'Terreno & Taller · Tiempo Completo',
+    requirements: 'Experiencia demostrable en programación de autómatas Siemens / Schneider y comisionamiento en faena.'
+  },
+  {
+    title: 'Maestro Mayor Electricista (Certificación SEC)',
+    type: 'Faenas Industriales · Turnos',
+    requirements: 'Licencia SEC vigente, dominio de curvado de canalizaciones, tendido de cables y armado de tableros TDF.'
+  },
+  {
+    title: 'Armador de Tableros Eléctricos Industriales',
+    type: 'Taller de Montaje · Valparaíso',
+    requirements: 'Lectura fluida de planos unilineales, cableado prolijo de control y fuerza, y pruebas de continuidad.'
+  }
+];
+---
+
+<Layout 
+  title="Trabaja con Nosotros"
+  description="Únete al equipo técnico de BKB Obras Eléctricas & Servicios. Convocatorias para ingenieros eléctricos, maestros y técnicos."
+>
+  <div class="bg-[#FBF8F5] py-16 border-b border-[#E6DDD5]">
+    <div class="container-bkb">
+      <span class="text-xs font-mono font-bold tracking-wider text-[#B4470F] uppercase">Oportunidades Laborales</span>
+      <h1 class="display-lg text-[#1A1513] mt-2 mb-4">Únete a Nuestro Equipo Técnico</h1>
+      <p class="body-base text-[#7D6F64] max-w-3xl">
+        Buscamos profesionales y técnicos comprometidos con la seguridad en faena, la excelencia en el montaje y el aprendizaje continuo en obras industriales de envergadura.
+      </p>
+    </div>
+  </div>
+
+  <div class="container-bkb py-16">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <!-- CONVOCATORIAS ABIERTAS -->
+      <div class="space-y-6">
+        <h2 class="display-md text-[#1A1513]">Perfiles en Búsqueda</h2>
+        <div class="space-y-4">
+          {roles.map(r => (
+            <div class="card-bkb p-6">
+              <h3 class="font-display text-base font-bold text-[#1A1513] mb-1">{r.title}</h3>
+              <span class="text-xs font-mono text-[#B4470F] block mb-3">{r.type}</span>
+              <p class="body-sm text-[#7D6F64]">{r.requirements}</p>
+            </div>
+          ))}
+        </div>
+
+        <div class="card-bkb bg-[#FAF6F2] p-6">
+          <h4 class="font-display text-sm font-bold text-[#1A1513] mb-2">¿Qué ofrecemos?</h4>
+          <ul class="text-xs text-[#7D6F64] space-y-2">
+            <li>✓ Contrato de trabajo formal con estabilidad laboral.</li>
+            <li>✓ Estándares estrictos de seguridad y EPP certificado.</li>
+            <li>✓ Capacitaciones continuas en normativas SEC y automatización.</li>
+            <li>✓ Seguro complementario contra accidentes en faena.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- FORMULARIO DE POSTULACIÓN / CV -->
+      <div class="lg:col-span-2">
+        <form class="card-bkb space-y-6" id="cv-form">
+          <h2 class="display-md text-[#1A1513]">Envío de Antecedentes y CV</h2>
+          <p class="text-xs text-[#7D6F64]">
+            Los campos marcados con (*) son obligatorios para evaluar su postulación.
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label for="cv-nombre" class="block text-sm font-semibold text-[#1A1513] mb-2">Nombre completo *</label>
+              <input type="text" id="cv-nombre" name="nombre" required class="w-full px-4 py-3 rounded-lg border border-[#E6DDD5] bg-white text-[#1A1513] focus-bkb text-sm" />
+            </div>
+
+            <div>
+              <label for="cv-rut" class="block text-sm font-semibold text-[#1A1513] mb-2">RUT *</label>
+              <input type="text" id="cv-rut" name="rut" required class="w-full px-4 py-3 rounded-lg border border-[#E6DDD5] bg-white text-[#1A1513] font-mono focus-bkb text-sm" placeholder="12.345.678-9" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label for="cv-email" class="block text-sm font-semibold text-[#1A1513] mb-2">Correo electrónico *</label>
+              <input type="email" id="cv-email" name="email" required class="w-full px-4 py-3 rounded-lg border border-[#E6DDD5] bg-white text-[#1A1513] focus-bkb text-sm" />
+            </div>
+
+            <div>
+              <label for="cv-telefono" class="block text-sm font-semibold text-[#1A1513] mb-2">Teléfono móvil *</label>
+              <input type="tel" id="cv-telefono" name="telefono" required class="w-full px-4 py-3 rounded-lg border border-[#E6DDD5] bg-white text-[#1A1513] font-mono focus-bkb text-sm" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label for="cv-area" class="block text-sm font-semibold text-[#1A1513] mb-2">Área de postulación *</label>
+              <select id="cv-area" name="area" required class="w-full px-4 py-3 rounded-lg border border-[#E6DDD5] bg-white text-[#1A1513] focus-bkb text-sm">
+                <option value="">Seleccione un área...</option>
+                <option value="automatizacion">Automatización / Programación PLC</option>
+                <option value="electricista">Maestro Electricista / Montajista</option>
+                <option value="tablerista">Armador de Tableros Eléctricos</option>
+                <option value="ingenieria">Ingeniero de Proyectos / Dibujante Técnico</option>
+                <option value="practica">Práctica Profesional</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="cv-licencia" class="block text-sm font-semibold text-[#1A1513] mb-2">Licencia SEC (si posee)</label>
+              <select id="cv-licencia" name="licencia_sec" class="w-full px-4 py-3 rounded-lg border border-[#E6DDD5] bg-white text-[#1A1513] focus-bkb text-sm">
+                <option value="ninguna">No poseo licencia SEC</option>
+                <option value="clase-a">SEC Clase A</option>
+                <option value="clase-b">SEC Clase B</option>
+                <option value="clase-c">SEC Clase C</option>
+                <option value="clase-d">SEC Clase D</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="cv-file" class="block text-sm font-semibold text-[#1A1513] mb-2">Adjuntar Curriculum Vitae (PDF máx. 5 MB) *</label>
+            <input type="file" id="cv-file" name="curriculum" accept=".pdf" required class="w-full px-4 py-3 rounded-lg border border-[#E6DDD5] bg-white text-[#1A1513] text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#FFE5D6] file:text-[#B4470F] hover:file:bg-[#FFCDB5]" />
+          </div>
+
+          <!-- AVISO LEGAL LEY 21.719 -->
+          <div class="card-bkb bg-[#FAF6F2] p-4 text-xs text-[#7D6F64] space-y-2">
+            <strong class="text-[#1A1513] block">Consentimiento de Tratamiento de Datos (Ley 21.719):</strong>
+            <p>
+              Los datos personales y documentos laborales proporcionados serán tratados por BKB SpA con la exclusiva finalidad de evaluar su idoneidad en procesos de selección de personal presentes y futuros, durante un plazo máximo de retención de 12 meses.
+            </p>
+            <div class="flex items-start gap-2 pt-1">
+              <input type="checkbox" id="consentimiento-cv" name="consentimiento" required class="mt-0.5 rounded border-[#E6DDD5] text-[#B4470F]" />
+              <label for="consentimiento-cv" class="text-[#1A1513] font-medium">
+                Consiento expresamente el tratamiento de mis datos personales según los términos descritos y la política de privacidad.
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <Button type="submit" variant="primary">
+              Enviar Postulación
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,116 @@
+---
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = '/' } = Astro.props;
+
+const navLinks = [
+  { href: '/', label: 'Inicio' },
+  { href: '/servicios', label: 'Servicios' },
+  { href: '/obras', label: 'Obras' },
+  { href: '/nosotros', label: 'Nosotros & Clientes' },
+  { href: '/contacto', label: 'Contacto' },
+  { href: '/trabaja-con-nosotros', label: 'Trabaja con Nosotros' },
+];
+---
+
+<header class="sticky top-0 z-40 bg-[#FBF8F5]/95 backdrop-blur border-b border-[#E6DDD5] transition-all">
+  <div class="container-bkb">
+    <div class="flex items-center justify-between h-20 gap-4">
+      <!-- Logo BKB -->
+      <a href="/" class="flex items-center gap-3 focus-bkb rounded-lg group" aria-label="BKB Inicio">
+        <img src="/logo.svg" alt="BKB Obras Eléctricas y Servicios" class="h-10 sm:h-12 w-auto" />
+      </a>
+
+      <!-- Menú Desktop -->
+      <nav class="hidden lg:flex items-center gap-6" aria-label="Navegación principal">
+        {navLinks.map(link => {
+          const isActive = currentPath === link.href;
+          return (
+            <a
+              href={link.href}
+              class={`text-sm font-medium transition-colors hover:text-[#B4470F] focus-bkb py-2 ${
+                isActive ? 'text-[#B4470F] font-semibold' : 'text-[#332B26]'
+              }`}
+            >
+              {link.label}
+            </a>
+          );
+        })}
+      </nav>
+
+      <!-- Botón Portal y Contacto -->
+      <div class="hidden sm:flex items-center gap-3">
+        <a 
+          href="https://portal.bkb.cl" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="btn btn-secondary text-sm !h-10 !px-4"
+          title="Acceso al portal de clientes para certificados SEC y planos"
+        >
+          <svg class="w-4 h-4 text-[#B4470F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Portal Clientes
+        </a>
+        <a href="/contacto" class="btn btn-primary text-sm !h-10 !px-4">
+          Cotizar
+        </a>
+      </div>
+
+      <!-- Botón Menú Móvil -->
+      <button 
+        id="mobile-menu-btn" 
+        type="button" 
+        class="lg:hidden p-2 rounded-md border border-[#E6DDD5] text-[#1A1513] hover:bg-[#F0EAE3] focus-bkb"
+        aria-label="Abrir menú de navegación"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Menú Desplegable Móvil -->
+    <div id="mobile-menu" class="hidden lg:hidden border-t border-[#E6DDD5] py-4 bg-[#FBF8F5]">
+      <nav class="flex flex-col gap-3">
+        {navLinks.map(link => {
+          const isActive = currentPath === link.href;
+          return (
+            <a
+              href={link.href}
+              class={`px-3 py-2 rounded-md text-base font-medium ${
+                isActive ? 'bg-[#FFE5D6] text-[#B4470F] font-semibold' : 'text-[#332B26] hover:bg-[#F0EAE3]'
+              }`}
+            >
+              {link.label}
+            </a>
+          );
+        })}
+        <div class="pt-3 border-t border-[#E6DDD5] flex flex-col gap-2 px-3">
+          <a href="https://portal.bkb.cl" class="btn btn-secondary !h-11 justify-center">
+            Portal Clientes BKB
+          </a>
+          <a href="/contacto" class="btn btn-primary !h-11 justify-center">
+            Solicitar Cotización
+          </a>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<script>
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  if (btn && menu) {
+    btn.addEventListener('click', () => {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!isExpanded));
+      menu.classList.toggle('hidden');
+    });
+  }
+</script>

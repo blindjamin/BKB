@@ -1,0 +1,11 @@
+{
+  "name": "@bkb/tokens",
+  "version": "1.0.0",
+  "description": "Sistema de diseño y tokens CSS oficiales de BKB (UI Kit v1.0)",
+  "main": "src/index.css",
+  "style": "src/index.css",
+  "files": [
+    "src"
+  ],
+  "license": "UNLICENSED"
+}

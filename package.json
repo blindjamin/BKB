@@ -1,0 +1,24 @@
+{
+  "name": "bkb-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo de la plataforma BKB: Sitio público (Astro) y Portal de Clientes (Django)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace=apps/web run dev",
+    "build:web": "npm --workspace=apps/web run build",
+    "preview:web": "npm --workspace=apps/web run preview",
+    "lint": "echo \"Linting plataforma BKB...\""
+  },
+  "keywords": [
+    "bkb",
+    "astro",
+    "django",
+    "monorepo"
+  ],
+  "author": "BKB SpA",
+  "license": "UNLICENSED"
+}

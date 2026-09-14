@@ -1,0 +1,74 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { 
+  title, 
+  description = "BKB · Obras Eléctricas & Servicios. Más de 25 años en ingeniería eléctrica, automatización, canalizaciones y tableros industriales en Chile. Certificación SEC Clase A." 
+} = Astro.props;
+
+const currentPath = Astro.url.pathname;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://www.bkb.cl').toString();
+
+// Schema.org LocalBusiness
+const schemaOrg = {
+  "@context": "https://schema.org",
+  "@type": "Electrician",
+  "name": "BKB Obras Eléctricas & Servicios",
+  "url": "https://www.bkb.cl",
+  "logo": "https://www.bkb.cl/logo.svg",
+  "description": description,
+  "areaServed": "Chile",
+  "hasCredential": "SEC Clase A",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+56-9-8765-4321",
+    "contactType": "emergency",
+    "availableLanguage": "Spanish"
+  }
+};
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalUrl} />
+    
+    <title>{title} | BKB Obras Eléctricas & Servicios</title>
+    <meta name="description" content={description} />
+    
+    <!-- Open Graph / Redes -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={`${title} | BKB Obras Eléctricas & Servicios`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:site_name" content="BKB SpA" />
+    <meta property="og:locale" content="es_CL" />
+
+    <!-- Datos estructurados SEO -->
+    <script type="application/ld+json" set:html={JSON.stringify(schemaOrg)} />
+  </head>
+  <body class="bg-[#FBF8F5] text-[#1A1513] min-h-screen flex flex-col selection:bg-[#FFE5D6] selection:text-[#B4470F]">
+    <!-- Enlace de salto accesible para WCAG 2.2 AA -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-[#B4470F] focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg">
+      Saltar al contenido principal
+    </a>
+
+    <Header currentPath={currentPath} />
+
+    <main id="main-content" class="flex-1">
+      <slot />
+    </main>
+
+    <Footer />
+  </body>
+</html>

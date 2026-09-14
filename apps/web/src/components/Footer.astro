@@ -1,0 +1,94 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-[#1A1513] text-[#FAF6F2] border-t border-[#332B26] mt-auto">
+  <!-- Franja de Guardia 24/7 (Principio UI Kit: Salida telefónica permanente) -->
+  <div class="border-b border-[#332B26] bg-[#221B18] py-4">
+    <div class="container-bkb flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="inline-block w-3 h-3 rounded-full bg-[#1E6B47] animate-pulse" aria-hidden="true"></span>
+        <span class="text-sm font-medium text-[#FFE5D6]">
+          Guardia Técnica 24/7 & Emergencias Eléctricas:
+        </span>
+        <a href="tel:+56912345678" class="text-sm font-bold text-white hover:text-[#F27A38] font-mono transition-colors">
+          +56 9 8765 4321
+        </a>
+      </div>
+      <div class="text-xs font-mono text-[#BDB0A4]">
+        Instalador SEC Clase A · Cobertura Nacional
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido Principal Footer -->
+  <div class="container-bkb py-12 lg:py-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+      <!-- Columna Marca -->
+      <div class="space-y-4">
+        <img src="/logo-dark.svg" alt="BKB Obras Eléctricas y Servicios" class="h-12 w-auto" />
+        <p class="text-sm text-[#BDB0A4] leading-relaxed">
+          Más de 25 años ejecutando proyectos de ingeniería eléctrica, automatización industrial, canalizaciones y montaje de tableros TDF/TDA en Chile.
+        </p>
+        <div class="pt-2">
+          <span class="badge badge-sec-ok">
+            SEC CLASE A VIGENTE
+          </span>
+        </div>
+      </div>
+
+      <!-- Enlaces Rápidos -->
+      <div>
+        <h4 class="font-display text-base font-bold text-white mb-4 tracking-tight">Navegación</h4>
+        <ul class="space-y-2.5 text-sm text-[#BDB0A4]">
+          <li><a href="/" class="hover:text-white transition-colors">Inicio</a></li>
+          <li><a href="/servicios" class="hover:text-white transition-colors">Servicios Industriales</a></li>
+          <li><a href="/obras" class="hover:text-white transition-colors">Portafolio de Obras</a></li>
+          <li><a href="/nosotros" class="hover:text-white transition-colors">Nosotros & Clientes</a></li>
+          <li><a href="/contacto" class="hover:text-white transition-colors">Cotizar Proyecto</a></li>
+          <li><a href="/trabaja-con-nosotros" class="hover:text-white transition-colors">Trabaja con Nosotros</a></li>
+        </ul>
+      </div>
+
+      <!-- Especialidades -->
+      <div>
+        <h4 class="font-display text-base font-bold text-white mb-4 tracking-tight">Especialidades</h4>
+        <ul class="space-y-2.5 text-sm text-[#BDB0A4]">
+          <li>Ingeniería Eléctrica y Planos</li>
+          <li>Tableros de Fuerza y Control TDF/TDA</li>
+          <li>Automatización y PLCs</li>
+          <li>Canalizaciones y Tendido de Cables</li>
+          <li>Certificaciones TE1 ante la SEC</li>
+          <li>Mantención Preventiva y Correctiva</li>
+        </ul>
+      </div>
+
+      <!-- Contacto Institucional -->
+      <div>
+        <h4 class="font-display text-base font-bold text-white mb-4 tracking-tight">Contacto & Oficina</h4>
+        <p class="text-sm text-[#BDB0A4] leading-relaxed mb-3">
+          Valparaíso / Santiago, Chile.<br/>
+          Atención técnica y cotizaciones de faena.
+        </p>
+        <p class="text-sm text-[#BDB0A4] font-mono mb-1">
+          contacto@bkb.cl
+        </p>
+        <p class="text-sm text-[#BDB0A4] font-mono">
+          cotizaciones@bkb.cl
+        </p>
+      </div>
+    </div>
+
+    <!-- Barra Inferior Legal -->
+    <div class="mt-12 pt-8 border-t border-[#332B26] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#7D6F64]">
+      <div>
+        © {currentYear} BKB SpA. Todos los derechos reservados.
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="/privacidad" class="hover:text-[#BDB0A4] transition-colors">Política de Privacidad (Ley 21.719)</a>
+        <a href="/terminos" class="hover:text-[#BDB0A4] transition-colors">Términos del Servicio</a>
+        <a href="https://portal.bkb.cl" class="hover:text-[#BDB0A4] transition-colors">Acceso Portal</a>
+      </div>
+    </div>
+  </div>
+</footer>

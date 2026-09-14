@@ -1,0 +1,44 @@
+:root {
+  /* Naranja Cobre BKB (Acción & Marca) */
+  --bkb-copper-50: #FFF5EE;
+  --bkb-copper-100: #FFE5D6;
+  --bkb-copper-200: #FFCDB5;
+  --bkb-copper-400: #F27A38;
+  --bkb-copper-500: #E05D1E;
+  --bkb-copper-600: #C7480C;
+  --bkb-copper-700: #B4470F; /* Primario oficial BKB */
+  --bkb-copper-800: #8F3407; /* Hover primario */
+  --bkb-copper-900: #5C2003;
+
+  /* Neutros Técnicos & Superficies */
+  --bkb-white: #FFFFFF;
+  --bkb-paper-50: #FBF8F5; /* Fondo general cálido */
+  --bkb-paper-100: #FAF6F2;
+  --bkb-paper-200: #F0EAE3;
+  --bkb-sand-200: #E6DDD5;  /* Borde estándar */
+  --bkb-sand-400: #BDB0A4;
+  --bkb-sand-600: #7D6F64;  /* Texto secundario */
+  --bkb-ink-800: #332B26;   /* Títulos secundarios */
+  --bkb-ink-900: #1A1513;   /* Tinta principal / carbón industrial */
+
+  /* Semánticos Normativos SEC */
+  --bkb-sec-ok-text: #1E6B47;
+  --bkb-sec-ok-bg: #E6F4EC;
+  --bkb-sec-ok-border: #C3E6D2;
+
+  --bkb-sec-warning-text: #B85D0A;
+  --bkb-sec-warning-bg: #FEF3E6;
+  --bkb-sec-warning-border: #FBD6B0;
+
+  --bkb-sec-danger-text: #A8271B;
+  --bkb-sec-danger-bg: #FDEEED;
+  --bkb-sec-danger-border: #F7C6C2;
+
+  --bkb-sec-info-text: #1B5887;
+  --bkb-sec-info-bg: #EBF3F9;
+  --bkb-sec-info-border: #CBE0F0;
+
+  --bkb-sec-reserved-text: #7F7269;
+  --bkb-sec-reserved-bg: #F0EAE3;
+  --bkb-sec-reserved-border: #DED5CC;
+}

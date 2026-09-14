@@ -1,0 +1,150 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Button from '../components/Button.astro';
+
+const metrics = [
+  { value: '+25', label: 'Años de Experiencia en Faenas Industriales' },
+  { value: 'SEC A', label: 'Instalador Certificado de Máxima Categoría' },
+  { value: '100%', label: 'Cumplimiento Normativo TE1 y TDA' },
+  { value: '24/7', label: 'Respaldo Técnico & Guardia de Emergencia' },
+];
+
+const mainServices = [
+  {
+    title: 'Ingeniería & Proyectos Eléctricos',
+    desc: 'Diseño de planos, memorias de cálculo, levantamiento de cargas y regularizaciones normativas completas ante la SEC.',
+    link: '/servicios#ingenieria'
+  },
+  {
+    title: 'Montaje de Tableros TDF / TDA',
+    desc: 'Fabricación, cableado e integración de tableros de distribución de fuerza y alumbrado con componentes certificados.',
+    link: '/servicios#tableros'
+  },
+  {
+    title: 'Automatización & Control PLC',
+    desc: 'Programación de autómatas, sistemas SCADA, telemetría y control de bombas para procesos industriales críticos.',
+    link: '/servicios#automatizacion'
+  },
+  {
+    title: 'Obras Civiles & Canalizaciones',
+    desc: 'Tendido de escalerillas portacables, bancos de ductos subterráneos, mallas de tierra y salas eléctricas dedicadas.',
+    link: '/servicios#obras-civiles'
+  }
+];
+---
+
+<Layout title="Ingeniería Eléctrica y Automatización Industrial">
+  <!-- HERO SECTION -->
+  <section class="relative bg-[#FBF8F5] py-20 lg:py-28 border-b border-[#E6DDD5] bg-grid-technical overflow-hidden">
+    <div class="container-bkb">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 mb-6">
+          <span class="badge badge-sec-ok">INSTALADOR SEC CLASE A</span>
+          <span class="text-xs font-mono text-[#7D6F64]">CONTRATISTA INDUSTRIAL DESDE 1999</span>
+        </div>
+
+        <h1 class="display-xl text-[#1A1513] mb-6">
+          Ingeniería eléctrica de alta exigencia para la industria chilena.
+        </h1>
+
+        <p class="body-base text-[#332B26] mb-8 leading-relaxed">
+          Diseño, montaje y certificación de infraestructura eléctrica de potencia, tableros TDF/TDA y automatización de procesos para plantas productivas, minería y servicios esenciales.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <Button href="/contacto" variant="primary">
+            Solicitar Levantamiento o Cotización
+          </Button>
+          <Button href="/obras" variant="secondary">
+            Explorar Obras Realizadas
+          </Button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CIFRAS CLAVE -->
+  <section class="bg-[#FAF6F2] py-12 border-b border-[#E6DDD5]">
+    <div class="container-bkb">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {metrics.map(m => (
+          <div class="border-l-2 border-[#B4470F] pl-4">
+            <div class="font-display text-3xl sm:text-4xl font-extrabold text-[#1A1513] tracking-tight mb-1">
+              {m.value}
+            </div>
+            <div class="text-xs sm:text-sm text-[#7D6F64] font-medium leading-snug">
+              {m.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICIOS DESTACADOS -->
+  <section class="py-20 bg-[#FBF8F5]">
+    <div class="container-bkb">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+        <div>
+          <span class="text-xs font-mono font-bold tracking-wider text-[#B4470F] uppercase">Capacidades Técnicas</span>
+          <h2 class="display-lg text-[#1A1513] mt-2">Soluciones Eléctricas Integrales</h2>
+        </div>
+        <a href="/servicios" class="text-sm font-bold text-[#B4470F] hover:underline inline-flex items-center gap-1">
+          Ver todas las especialidades →
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {mainServices.map(s => (
+          <div class="card-bkb hover:border-[#B4470F] transition-all">
+            <h3 class="display-md text-[#1A1513] mb-3">{s.title}</h3>
+            <p class="body-sm text-[#7D6F64] mb-6 leading-relaxed">{s.desc}</p>
+            <a href={s.link} class="text-sm font-bold text-[#B4470F] hover:text-[#8F3407] inline-flex items-center gap-1">
+              Detalle del servicio <span>→</span>
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- BANNER PORTAL DE CLIENTES -->
+  <section class="bg-[#1A1513] text-white py-16 border-y border-[#332B26]">
+    <div class="container-bkb">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="max-w-2xl">
+          <div class="inline-block bg-[#FFE5D6] text-[#B4470F] px-3 py-1 rounded-full text-xs font-mono font-bold mb-4">
+            NUEVO PORTAL DOCUMENTAL
+          </div>
+          <h2 class="display-lg text-white mb-4">
+            Descarga de Certificados SEC TE1, Planos y Dossiers de Obra
+          </h2>
+          <p class="text-[#BDB0A4] text-base leading-relaxed">
+            Plataforma reservada y protegida para clientes de BKB. Consulta la vigencia de tus certificaciones SEC, revisa planos As-Built y descarga informes técnicos con trazabilidad completa.
+          </p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+          <a href="https://portal.bkb.cl" class="btn btn-primary !h-12 !px-6 justify-center">
+            Ingresar al Portal
+          </a>
+          <a href="/contacto" class="btn btn-secondary !border-white !text-white hover:!bg-white hover:!text-[#1A1513] !h-12 justify-center">
+            Solicitar Cuenta de Acceso
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="py-20 bg-[#FBF8F5] text-center bg-grid-technical">
+    <div class="container-bkb max-w-2xl">
+      <h2 class="display-lg text-[#1A1513] mb-4">¿Tienes una faena o proyecto en desarrollo?</h2>
+      <p class="body-base text-[#7D6F64] mb-8">
+        Coordinamos visitas a terreno en menos de 48 horas para levantamientos técnicos en faenas industriales y comerciales.
+      </p>
+      <Button href="/contacto" variant="primary">
+        Contactar al Área de Ingeniería
+      </Button>
+    </div>
+  </section>
+</Layout>

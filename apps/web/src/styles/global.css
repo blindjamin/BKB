@@ -1,0 +1,191 @@
+@import "@bkb/tokens";
+
+/* Fuentes Web */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--bkb-font-body);
+  color: var(--bkb-ink-900);
+  background-color: var(--bkb-paper-50);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Patrón técnico de papel milimetrado de fondo */
+.bg-grid-technical {
+  background-image: radial-gradient(#E6DDD5 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Tipografía */
+.font-display { font-family: var(--bkb-font-display); }
+.font-body { font-family: var(--bkb-font-body); }
+.font-mono { font-family: var(--bkb-font-mono); }
+
+.display-xl {
+  font-family: var(--bkb-font-display);
+  font-size: var(--bkb-text-display-xl);
+  line-height: var(--bkb-leading-display-xl);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.display-lg {
+  font-family: var(--bkb-font-display);
+  font-size: var(--bkb-text-display-lg);
+  line-height: var(--bkb-leading-display-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.display-md {
+  font-family: var(--bkb-font-display);
+  font-size: var(--bkb-text-display-md);
+  line-height: var(--bkb-leading-display-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.title-sm {
+  font-family: var(--bkb-font-body);
+  font-size: var(--bkb-text-title-sm);
+  line-height: var(--bkb-leading-title-sm);
+  font-weight: 600;
+}
+
+.body-base {
+  font-family: var(--bkb-font-body);
+  font-size: var(--bkb-text-body-base);
+  line-height: var(--bkb-leading-body-base);
+  font-weight: 400;
+}
+
+.body-sm {
+  font-family: var(--bkb-font-body);
+  font-size: var(--bkb-text-body-sm);
+  line-height: var(--bkb-leading-body-sm);
+  font-weight: 400;
+}
+
+/* Botones con sensación táctil industrial */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--bkb-font-body);
+  font-weight: 600;
+  border-radius: var(--bkb-radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0 1.5rem;
+  height: 52px;
+  font-size: 1.05rem;
+  border: none;
+}
+
+.btn:hover {
+  transform: translateY(-1.5px);
+}
+
+.btn:active {
+  transform: translateY(0.5px);
+}
+
+.btn-primary {
+  background-color: var(--bkb-copper-700);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background-color: var(--bkb-copper-800);
+  color: #FFFFFF;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--bkb-ink-900);
+  border: 2px solid var(--bkb-ink-900);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bkb-ink-900);
+  color: #FFFFFF;
+}
+
+.btn-tertiary {
+  background-color: var(--bkb-paper-200);
+  color: var(--bkb-ink-800);
+}
+
+.btn-tertiary:hover {
+  background-color: var(--bkb-sand-200);
+}
+
+/* Foco accesible */
+.focus-bkb:focus-visible {
+  outline: 3px solid var(--bkb-ink-900);
+  outline-offset: 3px;
+}
+
+/* Badges de estado normativo SEC */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--bkb-radius-pill);
+  font-family: var(--bkb-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.badge-sec-ok {
+  background-color: var(--bkb-sec-ok-bg);
+  color: var(--bkb-sec-ok-text);
+  border: 1px solid var(--bkb-sec-ok-border);
+}
+
+.badge-sec-warning {
+  background-color: var(--bkb-sec-warning-bg);
+  color: var(--bkb-sec-warning-text);
+  border: 1px solid var(--bkb-sec-warning-border);
+}
+
+.badge-sec-info {
+  background-color: var(--bkb-sec-info-bg);
+  color: var(--bkb-sec-info-text);
+  border: 1px solid var(--bkb-sec-info-border);
+}
+
+/* Contenedores */
+.container-bkb {
+  width: 100%;
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* Tarjetas */
+.card-bkb {
+  background-color: var(--bkb-white);
+  border: var(--bkb-border-default);
+  border-radius: var(--bkb-radius-lg);
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}

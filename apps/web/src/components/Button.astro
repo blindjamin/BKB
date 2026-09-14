@@ -1,0 +1,33 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary' | 'tertiary';
+  href?: string;
+  type?: 'button' | 'submit' | 'reset';
+  className?: string;
+  [key: string]: any;
+}
+
+const { 
+  variant = 'primary', 
+  href, 
+  type = 'button', 
+  className = '',
+  ...rest 
+} = Astro.props;
+
+const variantClass = {
+  primary: 'btn-primary',
+  secondary: 'btn-secondary',
+  tertiary: 'btn-tertiary',
+}[variant];
+---
+
+{href ? (
+  <a href={href} class={`btn ${variantClass} focus-bkb ${className}`} {...rest}>
+    <slot />
+  </a>
+) : (
+  <button type={type} class={`btn ${variantClass} focus-bkb ${className}`} {...rest}>
+    <slot />
+  </button>
+)}
