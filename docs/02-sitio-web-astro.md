@@ -8,7 +8,8 @@
 ## 1. Stack Tecnológico
 - **Framework:** Astro 5+
 - **Modo:** Salida Estática (`output: 'static'`)
-- **Estilos:** `@bkb/tokens` con utilidades personalizadas de diseño en `src/styles/global.css`.
+- **Estilos:** Tailwind CSS v4 (`@tailwindcss/vite`) + `@bkb/tokens` con utilidades en `src/styles/global.css`.
+- **Activos:** Logotipos vectoriales en `public/` y galería de fotografías reales de obra y tableros en `public/assets/images/`.
 - **Cero JS del Lado del Cliente:** Todo el HTML se pre-renderiza en tiempo de compilación para máxima velocidad y seguridad. Solo pequeños scripts progresivos (menú responsive, copy al portapapeles) se usan en el cliente.
 
 ---

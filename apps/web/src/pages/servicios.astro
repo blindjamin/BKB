@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
+import { getPath } from '../utils/paths';
 
 const services = [
   {
@@ -8,6 +9,8 @@ const services = [
     code: 'SRV-01',
     title: 'Ingeniería Eléctrica y Regularizaciones SEC',
     summary: 'Desarrollo integral de proyectos de baja y media tensión conforme al Pliego Técnico Normativo RIC.',
+    image: getPath('/assets/images/plano.jpg'),
+    alt: 'Planos y diagramas unilineales de ingeniería eléctrica SEC',
     details: [
       'Elaboración de planos unilineales y de distribución bajo norma SEC.',
       'Cálculo y diseño de mallas de tierra con medición de resistividad de terreno.',
@@ -20,6 +23,8 @@ const services = [
     code: 'SRV-02',
     title: 'Fabricación y Montaje de Tableros TDF / TDA',
     summary: 'Integración en taller propio con equipamiento industrial de primeras marcas mundiales.',
+    image: getPath('/assets/images/tablero3.jpg'),
+    alt: 'Armado e integración de tableros TDF en taller BKB',
     details: [
       'Tableros de Distribución de Fuerza (TDF) y Alumbrado (TDA).',
       'Centros de Control de Motores (CCM) fijos y extraíbles.',
@@ -32,6 +37,8 @@ const services = [
     code: 'SRV-03',
     title: 'Automatización Industrial, Control & PLC',
     summary: 'Control inteligente de procesos productivos, plantas de tratamiento y sistemas de bombeo.',
+    image: getPath('/assets/images/plc.jpg'),
+    alt: 'Programación de autómatas industriales y sistemas SCADA',
     details: [
       'Programación de autómatas PLC (Siemens, Schneider, Allen-Bradley).',
       'Desarrollo de interfaces HMI y sistemas SCADA de supervisión remota.',
@@ -44,6 +51,8 @@ const services = [
     code: 'SRV-04',
     title: 'Obras Civiles Eléctricas & Montaje en Terreno',
     summary: 'Infraestructura física y canalizaciones de servicio pesado para faenas industriales.',
+    image: getPath('/assets/images/civil.jpg'),
+    alt: 'Instalación de escalerillas portacables y canalizaciones subterráneas',
     details: [
       'Instalación de escalerillas portacables galvanizadas y bandejas perforadas.',
       'Bancos de ductos subterráneos de hormigón y cámaras de paso inspeccionables.',
@@ -56,6 +65,8 @@ const services = [
     code: 'SRV-05',
     title: 'Mantención Preventiva, Correctiva & Termografía',
     summary: 'Planes de mantenimiento programado para evitar paradas no planificadas de planta.',
+    image: getPath('/assets/images/proyecto-tablero.jpg'),
+    alt: 'Termografía infrarroja y mantención de tableros eléctricos',
     details: [
       'Inspección termográfica infrarroja certificada de tableros en carga.',
       'Apreté dinanométrico de conexiones y reapriete de barrajes de cobre.',
@@ -83,33 +94,49 @@ const services = [
   <div class="container-bkb py-16">
     <div class="space-y-12">
       {services.map(s => (
-        <section id={s.id} class="card-bkb scroll-mt-28">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <span class="text-xs font-mono font-bold text-[#B4470F] bg-[#FFE5D6] px-2.5 py-1 rounded">
-              {s.code}
-            </span>
-            <span class="text-xs font-mono text-[#7D6F64]">NORMATIVA SEC / RIC VIGENTE</span>
-          </div>
+        <section id={s.id} class="card-bkb scroll-mt-28 overflow-hidden hover:shadow-md transition-all">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Columna Texto y Alcance -->
+            <div class="lg:col-span-8">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <span class="text-xs font-mono font-bold text-[#B4470F] bg-[#FFE5D6] px-2.5 py-1 rounded">
+                  {s.code}
+                </span>
+                <span class="text-xs font-mono text-[#7D6F64]">NORMATIVA SEC / RIC VIGENTE</span>
+              </div>
 
-          <h2 class="display-md text-[#1A1513] mb-3">{s.title}</h2>
-          <p class="body-base text-[#332B26] mb-6">{s.summary}</p>
+              <h2 class="display-md text-[#1A1513] mb-3">{s.title}</h2>
+              <p class="body-base text-[#332B26] mb-6">{s.summary}</p>
 
-          <div class="border-t border-[#E6DDD5] pt-6 mb-6">
-            <h3 class="title-sm text-[#1A1513] mb-4">Alcance de los trabajos:</h3>
-            <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-[#7D6F64]">
-              {s.details.map(item => (
-                <li class="flex items-start gap-2">
-                  <span class="text-[#B4470F] font-bold">✓</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+              <div class="border-t border-[#E6DDD5] pt-6 mb-6">
+                <h3 class="title-sm text-[#1A1513] mb-4">Alcance de los trabajos:</h3>
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-[#7D6F64]">
+                  {s.details.map(item => (
+                    <li class="flex items-start gap-2">
+                      <span class="text-[#B4470F] font-bold">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-          <div class="flex items-center gap-4 pt-2">
-            <Button href={`/contacto?servicio=${encodeURIComponent(s.title)}`} variant="primary" className="!h-11 !text-sm">
-              Cotizar esta especialidad
-            </Button>
+              <div class="flex items-center gap-4 pt-2">
+                <Button href={`/contacto?servicio=${encodeURIComponent(s.title)}`} variant="primary" className="!h-11 !text-sm">
+                  Cotizar esta especialidad
+                </Button>
+              </div>
+            </div>
+
+            <!-- Columna Fotografía Técnica -->
+            <div class="lg:col-span-4">
+              <div class="rounded-xl overflow-hidden border border-[#E6DDD5] bg-[#FAF6F2] shadow-sm">
+                <img 
+                  src={s.image} 
+                  alt={s.alt} 
+                  class="w-full h-56 lg:h-64 object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            </div>
           </div>
         </section>
       ))}

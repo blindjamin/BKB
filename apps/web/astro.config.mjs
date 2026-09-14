@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import tailwindcss from '@tailwindcss/vite';
 
 const isGitHubPages = process.env.GITHUB_PAGES === 'true';
 
@@ -10,5 +11,8 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true
+  },
+  vite: {
+    plugins: [tailwindcss()]
   }
 });

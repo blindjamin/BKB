@@ -10,6 +10,8 @@ const projects = [
     location: 'Región de Valparaíso',
     year: '2024',
     scope: 'Reemplazo de barrajes principales de 2500A, integración de banco de condensadores automático de 400 kVAr y tramitación de anexo SEC TE1.',
+    image: getPath('/assets/images/hero-tablero.jpg'),
+    alt: 'Tablero TDF principal montado en faena',
     tags: ['TDF 2500A', 'SEC TE1', 'CCM Schneider', 'Malla de Tierra']
   },
   {
@@ -18,6 +20,8 @@ const projects = [
     location: 'Región Metropolitana',
     year: '2023',
     scope: 'Programación de autómatas redundantes Siemens S7-1500, control de 6 bombas centrífugas con variadores de frecuencia y transmisión de datos vía fibra óptica.',
+    image: getPath('/assets/images/plc.jpg'),
+    alt: 'Tablero de control y automatización PLC en planta',
     tags: ['PLC Siemens S7', 'SCADA', 'Variadores VFD', 'Fibra Óptica']
   },
   {
@@ -26,6 +30,8 @@ const projects = [
     location: 'San Antonio, V Región',
     year: '2023',
     scope: 'Tendido de 2.400 metros lineales de escalerillas portacables galvanizadas en caliente, 18 cámaras de paso y medición de telurómetro bajo 3 ohms.',
+    image: getPath('/assets/images/civil.jpg'),
+    alt: 'Tendido de escalerillas portacables industriales',
     tags: ['Escalerillas HDG', 'Malla Profunda', 'Cámaras de Hormigón', 'Baja Tensión']
   },
   {
@@ -34,6 +40,8 @@ const projects = [
     location: 'Concón, V Región',
     year: '2024',
     scope: 'Inspección de 32 tableros generales bajo máxima carga productiva, ajuste dinanométrico de terminales y reporte técnico de mitigación de puntos calientes.',
+    image: getPath('/assets/images/tablero.jpg'),
+    alt: 'Mantenimiento preventivo e inspección de tableros industriales',
     tags: ['Termografía Infrarroja', 'Torque Certificado', 'Informe SEC', 'Continuidad']
   }
 ];
@@ -56,8 +64,16 @@ const projects = [
   <div class="container-bkb py-16">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       {projects.map(p => (
-        <article class="card-bkb flex flex-col justify-between hover:shadow-md transition-shadow">
+        <article class="card-bkb flex flex-col justify-between hover:shadow-lg transition-all group overflow-hidden">
           <div>
+            <div class="rounded-lg overflow-hidden mb-6 h-56 bg-[#E6DDD5]">
+              <img 
+                src={p.image} 
+                alt={p.alt} 
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+
             <div class="flex items-center justify-between text-xs font-mono text-[#7D6F64] mb-3">
               <span class="bg-[#FFE5D6] text-[#B4470F] px-2 py-0.5 rounded font-semibold">
                 {p.category}
