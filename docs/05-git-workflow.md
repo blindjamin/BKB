@@ -64,3 +64,13 @@ Cada vez que se vaya a realizar una modificación o avance, se debe crear una ra
    git merge benjamin/YYYY-MM-DD-descripcion-corta
    git push origin desarrollo
    ```
+
+---
+
+## 4. Despliegue Continuo a GitHub Pages
+
+El repositorio cuenta con la acción `.github/workflows/deploy-pages.yml` activa:
+- Cada push o merge a la rama `desarrollo` compila automáticamente el sitio Astro con `GITHUB_PAGES=true` y lo publica en:
+  **`https://blindjamin.github.io/BKB/`**
+- Permite disponer de un enlace público funcional en cualquier momento sin costo de infraestructura mientras no se configure DigitalOcean.
+

@@ -1,4 +1,6 @@
 ---
+import { getPath } from '../utils/paths';
+
 const currentYear = new Date().getFullYear();
 ---
 
@@ -26,7 +28,7 @@ const currentYear = new Date().getFullYear();
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
       <!-- Columna Marca -->
       <div class="space-y-4">
-        <img src="/logo-dark.svg" alt="BKB Obras Eléctricas y Servicios" class="h-12 w-auto" />
+        <img src={getPath('/logo-dark.svg')} alt="BKB Obras Eléctricas y Servicios" class="h-12 w-auto" />
         <p class="text-sm text-[#BDB0A4] leading-relaxed">
           Más de 25 años ejecutando proyectos de ingeniería eléctrica, automatización industrial, canalizaciones y montaje de tableros TDF/TDA en Chile.
         </p>
@@ -41,12 +43,12 @@ const currentYear = new Date().getFullYear();
       <div>
         <h4 class="font-display text-base font-bold text-white mb-4 tracking-tight">Navegación</h4>
         <ul class="space-y-2.5 text-sm text-[#BDB0A4]">
-          <li><a href="/" class="hover:text-white transition-colors">Inicio</a></li>
-          <li><a href="/servicios" class="hover:text-white transition-colors">Servicios Industriales</a></li>
-          <li><a href="/obras" class="hover:text-white transition-colors">Portafolio de Obras</a></li>
-          <li><a href="/nosotros" class="hover:text-white transition-colors">Nosotros & Clientes</a></li>
-          <li><a href="/contacto" class="hover:text-white transition-colors">Cotizar Proyecto</a></li>
-          <li><a href="/trabaja-con-nosotros" class="hover:text-white transition-colors">Trabaja con Nosotros</a></li>
+          <li><a href={getPath('/')} class="hover:text-white transition-colors">Inicio</a></li>
+          <li><a href={getPath('/servicios')} class="hover:text-white transition-colors">Servicios Industriales</a></li>
+          <li><a href={getPath('/obras')} class="hover:text-white transition-colors">Portafolio de Obras</a></li>
+          <li><a href={getPath('/nosotros')} class="hover:text-white transition-colors">Nosotros & Clientes</a></li>
+          <li><a href={getPath('/contacto')} class="hover:text-white transition-colors">Cotizar Proyecto</a></li>
+          <li><a href={getPath('/trabaja-con-nosotros')} class="hover:text-white transition-colors">Trabaja con Nosotros</a></li>
         </ul>
       </div>
 
@@ -85,8 +87,8 @@ const currentYear = new Date().getFullYear();
         © {currentYear} BKB SpA. Todos los derechos reservados.
       </div>
       <div class="flex items-center gap-6">
-        <a href="/privacidad" class="hover:text-[#BDB0A4] transition-colors">Política de Privacidad (Ley 21.719)</a>
-        <a href="/terminos" class="hover:text-[#BDB0A4] transition-colors">Términos del Servicio</a>
+        <a href={getPath('/privacidad')} class="hover:text-[#BDB0A4] transition-colors">Política de Privacidad (Ley 21.719)</a>
+        <a href={getPath('/terminos')} class="hover:text-[#BDB0A4] transition-colors">Términos del Servicio</a>
         <a href="https://portal.bkb.cl" class="hover:text-[#BDB0A4] transition-colors">Acceso Portal</a>
       </div>
     </div>

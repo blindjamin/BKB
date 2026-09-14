@@ -1,4 +1,6 @@
 ---
+import { getPath } from '../utils/paths';
+
 interface Props {
   currentPath?: string;
 }
@@ -6,12 +8,12 @@ interface Props {
 const { currentPath = '/' } = Astro.props;
 
 const navLinks = [
-  { href: '/', label: 'Inicio' },
-  { href: '/servicios', label: 'Servicios' },
-  { href: '/obras', label: 'Obras' },
-  { href: '/nosotros', label: 'Nosotros & Clientes' },
-  { href: '/contacto', label: 'Contacto' },
-  { href: '/trabaja-con-nosotros', label: 'Trabaja con Nosotros' },
+  { href: getPath('/'), raw: '/', label: 'Inicio' },
+  { href: getPath('/servicios'), raw: '/servicios', label: 'Servicios' },
+  { href: getPath('/obras'), raw: '/obras', label: 'Obras' },
+  { href: getPath('/nosotros'), raw: '/nosotros', label: 'Nosotros & Clientes' },
+  { href: getPath('/contacto'), raw: '/contacto', label: 'Contacto' },
+  { href: getPath('/trabaja-con-nosotros'), raw: '/trabaja-con-nosotros', label: 'Trabaja con Nosotros' },
 ];
 ---
 
@@ -19,14 +21,14 @@ const navLinks = [
   <div class="container-bkb">
     <div class="flex items-center justify-between h-20 gap-4">
       <!-- Logo BKB -->
-      <a href="/" class="flex items-center gap-3 focus-bkb rounded-lg group" aria-label="BKB Inicio">
-        <img src="/logo.svg" alt="BKB Obras Eléctricas y Servicios" class="h-10 sm:h-12 w-auto" />
+      <a href={getPath('/')} class="flex items-center gap-3 focus-bkb rounded-lg group" aria-label="BKB Inicio">
+        <img src={getPath('/logo.svg')} alt="BKB Obras Eléctricas y Servicios" class="h-10 sm:h-12 w-auto" />
       </a>
 
       <!-- Menú Desktop -->
       <nav class="hidden lg:flex items-center gap-6" aria-label="Navegación principal">
         {navLinks.map(link => {
-          const isActive = currentPath === link.href;
+          const isActive = currentPath === link.raw || currentPath === link.href;
           return (
             <a
               href={link.href}
@@ -54,7 +56,7 @@ const navLinks = [
           </svg>
           Portal Clientes
         </a>
-        <a href="/contacto" class="btn btn-primary text-sm !h-10 !px-4">
+        <a href={getPath('/contacto')} class="btn btn-primary text-sm !h-10 !px-4">
           Cotizar
         </a>
       </div>
@@ -78,7 +80,7 @@ const navLinks = [
     <div id="mobile-menu" class="hidden lg:hidden border-t border-[#E6DDD5] py-4 bg-[#FBF8F5]">
       <nav class="flex flex-col gap-3">
         {navLinks.map(link => {
-          const isActive = currentPath === link.href;
+          const isActive = currentPath === link.raw || currentPath === link.href;
           return (
             <a
               href={link.href}
@@ -94,7 +96,7 @@ const navLinks = [
           <a href="https://portal.bkb.cl" class="btn btn-secondary !h-11 justify-center">
             Portal Clientes BKB
           </a>
-          <a href="/contacto" class="btn btn-primary !h-11 justify-center">
+          <a href={getPath('/contacto')} class="btn btn-primary !h-11 justify-center">
             Solicitar Cotización
           </a>
         </div>

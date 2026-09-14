@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
+import { getPath } from '../utils/paths';
 
 const metrics = [
   { value: '+25', label: 'Años de Experiencia en Faenas Industriales' },
@@ -13,22 +14,22 @@ const mainServices = [
   {
     title: 'Ingeniería & Proyectos Eléctricos',
     desc: 'Diseño de planos, memorias de cálculo, levantamiento de cargas y regularizaciones normativas completas ante la SEC.',
-    link: '/servicios#ingenieria'
+    link: getPath('/servicios#ingenieria')
   },
   {
     title: 'Montaje de Tableros TDF / TDA',
     desc: 'Fabricación, cableado e integración de tableros de distribución de fuerza y alumbrado con componentes certificados.',
-    link: '/servicios#tableros'
+    link: getPath('/servicios#tableros')
   },
   {
     title: 'Automatización & Control PLC',
     desc: 'Programación de autómatas, sistemas SCADA, telemetría y control de bombas para procesos industriales críticos.',
-    link: '/servicios#automatizacion'
+    link: getPath('/servicios#automatizacion')
   },
   {
     title: 'Obras Civiles & Canalizaciones',
     desc: 'Tendido de escalerillas portacables, bancos de ductos subterráneos, mallas de tierra y salas eléctricas dedicadas.',
-    link: '/servicios#obras-civiles'
+    link: getPath('/servicios#obras-civiles')
   }
 ];
 ---
@@ -89,7 +90,7 @@ const mainServices = [
           <span class="text-xs font-mono font-bold tracking-wider text-[#B4470F] uppercase">Capacidades Técnicas</span>
           <h2 class="display-lg text-[#1A1513] mt-2">Soluciones Eléctricas Integrales</h2>
         </div>
-        <a href="/servicios" class="text-sm font-bold text-[#B4470F] hover:underline inline-flex items-center gap-1">
+        <a href={getPath('/servicios')} class="text-sm font-bold text-[#B4470F] hover:underline inline-flex items-center gap-1">
           Ver todas las especialidades →
         </a>
       </div>
@@ -127,9 +128,9 @@ const mainServices = [
           <a href="https://portal.bkb.cl" class="btn btn-primary !h-12 !px-6 justify-center">
             Ingresar al Portal
           </a>
-          <a href="/contacto" class="btn btn-secondary !border-white !text-white hover:!bg-white hover:!text-[#1A1513] !h-12 justify-center">
+          <Button href="/contacto" variant="secondary" className="!border-white !text-white hover:!bg-white hover:!text-[#1A1513] !h-12 justify-center">
             Solicitar Cuenta de Acceso
-          </a>
+          </Button>
         </div>
       </div>
     </div>

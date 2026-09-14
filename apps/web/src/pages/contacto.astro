@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
+import { getPath } from '../utils/paths';
 ---
 
 <Layout 
@@ -132,7 +133,7 @@ import Button from '../components/Button.astro';
               class="mt-1 rounded border-[#E6DDD5] text-[#B4470F] focus:ring-[#B4470F]"
             />
             <label for="privacidad" class="text-xs text-[#7D6F64] leading-relaxed">
-              Acepto la <a href="/privacidad" class="text-[#B4470F] underline">política de privacidad</a> para el tratamiento de mis datos de contacto comercial conforme a la Ley 21.719.
+              Acepto la <a href={getPath('/privacidad')} class="text-[#B4470F] underline">política de privacidad</a> para el tratamiento de mis datos de contacto comercial conforme a la Ley 21.719.
             </label>
           </div>
 

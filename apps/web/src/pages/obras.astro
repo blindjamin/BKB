@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
+import { getPath } from '../utils/paths';
 
 const projects = [
   {
@@ -81,7 +82,7 @@ const projects = [
               <span class="text-xs font-mono text-[#1E6B47] font-semibold flex items-center gap-1">
                 ✓ Obra Entregada & Operativa
               </span>
-              <a href="/contacto" class="text-xs font-bold text-[#B4470F] hover:underline">
+              <a href={getPath('/contacto')} class="text-xs font-bold text-[#B4470F] hover:underline">
                 Cotizar proyecto similar →
               </a>
             </div>
