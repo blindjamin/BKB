@@ -6,10 +6,24 @@
 
 ---
 
-## 1. Ramas Principales del Repositorio
+## 1. Jerarquía de Ramas (Estructura de 3 Niveles)
 
-- **`main`:** Rama de producción protegida. Solo recibe merges validados y probados provenientes de `desarrollo`.
-- **`desarrollo`:** Rama base de integración continua. Toda nueva característica o corrección se fusiona hacia acá.
+El repositorio sigue un modelo de tres niveles estricto:
+
+1. **Nivel 1 · `main` (Rama Primaria / Producción):**
+   - Es la rama principal del repositorio.
+   - Contiene únicamente versiones estables y listas para producción.
+   - **Nadie hace commits ni push directo a `main`**. Solo recibe merges controlados provenientes de `desarrollo`.
+
+2. **Nivel 2 · `desarrollo` (Rama Secundaria / Integración Activa):**
+   - Es la rama base donde se reúne el trabajo activo del proyecto.
+   - Recibe los Pull Requests de las ramas de tarea una vez revisadas por el usuario/equipo.
+   - Es la rama que dispara el despliegue de previsualización en GitHub Pages.
+
+3. **Nivel 3 · `[nombre]/[fecha]-[descripcion]` (Ramas Terciarias / Tareas Específicas):**
+   - Ramas efímeras creadas a partir de `desarrollo` para cada funcionalidad, ajuste o avance.
+   - Todo push se hace **únicamente** hacia la rama de tarea creada.
+   - El desarrollador o la IA genera el Pull Request hacia `desarrollo` para que el usuario lo revise y fusione manualmente.
 
 ---
 
