@@ -38,8 +38,18 @@ El proyecto se divide en dos aplicaciones complementarias pero técnicamente des
 
 ---
 
-## 4. Estado Actual del Repositorio
-- El código se encuentra estructurado como monorepo con `npm workspaces`.
-- Los estilos base y tokens provienen del `UI Kit v1.0 oficial`.
-- Repositorio remoto: `https://github.com/blindjamin/BKB.git`.
-- Toda nueva contribución se realiza mediante ramas dedicadas que apuntan a la rama base `desarrollo`.
+## 4. Estado Actual del Repositorio (al 14-09-2026)
+- **Estructura:** Monorepo con `npm workspaces` en la carpeta `bkb-platform/`.
+- **Sistema de Diseño (`packages/tokens`):** Implementado con tokens oficiales de color, tipografía y semáforo normativo SEC del UI Kit v1.0.
+- **Sitio Público (`apps/web`):**
+  - Astro 5+ con salida estática y Tailwind CSS v4 (`@tailwindcss/vite`).
+  - 8 rutas completas generadas: `/`, `/servicios`, `/obras`, `/nosotros`, `/contacto`, `/trabaja-con-nosotros`, `/privacidad`, `/terminos`.
+  - Galería de 12 fotografías y planos reales de faena integrados en `public/assets/images/`.
+  - Helper de rutas (`src/utils/paths.ts`) compatible con local y GitHub Pages.
+- **Portal de Clientes (`apps/portal`):** Esqueleto base Django con configuración ASVS Nivel 2, endpoint `/health/` y soporte para SQLite local / PostgreSQL.
+- **Despliegue Continuo:** GitHub Action activo para publicar automáticamente en GitHub Pages (`https://blindjamin.github.io/BKB/`) tras cada merge a `desarrollo`.
+- **Jerarquía Git:**
+  1. `main` (Producción / Primaria)
+  2. `desarrollo` (Integración / Secundaria)
+  3. Ramas de tarea `[nombre]/[fecha]-[descripcion]` con Pull Request manual a `desarrollo`.
+- **Pull Request Actual:** `benjamin/2026-09-14-estilos-tailwind-web` esperando revisión manual del usuario.
