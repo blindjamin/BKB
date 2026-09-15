@@ -10,7 +10,7 @@ dj-database-url>=2.3.0
 # Autenticación y Seguridad (ASVS Nivel 2)
 django-allauth>=65.4.0
 django-axes>=7.0.0
-django-rules>=3.5.0
+rules>=3.5.0
 argon2-cffi>=23.1.0
 django-csp>=4.0.0
 
