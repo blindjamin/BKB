@@ -1,0 +1,73 @@
+---
+import { Image } from 'astro:assets';
+import { PORTAL_URLS } from '../../config/site';
+import faenaHero from '../../assets/landing/faena-hero.jpg';
+---
+
+<section class="relative w-full min-h-[100svh] overflow-hidden flex items-center bg-night-900" aria-label="Hero">
+  <div class="absolute inset-0 overflow-hidden">
+    <Image 
+      src={faenaHero} 
+      alt="Técnico BKB en faena eléctrica industrial" 
+      class="hero-bg-img w-full h-full object-cover" 
+      loading="eager" 
+      fetchpriority="high" 
+    />
+    <div class="absolute inset-0 bg-gradient-to-br from-night-900/90 via-night-900/70 to-night-900/50"></div>
+  </div>
+
+  <div class="relative z-10 mx-auto w-full px-4 sm:px-10 pt-[96px] pb-[110px] grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-14 items-start" style="max-width: var(--bkb-container);">
+
+    <div class="flex flex-col gap-6 pt-5">
+      <div class="hero-in inline-flex self-start items-center gap-2 bg-salmon-500/15 border border-salmon-500/40 text-salmon-300 text-[13px] font-semibold tracking-[0.02em] px-4 py-[9px] rounded-pill">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+          <path d="M11 21.9v-8.4H5.3c-.6 0-1-.6-.8-1.2l4.8-10.8c.2-.5.8-.8 1.4-.6.2.1.4.2.5.4l.2.4v7.9h5.3c.6 0 1 .6.8 1.2l-4.8 10.8c-.2.5-.8.8-1.4.6-.2-.1-.4-.2-.5-.3z"/>
+        </svg>
+        <span>Obras Eléctricas Industriales · Más de 25 años de trayectoria</span>
+      </div>
+
+      <h1 class="hero-in font-display text-[var(--bkb-text-h1)] leading-[1.08] tracking-[-0.02em] m-0 font-extrabold text-[#F8FAFC]">
+        Energía que<br/><span class="text-salmon-500">no se detiene.</span>
+      </h1>
+
+      <p class="hero-in text-[18px] leading-[1.6] text-[#94A3B8] m-0 max-w-[48ch]">
+        Ingeniería de montaje, automatización PLC y mantenimiento eléctrico integral para plantas industriales en Chile. Garantía de continuidad operativa y certificación SEC TE1.
+      </p>
+    </div>
+
+    <!-- Portal access card -->
+    <div class="hero-in bg-night-800/75 backdrop-blur-md border border-[rgba(255,255,255,0.16)] rounded-[20px] shadow-[0_30px_60px_rgba(0,0,0,0.6),0_0_40px_rgba(250,90,54,0.12)] p-8 flex flex-col gap-5">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-salmon-500/15 border border-salmon-500/35 flex items-center justify-center text-salmon-500">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="font-display text-[17px] font-bold text-[#F8FAFC]">Portal Digital BKB</div>
+          <div class="text-[12px] text-[#94A3B8]">Gestión Documental & SEC TE1</div>
+        </div>
+      </div>
+      
+      <p class="m-0 text-[14px] text-[#94A3B8] leading-[1.5]">
+        Selecciona tu perfil para ingresar al portal.
+      </p>
+      
+      <div class="flex flex-col gap-3">
+        <a href={PORTAL_URLS.cliente} class="flex items-center justify-center p-4 rounded-[10px] bg-salmon-500 text-white font-semibold text-[15px] no-underline transition-colors hover:bg-salmon-600 focus-bkb">
+          Soy Cliente &rarr;
+        </a>
+        <a href={PORTAL_URLS.colaborador} class="flex items-center justify-center p-4 rounded-[10px] bg-[rgba(255,255,255,0.06)] border-[1.5px] border-[rgba(255,255,255,0.2)] text-[#F8FAFC] font-semibold text-[15px] no-underline transition-colors hover:border-salmon-500 hover:text-salmon-500 focus-bkb">
+          Soy BKB &rarr;
+        </a>
+      </div>
+    </div>
+    
+  </div>
+</section>
+
+<style>
+  .hero-bg-img {
+    animation: heroZoom 22s infinite alternate ease-in-out;
+  }
+</style>

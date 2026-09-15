@@ -1,0 +1,127 @@
+---
+import { quoteOptions } from '../../data/landing';
+import { SITE, QUOTE_ENDPOINT } from '../../config/site';
+import { getPath } from '../../utils/paths';
+
+const isEndpointAvailable = Boolean(QUOTE_ENDPOINT);
+---
+
+<section id="cotizar" class="py-24 bg-page border-t border-card-border scroll-mt-[80px]">
+  <div class="max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10">
+    
+    <div class="grid grid-cols-1 md:grid-cols-[0.9fr_1.1fr] gap-10 lg:gap-16 items-start">
+      
+      <!-- Tarjeta Guardia 24/7 (Siempre Oscura) -->
+      <div class="reveal rounded-[20px] bg-gradient-to-br from-[#162035] to-[#080C14] border border-salmon-500/30 p-8 sm:p-10 flex flex-col items-start gap-6 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-salmon-500/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+        
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-danger/15 border border-danger/30 text-danger text-[11px] font-bold tracking-wider font-mono uppercase">
+          <span class="w-2 h-2 rounded-full bg-danger animate-pulse"></span>
+          Guardia de Urgencia 24/7
+        </div>
+        
+        <div>
+          <h2 class="font-display font-bold text-[32px] leading-[1.1] text-white mb-4">¿Emergencia en planta?</h2>
+          <p class="text-[15px] leading-[1.6] text-[#94A3B8] m-0">
+            Falla de tableros, cortes de suministro en faena o anomalías térmicas críticas. Respuesta inmediata dentro de la cobertura.
+          </p>
+        </div>
+        
+        <div class="mt-4 flex flex-col gap-1">
+          <span class="text-[12px] font-mono text-[#64748B] uppercase">Línea directa</span>
+          <a href={SITE.phoneHref} class="font-display font-bold text-[36px] text-salmon-300 no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">
+            {SITE.phoneDisplay}
+          </a>
+        </div>
+        
+        <div class="w-full h-px bg-white/10 my-2"></div>
+        
+        <div class="flex flex-col gap-2 w-full">
+          <div class="flex items-center justify-between text-[13.5px] text-[#8391A7]">
+            <span class="font-medium text-white">Oficina Central</span>
+            <span>{SITE.office}</span>
+          </div>
+          <div class="flex items-center justify-between text-[13.5px] text-[#8391A7]">
+            <span class="font-medium text-white">Cobertura</span>
+            <span>{SITE.coverage}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="reveal bg-card border border-card-border rounded-[18px] p-8 sm:p-10 shadow-lg">
+        <div class="mb-8">
+          <h2 class="font-display font-bold text-[28px] text-main mb-2 m-0">Cotizar Obra o Servicio</h2>
+          <p class="text-[14.5px] text-muted m-0">Completa el formulario y nuestro equipo de ingeniería te contactará a la brevedad.</p>
+        </div>
+
+        <form action={QUOTE_ENDPOINT} method="POST" class="flex flex-col gap-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="flex flex-col gap-1.5">
+              <label for="name" class="text-[13px] font-semibold text-main">Nombre completo</label>
+              <input type="text" id="name" name="name" required autocomplete="name" placeholder="Ej. Juan Pérez" class="h-[46px] px-4 rounded-input bg-input border border-input-border text-main text-[14.5px] focus:outline-none focus:border-salmon-500 focus:ring-1 focus:ring-salmon-500 transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="organization" class="text-[13px] font-semibold text-main">Empresa</label>
+              <input type="text" id="organization" name="organization" required autocomplete="organization" placeholder="Razón social" class="h-[46px] px-4 rounded-input bg-input border border-input-border text-main text-[14.5px] focus:outline-none focus:border-salmon-500 focus:ring-1 focus:ring-salmon-500 transition-colors" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="flex flex-col gap-1.5">
+              <label for="email" class="text-[13px] font-semibold text-main">Correo electrónico</label>
+              <input type="email" id="email" name="email" required autocomplete="email" placeholder="correo@empresa.cl" class="h-[46px] px-4 rounded-input bg-input border border-input-border text-main text-[14.5px] focus:outline-none focus:border-salmon-500 focus:ring-1 focus:ring-salmon-500 transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="tel" class="text-[13px] font-semibold text-main">Teléfono</label>
+              <input type="tel" id="tel" name="tel" required autocomplete="tel" placeholder="+56 9 0000 0000" class="h-[46px] px-4 rounded-input bg-input border border-input-border text-main text-[14.5px] focus:outline-none focus:border-salmon-500 focus:ring-1 focus:ring-salmon-500 transition-colors" />
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label for="service" class="text-[13px] font-semibold text-main">Servicio requerido</label>
+            <select id="service" name="service" required class="h-[46px] px-4 rounded-input bg-input border border-input-border text-main text-[14.5px] focus:outline-none focus:border-salmon-500 focus:ring-1 focus:ring-salmon-500 transition-colors appearance-none cursor-pointer">
+              <option value="" disabled selected>Selecciona una opción...</option>
+              {quoteOptions.map(opt => (
+                <option value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label for="message" class="text-[13px] font-semibold text-main">Detalles del proyecto</label>
+            <textarea id="message" name="message" required rows="4" placeholder="Describe brevemente los requerimientos, ubicación y plazos estimados..." class="p-4 rounded-input bg-input border border-input-border text-main text-[14.5px] focus:outline-none focus:border-salmon-500 focus:ring-1 focus:ring-salmon-500 transition-colors resize-y"></textarea>
+          </div>
+
+          <!-- Anti-bot honeypot -->
+          <div class="hidden" aria-hidden="true">
+            <label for="bot-field">No llenar si eres humano</label>
+            <input type="text" id="bot-field" name="bot-field" tabindex="-1" />
+          </div>
+
+          <div class="flex items-start gap-3 mt-2">
+            <input type="checkbox" id="consent" name="consent" required class="mt-1 w-4 h-4 rounded-sm border-input-border bg-input text-salmon-500 focus:ring-salmon-500" />
+            <label for="consent" class="text-[13px] text-muted leading-snug cursor-pointer">
+              He leído y acepto la <a href={getPath('/privacidad')} class="text-salmon-500 hover:underline focus-bkb rounded-sm">Política de Privacidad</a> respecto al tratamiento de mis datos personales (Ley 21.719).
+            </label>
+          </div>
+
+          <button 
+            type="submit" 
+            class="mt-4 flex items-center justify-center h-[52px] rounded-pill bg-salmon-500 text-white font-semibold text-[15.5px] transition-all hover:bg-salmon-600 hover:-translate-y-0.5 focus:outline-none focus-visible:outline-[3px] focus-visible:outline-salmon-500 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            disabled={!isEndpointAvailable}
+          >
+            Enviar Solicitud &rarr;
+          </button>
+          
+          {!isEndpointAvailable && (
+            <div class="mt-2 text-[12.5px] text-warning bg-warning/10 border border-warning/30 p-3 rounded-md text-center font-medium">
+              Formulario en habilitación. Escríbenos a <a href={`mailto:${SITE.email}`} class="underline hover:text-salmon-500">{SITE.email}</a> o llama al <a href={SITE.phoneHref} class="underline hover:text-salmon-500">{SITE.phoneDisplay}</a>
+            </div>
+          )}
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
