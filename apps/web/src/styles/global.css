@@ -1,17 +1,50 @@
-/* Fuentes Web */
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
-
 @import "tailwindcss";
 @import "@bkb/tokens";
+
+@theme inline {
+  --color-page: var(--page-bg);
+  --color-card: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-main: var(--text-main);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--text-subtle);
+  --color-input: var(--input-bg);
+  --color-input-border: var(--input-border);
+  
+  --color-salmon-300: var(--bkb-salmon-300);
+  --color-salmon-500: var(--bkb-salmon-500);
+  --color-salmon-600: var(--bkb-salmon-600);
+  --color-salmon-700: var(--bkb-salmon-700);
+  --color-salmon-800: var(--bkb-salmon-800);
+  
+  --color-night-700: var(--bkb-night-700);
+  --color-night-800: var(--bkb-night-800);
+  --color-night-900: var(--bkb-night-900);
+  --color-night-950: var(--bkb-night-950);
+  
+  --color-success: var(--bkb-success);
+  
+  --font-display: var(--bkb-font-display);
+  --font-sans: var(--bkb-font-sans);
+  --font-mono: var(--bkb-font-mono);
+  
+  --radius-card: var(--bkb-radius-card);
+  --radius-pill: var(--bkb-radius-pill);
+}
 
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
+::selection {
+  background: var(--bkb-salmon-500);
+  color: #fff;
+}
+
 html {
-  font-family: var(--bkb-font-body);
-  color: var(--bkb-ink-900);
-  background-color: var(--bkb-paper-50);
+  font-family: var(--bkb-font-sans);
+  color: var(--text-main);
+  background-color: var(--page-bg);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -24,155 +57,151 @@ body {
   flex-direction: column;
 }
 
-/* Patrón técnico de papel milimetrado de fondo */
+html.js {
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hero-in {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroZoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes marqueeScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .reveal,
+  html.js .hero-in {
+    opacity: 1;
+    transform: translateY(0);
+    transition: none;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* CLASES ANTIGUAS (Temporales hasta Fase 7) */
 .bg-grid-technical {
   background-image: radial-gradient(#E6DDD5 1px, transparent 0);
   background-size: 24px 24px;
 }
-
-/* Tipografía */
-.font-display { font-family: var(--bkb-font-display); }
-.font-body { font-family: var(--bkb-font-body); }
-.font-mono { font-family: var(--bkb-font-mono); }
-
+.font-body { font-family: var(--bkb-font-sans); }
 .display-xl {
   font-family: var(--bkb-font-display);
-  font-size: var(--bkb-text-display-xl);
-  line-height: var(--bkb-leading-display-xl);
+  font-size: 3.75rem;
+  line-height: 1.06;
   font-weight: 800;
-  letter-spacing: -0.025em;
 }
-
 .display-lg {
   font-family: var(--bkb-font-display);
-  font-size: var(--bkb-text-display-lg);
-  line-height: var(--bkb-leading-display-lg);
+  font-size: 2.375rem;
+  line-height: 1.15;
   font-weight: 700;
-  letter-spacing: -0.02em;
 }
-
 .display-md {
   font-family: var(--bkb-font-display);
-  font-size: var(--bkb-text-display-md);
-  line-height: var(--bkb-leading-display-md);
+  font-size: 1.625rem;
+  line-height: 1.23;
   font-weight: 600;
-  letter-spacing: -0.01em;
 }
-
 .title-sm {
-  font-family: var(--bkb-font-body);
-  font-size: var(--bkb-text-title-sm);
-  line-height: var(--bkb-leading-title-sm);
+  font-family: var(--bkb-font-sans);
+  font-size: 1.25rem;
+  line-height: 1.3;
   font-weight: 600;
 }
-
 .body-base {
-  font-family: var(--bkb-font-body);
-  font-size: var(--bkb-text-body-base);
-  line-height: var(--bkb-leading-body-base);
+  font-family: var(--bkb-font-sans);
+  font-size: 1.1875rem;
+  line-height: 1.58;
   font-weight: 400;
 }
-
 .body-sm {
-  font-family: var(--bkb-font-body);
-  font-size: var(--bkb-text-body-sm);
-  line-height: var(--bkb-leading-body-sm);
+  font-family: var(--bkb-font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.6;
   font-weight: 400;
 }
-
-/* Botones con sensación táctil industrial */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-family: var(--bkb-font-body);
+  font-family: var(--bkb-font-sans);
   font-weight: 600;
-  border-radius: var(--bkb-radius-md);
+  border-radius: 10px;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   padding: 0 1.5rem;
   height: 52px;
   font-size: 1.05rem;
   border: none;
 }
-
-.btn:hover {
-  transform: translateY(-1.5px);
-}
-
-.btn:active {
-  transform: translateY(0.5px);
-}
-
 .btn-primary {
-  background-color: var(--bkb-copper-700);
+  background-color: #B4470F;
   color: #FFFFFF;
 }
-
-.btn-primary:hover {
-  background-color: var(--bkb-copper-800);
-  color: #FFFFFF;
-}
-
 .btn-secondary {
   background-color: transparent;
   color: var(--bkb-ink-900);
   border: 2px solid var(--bkb-ink-900);
 }
-
-.btn-secondary:hover {
-  background-color: var(--bkb-ink-900);
-  color: #FFFFFF;
-}
-
 .btn-tertiary {
-  background-color: var(--bkb-paper-200);
-  color: var(--bkb-ink-800);
+  background-color: #F0EAE3;
+  color: #332B26;
 }
-
-.btn-tertiary:hover {
-  background-color: var(--bkb-sand-200);
-}
-
-/* Foco accesible */
-.focus-bkb:focus-visible {
-  outline: 3px solid var(--bkb-ink-900);
-  outline-offset: 3px;
-}
-
-/* Badges de estado normativo SEC */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
   padding: 0.25rem 0.75rem;
-  border-radius: var(--bkb-radius-pill);
+  border-radius: 9999px;
   font-family: var(--bkb-font-mono);
   font-size: 0.8125rem;
   font-weight: 600;
 }
-
 .badge-sec-ok {
   background-color: var(--bkb-sec-ok-bg);
   color: var(--bkb-sec-ok-text);
   border: 1px solid var(--bkb-sec-ok-border);
 }
-
 .badge-sec-warning {
   background-color: var(--bkb-sec-warning-bg);
   color: var(--bkb-sec-warning-text);
   border: 1px solid var(--bkb-sec-warning-border);
 }
-
 .badge-sec-info {
   background-color: var(--bkb-sec-info-bg);
   color: var(--bkb-sec-info-text);
   border: 1px solid var(--bkb-sec-info-border);
 }
-
-/* Contenedores */
 .container-bkb {
   width: 100%;
   max-width: 1240px;
@@ -181,12 +210,9 @@ body {
   padding-left: 1.5rem;
   padding-right: 1.5rem;
 }
-
-/* Tarjetas */
 .card-bkb {
-  background-color: var(--bkb-white);
-  border: var(--bkb-border-default);
-  border-radius: var(--bkb-radius-lg);
+  background-color: #FFFFFF;
+  border: 1.5px solid #E6DDD5;
+  border-radius: 14px;
   padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
