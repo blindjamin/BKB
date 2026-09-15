@@ -1,0 +1,15 @@
+---
+import Eyebrow from './Eyebrow.astro';
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  align?: 'left' | 'center';
+}
+const { eyebrow, title, align = 'left' } = Astro.props;
+---
+
+<div class={`max-w-[640px] mb-12 flex flex-col gap-3 ${align === 'center' ? 'mx-auto text-center items-center' : 'text-left items-start'}`}>
+  <Eyebrow text={eyebrow} />
+  <h2 class="font-display font-bold text-[var(--bkb-text-h2)] leading-[1.1] text-main m-0" set:html={title} />
+</div>

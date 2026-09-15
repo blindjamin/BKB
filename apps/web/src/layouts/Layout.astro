@@ -1,76 +1,104 @@
 ---
 import '../styles/global.css';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import SiteHeader from '../components/site/SiteHeader.astro';
+import SiteFooter from '../components/site/SiteFooter.astro';
 import { getPath } from '../utils/paths';
+import { SITE } from '../config/site';
 
 interface Props {
   title: string;
   description?: string;
+  headerMode?: 'reveal' | 'solid';
 }
 
 const { 
   title, 
-  description = "BKB · Obras Eléctricas & Servicios. Más de 25 años en ingeniería eléctrica, automatización, canalizaciones y tableros industriales en Chile. Certificación SEC Clase A." 
+  description = "BKB · Obras Eléctricas & Servicios. Más de 25 años en ingeniería eléctrica, automatización, canalizaciones y tableros industriales en Chile. Certificación SEC Clase A.",
+  headerMode = 'solid'
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
 const siteUrl = Astro.site || 'https://www.bkb.cl';
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
 
-// Schema.org LocalBusiness
+// Schema.org LocalBusiness actualizado
 const schemaOrg = {
   "@context": "https://schema.org",
   "@type": "Electrician",
-  "name": "BKB Obras Eléctricas & Servicios",
+  "name": SITE.name,
   "url": siteUrl.toString(),
   "logo": new URL(getPath('/logo.svg'), siteUrl).toString(),
   "description": description,
-  "areaServed": "Chile",
+  "areaServed": SITE.coverage,
   "hasCredential": "SEC Clase A",
   "contactPoint": {
     "@type": "ContactPoint",
-    "telephone": "+56-9-8765-4321",
-    "contactType": "emergency",
+    "telephone": SITE.phoneDisplay,
+    "contactType": "customer service",
     "availableLanguage": "Spanish"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Quilpué",
+    "addressRegion": "Valparaíso",
+    "addressCountry": "CL"
   }
 };
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
   <head>
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      try {
+        const t = localStorage.getItem('bkb-theme');
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.dataset.theme = t;
+        }
+      } catch (e) {}
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080C14" />
+    
     <link rel="icon" type="image/svg+xml" href={getPath('/favicon.svg')} />
     <link rel="canonical" href={canonicalUrl} />
     
-    <title>{title} | BKB Obras Eléctricas & Servicios</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet" />
+    
+    <title>{title} | {SITE.name}</title>
     <meta name="description" content={description} />
     
     <!-- Open Graph / Redes -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:title" content={`${title} | BKB Obras Eléctricas & Servicios`} />
+    <meta property="og:title" content={`${title} | ${SITE.name}`} />
     <meta property="og:description" content={description} />
-    <meta property="og:site_name" content="BKB SpA" />
+    <meta property="og:site_name" content={SITE.name} />
     <meta property="og:locale" content="es_CL" />
 
     <!-- Datos estructurados SEO -->
     <script type="application/ld+json" set:html={JSON.stringify(schemaOrg)} />
   </head>
-  <body class="bg-[#FBF8F5] text-[#1A1513] min-h-screen flex flex-col selection:bg-[#FFE5D6] selection:text-[#B4470F]">
+  <body class="bg-page text-main font-sans">
     <!-- Enlace de salto accesible para WCAG 2.2 AA -->
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-[#B4470F] focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-salmon-500 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:outline-none">
       Saltar al contenido principal
     </a>
 
-    <Header currentPath={currentPath} />
+    <SiteHeader mode={headerMode} />
 
-    <main id="main-content" class="flex-1">
+    <main id="main-content" class="flex-1 flex flex-col">
       <slot />
     </main>
 
-    <Footer />
+    <SiteFooter />
+    
+    <script src="../scripts/theme.ts"></script>
+    <script src="../scripts/motion.ts"></script>
   </body>
 </html>

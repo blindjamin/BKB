@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700;800&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    ::selection { background: #FA5A36; color: #ffffff; }
+
+    @keyframes heroZoom { from { transform: scale(1.1); } to { transform: scale(1); } }
+    @keyframes pulseDot { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); } 70% { box-shadow: 0 0 0 7px rgba(16,185,129,0); } }
+    @keyframes marqueeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+    .reveal.is-visible { opacity: 1; transform: none; }
+    .hero-in { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+    .hero-in.is-visible { opacity: 1; transform: none; }
+    .hero-bg-img { animation: heroZoom 22s ease-out forwards; }
+    .live-dot { animation: pulseDot 2.2s infinite; }
+    .marquee-track { animation: marqueeScroll 32s linear infinite; }
+    .service-card:hover .service-icon { transform: translateY(-3px) scale(1.08); background: rgba(250,90,54,0.2); }
+    .site-header.is-visible { opacity: 1 !important; transform: translateY(0) !important; pointer-events: auto !important; }
+    .theme-light .site-header.is-visible { background: rgba(251,248,245,0.94) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.12); border-bottom-color: rgba(26,21,19,0.08) !important; }
+    .theme-light .site-header.is-visible .navlink { color:#1A1513 !important; }
+    .theme-light .site-header.is-visible .portal-btn { color:#1A1513 !important; border-color: rgba(26,21,19,0.22) !important; background: rgba(26,21,19,0.04) !important; }
+    .theme-dark .site-header.is-visible { background: rgba(8,12,20,0.92) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.35); }
+
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal, .hero-in, .hero-bg-img, .live-dot, .marquee-track { transition: none !important; animation: none !important; opacity: 1 !important; transform: none !important; }
+    }
+    @media (max-width: 1180px) {
+      .hide-mobile { display: none !important; }
+    }
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr !important; }
+      .grid-3 { grid-template-columns: 1fr !important; }
+      .grid-4 { grid-template-columns: repeat(2,1fr) !important; }
+    }
+  </style>
+</helmet>
+
+<div class="{{ themeClass }}" style="{{ themeVars }} width:100%; background:var(--page-bg); font-family:'IBM Plex Sans',sans-serif; color:var(--text-main);">
+
+  <!-- 01 HEADER -->
+  <div class="site-header" data-screen-label="Header" style="position:fixed; top:0; left:0; right:0; z-index:60; background:rgba(8,12,20,0.6); backdrop-filter:blur(14px); border-bottom:1px solid rgba(255,255,255,0.09); opacity:0; transform:translateY(-100%); pointer-events:none; transition:background .3s ease, box-shadow .3s ease, opacity .3s ease, transform .3s ease;">
+    <div style="max-width:1360px; margin:0 auto; padding:14px 40px; display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:nowrap;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <img src="bkb-logo-final.png" alt="BKB Ingeniería Eléctrica & Servicios" style="height:44px; width:auto; object-fit:contain;" />
+        <span class="hide-mobile" style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:rgba(16,185,129,0.12); color:#10B981; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.04em; white-space:nowrap;">SEC CLASE A</span>
+      </div>
+
+      <div class="hide-mobile" style="display:flex; align-items:center; gap:30px;">
+        <a class="navlink" href="#" style="color:#F8FAFC; text-decoration:none; font-size:14px; font-weight:500; position:relative;" style-hover="color:#FA5A36;">Inicio</a>
+        <a class="navlink" href="#mercados" style="color:#F8FAFC; text-decoration:none; font-size:14px; font-weight:500;" style-hover="color:#FA5A36;">Mercados</a>
+        <a class="navlink" href="#servicios" style="color:#F8FAFC; text-decoration:none; font-size:14px; font-weight:500;" style-hover="color:#FA5A36;">Servicios</a>
+        <a class="navlink" href="#obras" style="color:#F8FAFC; text-decoration:none; font-size:14px; font-weight:500;" style-hover="color:#FA5A36;">Obras</a>
+        <a class="navlink" href="#portal" style="color:#F8FAFC; text-decoration:none; font-size:14px; font-weight:500;" style-hover="color:#FA5A36;">Portal SEC</a>
+        <a class="navlink" href="#cotizar" style="color:#F8FAFC; text-decoration:none; font-size:14px; font-weight:500;" style-hover="color:#FA5A36;">Contacto</a>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="portal-btn" onClick="{{ toggleTheme }}" title="Cambiar tema" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:999px; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.2); color:#F8FAFC; font-size:16px; cursor:pointer; backdrop-filter:blur(8px); flex-shrink:0;" style-hover="border-color:#FA5A36;">{{ themeIcon }}</div>
+        <div class="hide-mobile portal-btn" style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:999px; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.2); color:#F8FAFC; font-size:14px; font-weight:600; cursor:pointer; backdrop-filter:blur(8px);" style-hover="border-color:#FA5A36; color:#FA5A36;">Acceso Portal</div>
+        <div style="display:inline-flex; align-items:center; padding:10px 20px; border-radius:999px; background:#FA5A36; color:#ffffff; font-size:14px; font-weight:600; cursor:pointer; transition:transform .18s ease;" style-hover="background:#E04825; transform:translateY(-2px);">Cotizar Obra</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 HERO -->
+  <div class="hero-full" data-screen-label="Hero" style="position:relative; width:100%; min-height:100vh; overflow:hidden; display:flex; align-items:center;">
+    <div style="position:absolute; inset:0; overflow:hidden;">
+      <img class="hero-bg-img" src="faena-hero.jpg" alt="Técnico BKB en faena eléctrica industrial" style="width:100%; height:100%; object-fit:cover;" />
+      <div style="position:absolute; inset:0; background:linear-gradient(115deg, rgba(8,12,20,0.92) 20%, rgba(8,12,20,0.72) 55%, rgba(8,12,20,0.5) 100%);"></div>
+    </div>
+
+    <div style="position:relative; z-index:2; max-width:1360px; margin:0 auto; padding:96px 40px 110px; display:grid; grid-template-columns:1.1fr 0.9fr; gap:56px; align-items:start;" class="grid-2">
+
+      <div style="display:flex; flex-direction:column; gap:24px; padding-top:20px;">
+        <div class="hero-in" style="display:inline-flex; align-self:flex-start; align-items:center; gap:8px; background:rgba(250,90,54,0.14); border:1px solid rgba(250,90,54,0.4); color:#FFA580; font-size:13px; font-weight:600; letter-spacing:0.02em; padding:9px 16px; border-radius:999px;">
+          ⚡ Obras Eléctricas Industriales · Más de 25 años de trayectoria
+        </div>
+
+        <h1 class="hero-in" style="font-family:'Space Grotesk',sans-serif; font-size:56px; line-height:1.08; letter-spacing:-0.02em; margin:0; font-weight:800; color:#F8FAFC;">
+          Energía que<br/><span style="color:#FA5A36;">no se detiene.</span>
+        </h1>
+
+        <p class="hero-in" style="font-size:18px; line-height:1.6; color:#94A3B8; margin:0; max-width:48ch;">
+          Ingeniería de montaje, automatización PLC y mantenimiento eléctrico integral para plantas industriales en Chile. Garantía de continuidad operativa y certificación SEC TE1.
+        </p>
+
+      </div>
+
+      <!-- Portal access card -->
+      <div class="hero-in" style="background:rgba(15,23,42,0.75); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.16); border-radius:20px; box-shadow:0 30px 60px rgba(0,0,0,0.6), 0 0 40px rgba(250,90,54,0.12); padding:32px; display:flex; flex-direction:column; gap:22px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(250,90,54,0.16); border:1px solid rgba(250,90,54,0.35); display:flex; align-items:center; justify-content:center; color:#FA5A36; font-size:20px;">🛡</div>
+          <div>
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:700; color:#F8FAFC;">Portal Digital BKB</div>
+            <div style="font-size:12px; color:#94A3B8;">Gestión Documental &amp; SEC TE1</div>
+          </div>
+        </div>
+        <p style="margin:0; font-size:14px; color:#94A3B8; line-height:1.5;">Selecciona tu perfil para ingresar al portal.</p>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <a href="#" style="display:flex; align-items:center; justify-content:center; padding:16px; border-radius:10px; background:#FA5A36; color:#ffffff; font-weight:600; font-size:15px; text-decoration:none; transition:background .18s ease;" style-hover="background:#E04825;">Soy Cliente →</a>
+          <a href="#" style="display:flex; align-items:center; justify-content:center; padding:16px; border-radius:10px; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.2); color:#F8FAFC; font-weight:600; font-size:15px; text-decoration:none; transition:border-color .18s ease, color .18s ease;" style-hover="border-color:#FA5A36; color:#FA5A36;">Soy BKB →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 08 CLIENTES MARQUEE -->
+  <div class="reveal" data-screen-label="Clientes" style="padding:56px 0; border-top:1px solid rgba(255,255,255,0.09); border-bottom:1px solid rgba(255,255,255,0.09); overflow:hidden;">
+    <div style="text-align:center; margin-bottom:32px;">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#FA5A36; font-weight:600;">CONFÍAN EN BKB</span>
+    </div>
+    <div style="display:flex; width:max-content;">
+      <div class="marquee-track" style="display:flex; align-items:center; gap:20px;">
+        <sc-for list="{{ brandsLoop }}" as="br" hint-placeholder-count="32">
+          <div style="width:150px; height:84px; background:#FFFFFF; border-radius:12px; display:flex; align-items:center; justify-content:center; padding:16px; flex-shrink:0;">
+            <img src="{{ br.img }}" alt="{{ br.alt }}" style="max-width:100%; max-height:100%; object-fit:contain;" />
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 SERVICIOS -->
+  <div id="servicios" data-screen-label="Servicios" style="max-width:1360px; margin:0 auto; padding:64px 40px 96px;">
+    <div class="reveal" style="max-width:640px; margin-bottom:48px;">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#FA5A36; font-weight:600;">QUÉ HACEMOS</span>
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:36px; margin:10px 0 0; font-weight:700; color:var(--text-main);">Especialidades técnicas</h2>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:22px;" class="grid-4">
+      <sc-for list="{{ servicios }}" as="sv" hint-placeholder-count="4">
+        <div class="reveal service-card" style="display:flex; flex-direction:column; gap:16px; background:var(--card-bg); border:1px solid var(--card-border); border-radius:16px; padding:26px; transition:border-color .3s ease, transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s ease; transition-delay:{{ $index }}00ms;" style-hover="border-color:rgba(250,90,54,0.45); transform:translateY(-6px); box-shadow:0 16px 32px rgba(250,90,54,0.12);">
+          <div class="service-icon" style="width:52px; height:52px; border-radius:13px; background:rgba(250,90,54,0.12); display:flex; align-items:center; justify-content:center; overflow:hidden; transition:transform .3s ease, background .3s ease;">
+            <img src="{{ sv.icon }}" alt="" style="width:{{ sv.iconSize }}; height:{{ sv.iconSize }}; object-fit:{{ sv.iconFit }};" />
+          </div>
+          <h3 style="font-size:16.5px; font-weight:600; margin:0; color:var(--text-main);">{{ sv.title }}</h3>
+          <p style="font-size:13.5px; line-height:1.55; color:var(--text-muted); margin:0;">{{ sv.desc }}</p>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-top:auto; padding-top:10px; border-top:1px solid var(--card-border);">
+            <sc-for list="{{ sv.bullets }}" as="b" hint-placeholder-count="2">
+              <span style="font-size:12.5px; color:var(--text-subtle); display:flex; gap:6px;"><span style="color:#FA5A36;">·</span>{{ b }}</span>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- 03 STATS -->
+  <div class="reveal" data-screen-label="Métricas" style="background:var(--page-bg); border-top:1px solid var(--card-border); border-bottom:1px solid var(--card-border);">
+    <div style="max-width:1360px; margin:0 auto; padding:48px 40px; display:grid; grid-template-columns:repeat(4,1fr); gap:32px;" class="grid-4">
+      <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <span class="stat-number" data-target="{{ s.target }}" data-suffix="{{ s.suffix }}" style="font-family:'Space Grotesk',sans-serif; font-size:42px; font-weight:700; color:#FA5A36;">{{ s.display }}</span>
+          <span style="font-size:14px; color:var(--text-muted);">{{ s.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- 04 MERCADOS -->
+  <div id="mercados" data-screen-label="Mercados" style="max-width:1360px; margin:0 auto; padding:96px 40px 40px;">
+    <div class="reveal" style="max-width:640px; margin-bottom:48px;">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#FA5A36; font-weight:600;">SECTORES ESTRATÉGICOS</span>
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:36px; margin:10px 0 0; font-weight:700; color:var(--text-main);">Mercados que atendemos</h2>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:24px;" class="grid-3">
+      <sc-for list="{{ mercados }}" as="m" hint-placeholder-count="3">
+        <div class="reveal" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:16px; padding:28px; display:flex; flex-direction:column; gap:14px; transition:border-color .25s ease, transform .25s ease;" style-hover="border-color:rgba(250,90,54,0.45); transform:translateY(-4px);">
+          <h3 style="font-size:18px; font-weight:600; margin:0; color:var(--text-main);">{{ m.title }}</h3>
+          <p style="font-size:14px; line-height:1.6; color:var(--text-muted); margin:0;">{{ m.desc }}</p>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-subtle); margin-top:auto; padding-top:10px; border-top:1px solid var(--card-border);">Clientes: {{ m.clients }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- 06 PORTAFOLIO -->
+  <div id="obras" data-screen-label="Portafolio" style="max-width:1360px; margin:0 auto; padding:64px 40px 96px;">
+    <div class="reveal" style="max-width:640px; margin-bottom:48px;">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#FA5A36; font-weight:600;">OBRAS REALES</span>
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:36px; margin:10px 0 0; font-weight:700; color:var(--text-main);">Portafolio de proyectos</h2>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:24px;" class="grid-3">
+      <sc-for list="{{ portafolio }}" as="p" hint-placeholder-count="3">
+        <div class="reveal" style="border-radius:16px; overflow:hidden; background:var(--card-bg); border:1px solid var(--card-border);">
+          <div style="position:relative; aspect-ratio:4/3; overflow:hidden;">
+            <img src="{{ p.img }}" alt="{{ p.title }}" style="width:100%; height:100%; object-fit:cover; transition:transform .5s cubic-bezier(.16,1,.3,1);" style-hover="transform:scale(1.06);" />
+            <div style="position:absolute; top:12px; left:12px; background:rgba(16,185,129,0.9); color:#052e1f; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:0.04em; padding:5px 10px; border-radius:999px;">SEC TE1 VIGENTE</div>
+          </div>
+          <div style="padding:20px; display:flex; flex-direction:column; gap:6px;">
+            <h3 style="font-size:15.5px; font-weight:600; margin:0; color:var(--text-main);">{{ p.title }}</h3>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-muted);">{{ p.spec }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- 07 PORTAL SEC -->
+  <div id="portal" data-screen-label="Portal SEC" style="max-width:1360px; margin:0 auto; padding:64px 40px 96px; display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center;" class="grid-2">
+    <div class="reveal" style="display:flex; flex-direction:column; gap:20px;">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#FA5A36; font-weight:600;">ECOSISTEMA DIGITAL</span>
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:34px; margin:0; font-weight:700; color:var(--text-main); line-height:1.15;">El portal que mantiene su faena en regla</h2>
+      <div style="display:flex; flex-direction:column; gap:16px; margin-top:8px;">
+        <div style="display:flex; gap:12px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:#FA5A36; margin-top:7px; flex-shrink:0;"></span>
+          <p style="margin:0; font-size:15px; line-height:1.6; color:var(--text-muted);">Semáforo normativo de vencimiento SEC, con alertas automáticas 30 días antes del vencimiento.</p>
+        </div>
+        <div style="display:flex; gap:12px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:#FA5A36; margin-top:7px; flex-shrink:0;"></span>
+          <p style="margin:0; font-size:15px; line-height:1.6; color:var(--text-muted);">Descarga inmediata en terreno para auditorías: planos unilineales y diagramas de control.</p>
+        </div>
+        <div style="display:flex; gap:12px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:#FA5A36; margin-top:7px; flex-shrink:0;"></span>
+          <p style="margin:0; font-size:15px; line-height:1.6; color:var(--text-muted);">Canal directo de solicitud de documentos timbrados, sin intermediarios.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="background:#0F172A; border:1px solid rgba(255,255,255,0.12); border-radius:16px; overflow:hidden; box-shadow:0 24px 48px rgba(0,0,0,0.4);">
+      <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; background:#162035; border-bottom:1px solid rgba(255,255,255,0.09);">
+        <span style="width:9px; height:9px; border-radius:50%; background:#EF4444;"></span>
+        <span style="width:9px; height:9px; border-radius:50%; background:#F59E0B;"></span>
+        <span style="width:9px; height:9px; border-radius:50%; background:#10B981;"></span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#64748B; margin-left:8px;">portal.bkb.cl/obras/sopraval-tdf</span>
+      </div>
+      <div style="padding:22px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px; border-radius:10px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25);">
+          <span style="font-size:14px; color:#F8FAFC; font-weight:500;">Certificado TE1</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#10B981; font-weight:700;">VIGENTE ↓</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09);">
+          <span style="font-size:14px; color:#F8FAFC; font-weight:500;">Plano DWG As-Built</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#94A3B8;">↓ 2.4 MB</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09);">
+          <span style="font-size:14px; color:#F8FAFC; font-weight:500;">Informe Termográfico</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#94A3B8;">↓ 1.1 MB</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);">
+          <span style="font-size:14px; color:#7F7269; font-weight:500;">Presupuesto Interno BKB</span>
+          <span style="font-size:14px; color:#7F7269;">🔒</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 09 COTIZACIÓN -->
+  <div id="cotizar" data-screen-label="Cotización y Guardia 24/7" style="max-width:1360px; margin:0 auto; padding:96px 40px; display:grid; grid-template-columns:0.9fr 1.1fr; gap:40px; align-items:start;" class="grid-2">
+
+    <div class="reveal" style="background:linear-gradient(155deg, #162035, #0F172A); border:1px solid rgba(250,90,54,0.35); border-radius:18px; padding:32px; display:flex; flex-direction:column; gap:18px;">
+      <span style="display:inline-flex; align-self:flex-start; padding:6px 14px; border-radius:999px; background:rgba(250,90,54,0.16); color:#FFA580; font-size:12px; font-weight:700; letter-spacing:0.03em;">GUARDIA DE URGENCIA 24/7</span>
+      <h3 style="font-family:'Space Grotesk',sans-serif; font-size:26px; margin:0; font-weight:700; color:#F8FAFC;">Parada de planta no programada</h3>
+      <p style="font-size:14.5px; color:#94A3B8; line-height:1.6; margin:0;">Atención directa e inmediata ante contingencias eléctricas críticas, sin intermediarios.</p>
+      <a href="tel:+56982491403" style="font-family:'Space Grotesk',sans-serif; font-size:28px; font-weight:700; color:#FA5A36; text-decoration:none;" style-hover="color:#FFA580;">+56 9 8249 1403</a>
+      <div style="display:flex; flex-direction:column; gap:6px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.09); font-size:13.5px; color:#94A3B8;">
+        <span>Oficina central · Quilpué, Región de Valparaíso</span>
+        <span>Cobertura: Valparaíso y Región Metropolitana</span>
+      </div>
+    </div>
+
+    <div class="reveal" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:18px; padding:32px; display:flex; flex-direction:column; gap:16px;">
+      <h3 style="font-family:'Space Grotesk',sans-serif; font-size:22px; margin:0 0 4px; font-weight:700; color:var(--text-main);">Solicitar cotización técnica</h3>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <input type="text" placeholder="Nombre" style="width:100%; padding:13px 14px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-main); font-size:14px; outline:none;" style-focus="outline:3px solid #FA5A36; outline-offset:2px; border-color:#FA5A36;" />
+        <input type="text" placeholder="Empresa / Razón Social" style="width:100%; padding:13px 14px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-main); font-size:14px; outline:none;" style-focus="outline:3px solid #FA5A36; outline-offset:2px; border-color:#FA5A36;" />
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <input type="email" placeholder="Correo Corporativo" style="width:100%; padding:13px 14px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-main); font-size:14px; outline:none;" style-focus="outline:3px solid #FA5A36; outline-offset:2px; border-color:#FA5A36;" />
+        <input type="tel" placeholder="Teléfono" style="width:100%; padding:13px 14px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-main); font-size:14px; outline:none;" style-focus="outline:3px solid #FA5A36; outline-offset:2px; border-color:#FA5A36;" />
+      </div>
+      <select style="width:100%; padding:13px 14px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-main); font-size:14px; outline:none;" style-focus="outline:3px solid #FA5A36; outline-offset:2px; border-color:#FA5A36;">
+        <sc-for list="{{ quoteOptions }}" as="opt" hint-placeholder-count="4">
+          <option style="background:var(--card-bg);">{{ opt }}</option>
+        </sc-for>
+      </select>
+      <textarea placeholder="Descripción de la faena…" rows="4" style="width:100%; padding:13px 14px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-main); font-size:14px; outline:none; resize:vertical; font-family:inherit;" style-focus="outline:3px solid #FA5A36; outline-offset:2px; border-color:#FA5A36;"></textarea>
+
+      <div style="display:inline-flex; align-self:flex-start; align-items:center; padding:14px 28px; border-radius:999px; background:#FA5A36; color:#ffffff; font-weight:600; font-size:15px; cursor:pointer; transition:transform .18s ease;" style-hover="background:#E04825; transform:translateY(-2px);">Enviar Solicitud →</div>
+    </div>
+  </div>
+
+  <!-- 10 FOOTER -->
+  <div data-screen-label="Footer" style="background:#05080E; border-top:1px solid rgba(255,255,255,0.08);">
+    <div style="max-width:1360px; margin:0 auto; padding:64px 40px 32px; display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr; gap:40px;" class="grid-4">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <img src="bkb-logo-final.png" alt="BKB Ingeniería Eléctrica & Servicios" style="height:42px; width:auto; object-fit:contain;" />
+        <p style="font-size:13.5px; line-height:1.6; color:#64748B; margin:0; max-width:32ch;">Más de 25 años de trayectoria en montaje eléctrico industrial y certificación SEC Clase A en Chile.</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <span style="font-size:13px; font-weight:600; color:#F8FAFC;">Especialidades</span>
+        <a href="#servicios" style="font-size:13.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">Ingeniería Eléctrica</a>
+        <a href="#servicios" style="font-size:13.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">Automatización PLC</a>
+        <a href="#servicios" style="font-size:13.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">Obras Civiles</a>
+        <a href="#servicios" style="font-size:13.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">Mantención 24/7</a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <span style="font-size:13px; font-weight:600; color:#F8FAFC;">Plataforma</span>
+        <a href="#portal" style="font-size:13.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">Portal SEC</a>
+        <a href="#" style="font-size:13.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">Acceso Clientes</a>
+        <a href="#" style="font-size:13.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">Acceso Colaboradores</a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <span style="font-size:13px; font-weight:600; color:#F8FAFC;">Contacto</span>
+        <span style="font-size:13.5px; color:#64748B;">Quilpué, Región de Valparaíso</span>
+        <a href="tel:+56982491403" style="font-size:13.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">+56 9 8249 1403</a>
+        <a href="mailto:contacto@bkb.cl" style="font-size:13.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">contacto@bkb.cl</a>
+      </div>
+    </div>
+    <div style="max-width:1360px; margin:0 auto; padding:20px 40px; border-top:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <span style="font-size:12.5px; color:#64748B;">© 2026 BKB, Obras Eléctricas &amp; Servicios</span>
+      <div style="display:flex; gap:20px;">
+        <a href="#" style="font-size:12.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">Términos de Servicio</a>
+        <a href="#" style="font-size:12.5px; color:#64748B; text-decoration:none;" style-hover="color:#FA5A36;">Privacidad (Ley 21.719)</a>
+        <a href="#" style="font-size:12.5px; font-weight:600; color:#FFA580; text-decoration:none;" style-hover="color:#FA5A36;">Portal de clientes →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;section&quot;:&quot;Tema&quot;}}">
+
+class Component extends DCLogic {
+  state = { themeOverride: null };
+
+  renderVals() {
+    var theme = this.state.themeOverride ?? this.props.theme ?? 'dark';
+    var self = this;
+    var themeVars = theme === 'light'
+      ? "--page-bg:#FFF4EE; --card-bg:#FFFFFF; --card-border:#F5D9C7; --text-main:#1A1513; --text-muted:#7D6F64; --text-subtle:#9A8F86; --input-bg:#FAF6F2; --input-border:#F5D9C7;"
+      : "--page-bg:#080C14; --card-bg:#0F172A; --card-border:rgba(255,255,255,0.09); --text-main:#F8FAFC; --text-muted:#94A3B8; --text-subtle:#64748B; --input-bg:rgba(255,255,255,0.04); --input-border:rgba(255,255,255,0.16);";
+
+    return {
+      themeVars: themeVars,
+      themeClass: 'theme-' + theme,
+      themeIcon: theme === 'light' ? '☀' : '☾',
+      toggleTheme: function () { self.setState({ themeOverride: theme === 'light' ? 'dark' : 'light' }); },
+
+      stats: [
+        { target: 25, suffix: '+', display: '25+', label: 'Años de trayectoria continua' },
+        { target: 150, suffix: '+', display: '150+', label: 'Proyectos de alta y baja tensión' },
+        { target: 40, suffix: '+', display: '40+', label: 'Clientes corporativos activos' },
+        { target: 100, suffix: '%', display: '100%', label: 'Certificaciones SEC aprobadas' }
+      ],
+
+      mercados: [
+        { title: 'Agroindustria & Alimentos', desc: 'Cámaras de frío, líneas de molienda y envasado con continuidad operativa garantizada.', clients: 'Sopraval · Castaño · Venezia' },
+        { title: 'Recursos Hídricos & Sanitaria', desc: 'Plantas de tratamiento, impulsión de caudal y variadores de frecuencia.', clients: 'ESVAL · KSB · Tecfluid' },
+        { title: 'Energía & Generación', desc: 'Sincronismo de generadores, celdas de MT y trámites de potencia.', clients: 'Generadora Metropolitana' }
+      ],
+
+      servicios: [
+        { icon: 'electric.png', iconSize: '28px', iconFit: 'contain', title: 'Ingeniería Eléctrica', desc: 'Montaje de TDF/TDA, mallas a tierra y bandejas portacables pesadas.', bullets: ['Declaración SEC TE1', 'Diseño BT/MT'] },
+        { icon: 'electronic.png', iconSize: '30px', iconFit: 'contain', title: 'Automatización & PLC', desc: 'Programación Siemens S7 / Allen-Bradley, pantallas HMI y SCADA.', bullets: ['Variadores de frecuencia', 'Integración SCADA'] },
+        { icon: 'civil.jpg', iconSize: '130%', iconFit: 'cover', title: 'Obras Civiles Industriales', desc: 'Salas eléctricas modulares climatizadas y zanjas para ductos subterráneos.', bullets: ['Radieres técnicos', 'Ductos subterráneos'] },
+        { icon: 'maintance.png', iconSize: '28px', iconFit: 'contain', title: 'Mantención & Guardia 24/7', desc: 'Termografía infrarroja de tableros y calibración de protecciones.', bullets: ['Atención de contingencias', 'Termografía IR'] }
+      ],
+
+      portafolio: [
+        { img: 'faena-1.jpg', title: 'Ampliación Planta Cecinas Sopraval', spec: '450 kVA · Quilpué' },
+        { img: 'faena-2.jpg', title: 'Estación de Bombeo e Impulsión ESVAL', spec: '800 kVA · Valparaíso' },
+        { img: 'faena-3.jpg', title: 'Línea de Envasado Alimentos Castaño', spec: 'Control Siemens S7-1500 · Santiago' }
+      ],
+
+      brandsLoop: (function () {
+        var brands = [
+          { img: 'brand-esval.png', alt: 'ESVAL' },
+          { img: 'brand-sopraval.jpg', alt: 'Sopraval' },
+          { img: 'brand-castano.jpg', alt: 'Castaño' },
+          { img: 'brand-generadora.jpg', alt: 'Generadora Metropolitana' },
+          { img: 'brand-ksb.jpg', alt: 'KSB' },
+          { img: 'brand-venezia.png', alt: 'Cecinas Venezia' },
+          { img: 'brand-algas.jpg', alt: 'Algas Marinas' },
+          { img: 'brand-tecfluid.jpg', alt: 'Tecfluid' },
+          { img: 'brand-propal.png', alt: 'Propal' },
+          { img: 'brand-ecorriles.png', alt: 'Ecorriles' },
+          { img: 'brand-maf.png', alt: 'MAF' },
+          { img: 'brand-soldesp.png', alt: 'Soldes P' },
+          { img: 'brand-energias.png', alt: 'Energías Industriales' },
+          { img: 'brand-ingefrio.png', alt: 'IngeFrío' },
+          { img: 'brand-ingenproyect.png', alt: 'IngenProyect' },
+          { img: 'brand-shs.jpg', alt: 'SHS' }
+        ];
+        return brands.concat(brands);
+      })(),
+
+      quoteOptions: ['Montaje TDF', 'Automatización', 'Trámite TE1', 'Mantención']
+    };
+  }
+
+  componentDidMount() {
+    if (window.__bkbMotionInit) return;
+    window.__bkbMotionInit = true;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var reveals = document.querySelectorAll('.reveal');
+    if (reduce) {
+      reveals.forEach(function (el) { el.classList.add('is-visible'); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) { entry.target.classList.add('is-visible'); io.unobserve(entry.target); }
+        });
+      }, { threshold: 0.15 });
+      reveals.forEach(function (el) { io.observe(el); });
+    }
+
+    var heroEls = document.querySelectorAll('.hero-in');
+    heroEls.forEach(function (el, i) {
+      if (reduce) { el.classList.add('is-visible'); return; }
+      setTimeout(function () { el.classList.add('is-visible'); }, 90 + i * 90);
+    });
+
+    function animateCounter(el) {
+      var target = parseFloat(el.getAttribute('data-target'));
+      var suffix = el.getAttribute('data-suffix') || '';
+      if (reduce) { el.textContent = target + suffix; return; }
+      var duration = 1100, start = performance.now();
+      function tick(now) {
+        var p = Math.min((now - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(target * eased) + suffix;
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+    var counters = document.querySelectorAll('.stat-number');
+    var cio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) { animateCounter(entry.target); cio.unobserve(entry.target); }
+      });
+    }, { threshold: 0.4 });
+    counters.forEach(function (el) { cio.observe(el); });
+
+    var header = document.querySelector('.site-header');
+    if (header) {
+      var onScroll = function () {
+        if (window.scrollY > 40) header.classList.add('is-visible');
+        else header.classList.remove('is-visible');
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    }
+  }
+}
+
+</script>
+</body>
+</html>

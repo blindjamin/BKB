@@ -1,0 +1,142 @@
+---
+import { PORTAL_URLS } from '../../config/site';
+
+interface Props {
+  links: { href: string; label: string }[];
+}
+const { links } = Astro.props;
+---
+
+<div class="xl:hidden">
+  <button 
+    type="button" 
+    id="mobile-nav-toggle"
+    aria-expanded="false" 
+    aria-controls="mobile-nav-panel"
+    aria-label="Abrir menú"
+    class="inline-flex items-center justify-center shrink-0 w-[44px] h-[44px] rounded-pill bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.2)] text-main backdrop-blur-[8px] cursor-pointer hover:border-salmon-500 transition-colors focus-bkb"
+    style="html[data-theme='light'] & { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div 
+    id="mobile-nav-backdrop"
+    class="fixed inset-0 bg-night-950/40 backdrop-blur-sm z-[60] opacity-0 pointer-events-none transition-opacity duration-300 hidden"
+    aria-hidden="true"
+  ></div>
+
+  <div 
+    id="mobile-nav-panel"
+    class="fixed top-0 right-0 h-[100dvh] w-full sm:w-[320px] bg-card border-l border-card-border z-[70] translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col pointer-events-none invisible shadow-2xl"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Menú de navegación"
+  >
+    <div class="flex items-center justify-between p-4 border-b border-card-border">
+      <span class="font-bold text-main">Menú</span>
+      <button 
+        type="button"
+        id="mobile-nav-close"
+        aria-label="Cerrar menú"
+        class="inline-flex items-center justify-center w-10 h-10 rounded-pill hover:bg-page transition-colors text-main focus-bkb"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+      {links.map(link => (
+        <a href={link.href} class="mobile-nav-link block p-3 text-lg font-medium text-main rounded-md hover:bg-page hover:text-salmon-500 focus-bkb transition-colors">
+          {link.label}
+        </a>
+      ))}
+      <div class="my-4 h-px bg-card-border"></div>
+      <a href={PORTAL_URLS.home} class="mobile-nav-link block p-3 text-lg font-semibold text-main rounded-md border border-card-border bg-page hover:border-salmon-500 text-center transition-colors">
+        Acceso Portal
+      </a>
+    </nav>
+  </div>
+</div>
+
+<script>
+  function initMobileNav() {
+    const toggle = document.getElementById('mobile-nav-toggle');
+    const closeBtn = document.getElementById('mobile-nav-close');
+    const backdrop = document.getElementById('mobile-nav-backdrop');
+    const panel = document.getElementById('mobile-nav-panel');
+    const links = document.querySelectorAll('.mobile-nav-link');
+    
+    if (!toggle || !panel || !backdrop) return;
+    
+    let isOpen = false;
+
+    function open() {
+      isOpen = true;
+      toggle?.setAttribute('aria-expanded', 'true');
+      
+      backdrop?.classList.remove('hidden');
+      panel.classList.remove('invisible');
+      
+      // Force reflow
+      void panel.offsetWidth;
+      
+      backdrop?.classList.remove('opacity-0');
+      backdrop?.classList.add('opacity-100', 'pointer-events-auto');
+      
+      panel.classList.remove('translate-x-full', 'pointer-events-none');
+      panel.classList.add('translate-x-0', 'pointer-events-auto');
+      
+      document.body.style.overflow = 'hidden';
+      closeBtn?.focus();
+    }
+
+    function close() {
+      if (!isOpen) return;
+      isOpen = false;
+      toggle?.setAttribute('aria-expanded', 'false');
+      
+      backdrop?.classList.remove('opacity-100', 'pointer-events-auto');
+      backdrop?.classList.add('opacity-0');
+      
+      panel.classList.remove('translate-x-0', 'pointer-events-auto');
+      panel.classList.add('translate-x-full', 'pointer-events-none');
+      
+      document.body.style.overflow = '';
+      toggle?.focus();
+      
+      setTimeout(() => {
+        if (!isOpen) {
+          backdrop?.classList.add('hidden');
+          panel.classList.add('invisible');
+        }
+      }, 300);
+    }
+
+    toggle.addEventListener('click', open);
+    closeBtn?.addEventListener('click', close);
+    backdrop.addEventListener('click', close);
+    
+    links.forEach(link => {
+      link.addEventListener('click', close);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen) close();
+    });
+  }
+
+  // Initialize on load and on Astro view transitions if used
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileNav);
+  } else {
+    initMobileNav();
+  }
+</script>

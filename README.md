@@ -40,3 +40,4 @@ Para asegurar la continuidad del proyecto al cambiar de modelo de lenguaje, asis
 - [03-portal-django.md](docs/03-portal-django.md): Backend, modelo de datos y permisos ASVS.
 - [04-seguridad-y-cumplimiento.md](docs/04-seguridad-y-cumplimiento.md): Ley 21.719, CSP y URLs prefirmadas.
 - [05-git-workflow.md](docs/05-git-workflow.md): Política estricta de ramas y despliegue a `desarrollo`.
+- [06-bitacora-avances.md](docs/06-bitacora-avances.md): Bitácora cronológica de sesiones y próximos pasos.

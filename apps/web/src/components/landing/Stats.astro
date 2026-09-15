@@ -1,0 +1,21 @@
+---
+import { stats } from '../../data/landing';
+---
+
+<section class="py-16 border-y border-card-border bg-page">
+  <div class="max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+      {stats.map((s, index) => (
+        <div 
+          class="reveal flex flex-col items-start gap-1"
+          style={`transition-delay: ${index * 100}ms;`}
+        >
+          <div class="font-display font-bold text-[42px] leading-[1.1] tracking-[-0.02em] text-salmon-500">
+            <span data-target={s.target} data-suffix={s.suffix}>{s.display}</span>
+          </div>
+          <span class="text-[13.5px] font-medium text-muted max-w-[16ch] leading-[1.3]">{s.label}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

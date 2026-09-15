@@ -14,5 +14,11 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()]
+  },
+  redirects: {
+    '/servicios': '/#servicios',
+    '/obras': '/#obras',
+    '/nosotros': '/#mercados',
+    '/contacto': '/#cotizar',
   }
 });
