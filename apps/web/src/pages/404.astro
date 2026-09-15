@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PillButton from '../components/ui/PillButton.astro';
+import { getPath } from '../utils/paths';
+---
+
+<Layout title="Página no encontrada | BKB" headerMode="solid">
+  <div class="min-h-[70vh] flex flex-col items-center justify-center text-center px-5 py-24">
+    <div class="font-display font-black text-[120px] leading-none text-salmon-500 mb-6 opacity-20">404</div>
+    <h1 class="font-display font-bold text-[32px] text-main m-0 mb-4">Página no encontrada</h1>
+    <p class="text-[16px] text-muted max-w-[40ch] mx-auto m-0 mb-10 leading-relaxed">
+      Lo sentimos, la página que estás buscando no existe o ha sido movida durante nuestra reciente actualización.
+    </p>
+    <PillButton href={getPath('/')} variant="primary">
+      Volver al Inicio
+    </PillButton>
+  </div>
+</Layout>
