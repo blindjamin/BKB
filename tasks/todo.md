@@ -98,15 +98,15 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] Manual: en `/admin/` crear empresa, proyecto, usuario cliente y asignarlo (hecho con el cliente de pruebas sobre `/admin/`: `test_flujo_empresa_cliente_proyecto_y_asignacion`; falta tu vistazo en el navegador)
 **Dependencias:** 3 · **Alcance:** M · **Archivos:** `documentos/{apps,models,admin}.py`, `documentos/migrations/0001_initial.py`, `documentos/tests/test_modelos.py`
 
-### [ ] Tarea 5: Permisos y matriz de pruebas
+### [x] Tarea 5: Permisos y matriz de pruebas
 **Descripción:** La función única que decide todo acceso, con la prueba más importante del proyecto.
 **Criterios:**
-- [ ] `permisos.py` con `proyectos_visibles` (personal: todos; cliente: los asignados), `archivos_visibles`, `puede_subir` (solo personal) y `puede_borrar` (personal: solo lo que subió; superusuario: cualquiera; cliente: nunca)
-- [ ] Un archivo `pendiente` o eliminado nunca es visible, para nadie
-- [ ] Un cliente con proyectos de dos empresas ve ambos y ningún otro
+- [x] `permisos.py` con `proyectos_visibles` (personal: todos; cliente: los asignados), `archivos_visibles`, `puede_subir` (solo personal) y `puede_borrar` (personal: solo lo que subió; superusuario: cualquiera; cliente: nunca)
+- [x] Un archivo `pendiente` o eliminado nunca es visible, para nadie
+- [x] Un cliente con proyectos de dos empresas ve ambos y ningún otro
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_permisos`: matriz tipo de usuario (2) × proyecto (asignado, no asignado) × archivo (disponible, pendiente, eliminado), cada caso con su resultado esperado; `puede_borrar` con autor, otro personal, superusuario y cliente
-- [ ] Toda rama de `permisos.py` tiene al menos una prueba
+- [x] `python manage.py test documentos.tests.test_permisos`: matriz tipo de usuario (2) × proyecto (asignado, no asignado) × archivo (disponible, pendiente, eliminado), cada caso con su resultado esperado; `puede_borrar` con autor, otro personal, superusuario y cliente
+- [x] Toda rama de `permisos.py` tiene al menos una prueba
 **Dependencias:** 4 · **Alcance:** S · **Archivos:** `documentos/permisos.py`, `documentos/tests/test_permisos.py`
 
 ### [ ] Tarea 6: Conexión con el Space
