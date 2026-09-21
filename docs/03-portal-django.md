@@ -246,7 +246,7 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 6. Las pruebas demuestran que ninguna clave generada queda fuera del prefijo `portal/`.
 7. Tras 5 intentos fallidos el login queda bloqueado, y el mensaje de error no revela si el correo existe.
 8. `python manage.py check --deploy` sin advertencias con variables de producción.
-9. Desplegado en `portal.bkb.cl` con HTTPS, `/health/` respondiendo y un piloto completo (login → el personal sube → el cliente ve y descarga → el personal borra) con un proyecto de prueba.
+9. Desplegado en `portal.empresabkb.cl` con HTTPS, `/health/` respondiendo y un piloto completo (login → el personal sube → el cliente ve y descarga → el personal borra) con un proyecto de prueba.
 10. `docs/00`, `docs/04` y la bitácora `docs/06` reflejan el estado final del portal.
 
 ---
@@ -255,7 +255,7 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 
 | # | Pregunta | Propuesta por defecto |
 |---|---|---|
-| 1 | ¿Quién administra el DNS de `bkb.cl`? Hace falta crear `portal.bkb.cl`. | Confirmar antes del despliegue |
+| 1 | ¿Quién administra el DNS? | **Resuelta (21-09-2026):** el único dominio es `empresabkb.cl`, con DNS en DigitalOcean. El portal será `portal.empresabkb.cl` |
 | 2 | ¿Se crea una clave de acceso del Space dedicada al portal (no la personal)? | Sí, guardada solo en las variables de App Platform |
 | 3 | ¿Quién puede borrar? | **Resuelta (21-09-2026):** el personal borra lo que él subió y el administrador cualquier archivo |
 

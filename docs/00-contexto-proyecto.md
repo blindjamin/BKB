@@ -20,13 +20,13 @@
 ## 2. Los Dos Productos Digitales
 Son dos aplicaciones con objetivos distintos y técnicamente desacopladas:
 
-1. **Sitio Público (`www.bkb.cl`):**
+1. **Sitio Público (`www.empresabkb.cl`):**
    - **Objetivo:** vender la empresa y generar confianza en futuros clientes corporativos (imagen profesional y llamativa), recibir solicitudes de cotización y postulaciones (CV), y posicionarse en buscadores.
    - **Tecnología:** Astro 5 (salida estática), Tailwind CSS v4 y `@bkb/tokens`. Sin servidor.
    - **Estado:** landing rediseñada en una sola página, aún no aprobada del todo.
    - **Hosting:** hoy se previsualiza en GitHub Pages; el destino es DigitalOcean App Platform (sitio estático).
 
-2. **Portal de Archivos (`portal.bkb.cl`):**
+2. **Portal de Archivos (`portal.empresabkb.cl`):**
    - **Objetivo:** que el personal de BKB suba los documentos y las fotos de cada proyecto en marcha, y que los clientes los consulten y descarguen, cada uno solo en los proyectos que se le asignan. **Es el propósito principal de la plataforma.**
    - **Tecnología:** Django 5.2 LTS, plantillas en servidor, PostgreSQL y los archivos en un DigitalOcean Space privado (`bkb-space`).
    - **Estado:** solo existe el esqueleto. La especificación está aprobada y el plan de implementación escrito (ver `03-portal-django.md` y `tasks/plan.md`).
@@ -54,4 +54,4 @@ Son dos aplicaciones con objetivos distintos y técnicamente desacopladas:
 ### Pendientes abiertos
 - **Landing:** validar el contenido D7 (origen de las fotos, autorización de los 16 logos de clientes, nombre oficial, métricas, obras y datos de contacto) y verificar las fases 8 a 10 del plan de rediseño.
 - **Formulario de cotización:** no tiene endpoint. El botón queda deshabilitado hasta definir `PUBLIC_QUOTE_ENDPOINT`.
-- **Portal:** crear la clave de acceso del Space solo para el portal y configurar CORS. Definir quién administra el DNS de `bkb.cl` para crear `portal.bkb.cl`.
+- **Portal:** crear la clave de acceso del Space solo para el portal y configurar CORS. El DNS de `empresabkb.cl` está en DigitalOcean: `portal.empresabkb.cl` se crea ahí en el despliegue.

@@ -86,7 +86,6 @@ Se hace una tarea a la vez (una sola persona). Lo único paralelizable es la doc
 | **6** | Crear una **clave de acceso del Space solo para el portal** (no la personal) y pasarla por `.env`, no por el chat | Panel de DigitalOcean → Spaces → Access Keys |
 | **6 y 12** | Agregar **CORS** en `bkb-space` para `http://localhost:8000` (yo te doy la configuración exacta) | Panel de DigitalOcean → Space → Settings |
 | **16** | Aprobar el gasto del **PostgreSQL gestionado (≈ US$ 15/mes)** y de la instancia (≈ US$ 12/mes) | Panel de DigitalOcean |
-| **16** | Saber quién administra el **DNS de `bkb.cl`** para crear `portal.bkb.cl` | Proveedor del dominio |
 | **17** | Elegir un cliente de confianza y un proyecto de prueba para el piloto | — |
 
 ## Riesgos y mitigaciones
@@ -110,6 +109,4 @@ Subida o solicitud de documentos por parte del cliente (si lo piden), marca inte
 
 ## Preguntas abiertas
 
-- **Dominio del portal:** en DigitalOcean el dominio es `empresabkb.cl` (con su DNS gestionado ahí), no `bkb.cl`. ¿El portal será `portal.empresabkb.cl`? Hoy la spec y el plan dicen `portal.bkb.cl`.
-
-**Resueltas (21-09-2026):** `bkb-space` está en **NYC3** (`SPACES_REGION=nyc3`, `SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com`); la app y el PostgreSQL se crean en NYC3. La landing se fusionó en `desarrollo` (PR #2) y el portal parte de `benjamin/2026-09-21-portal-base`.
+**Resueltas (21-09-2026):** el único dominio es `empresabkb.cl`, con DNS en DigitalOcean: el portal será `portal.empresabkb.cl` y el registro se crea en la tarea 16 sin depender de terceros. `bkb-space` está en **NYC3** (`SPACES_REGION=nyc3`, `SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com`); la app y el PostgreSQL se crean en NYC3. La landing se fusionó en `desarrollo` (PR #2) y el portal parte de `benjamin/2026-09-21-portal-base`.

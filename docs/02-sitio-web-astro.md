@@ -42,9 +42,9 @@ styles/global.css      Tailwind + tokens + keyframes
 **Puntos clave**
 - `Layout.astro` recibe `headerMode`: `'reveal'` en la landing (el header aparece al hacer scroll) y `'solid'` en las páginas internas.
 - El tema se guarda en `localStorage['bkb-theme']` y un script `is:inline` lo aplica antes de pintar, para evitar el parpadeo. La landing es oscura por defecto.
-- `config/site.ts` lee `PUBLIC_PORTAL_URL` (por defecto `https://portal.bkb.cl`) y `PUBLIC_QUOTE_ENDPOINT`. La plantilla está en `apps/web/.env.example`.
+- `config/site.ts` lee `PUBLIC_PORTAL_URL` (por defecto `https://portal.empresabkb.cl`) y `PUBLIC_QUOTE_ENDPOINT`. La plantilla está en `apps/web/.env.example`.
 - **Formulario de cotización:** usa `method="POST"` con `action` igual a `PUBLIC_QUOTE_ENDPOINT`. Sin endpoint, el botón queda deshabilitado con un aviso. Nunca debe existir un `<form>` sin `method`, porque enviaría datos personales por la URL.
-- Los enlaces al portal salen de `PORTAL_URLS`; no escribir `https://portal.bkb.cl` a mano.
+- Los enlaces al portal salen de `PORTAL_URLS`; no escribir `https://portal.empresabkb.cl` a mano.
 
 ---
 

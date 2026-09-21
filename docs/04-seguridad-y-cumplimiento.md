@@ -33,7 +33,7 @@
 ---
 
 ## 3. Seguridad en la Infraestructura
-- **Aislamiento por Subdominios:** El sitio estático (`www.bkb.cl`) y el portal transaccional (`portal.bkb.cl`) no comparten cookies ni estado.
+- **Aislamiento por Subdominios:** El sitio estático (`www.empresabkb.cl`) y el portal transaccional (`portal.empresabkb.cl`) no comparten cookies ni estado.
 - **Base de Datos Privada:** PostgreSQL no cuenta con IP pública; solo acepta conexiones autorizadas provenientes de los servidores de la aplicación en la VPC de DigitalOcean.
 - **Secretos:** Gestionados como variables de entorno cifradas en DigitalOcean App Platform, nunca comprometidas en el repositorio Git.
 

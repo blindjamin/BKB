@@ -115,7 +115,7 @@ El sitio es estático y el portal Django todavía no tiene endpoint.
 
 ### D5 · Destino de los botones del portal
 "Soy Cliente", "Soy BKB", "Acceso Portal", "Acceso Clientes", "Acceso Colaboradores".
-- **(Recomendada) A:** Centralizar en `src/config/site.ts` con `PUBLIC_PORTAL_URL` (por defecto `https://portal.bkb.cl`):
+- **(Recomendada) A:** Centralizar en `src/config/site.ts` con `PUBLIC_PORTAL_URL` (por defecto `https://portal.empresabkb.cl`):
   - Cliente → `${PORTAL_URL}/accounts/login/?perfil=cliente`
   - BKB/colaborador → `${PORTAL_URL}/accounts/login/?perfil=colaborador`
 - *Afecta:* Fases 2, 3, 4 y 5.
@@ -293,7 +293,7 @@ apps/web/src/
     office: 'Quilpué, Región de Valparaíso',
     coverage: 'Valparaíso y Región Metropolitana',
   } as const;
-  const PORTAL = import.meta.env.PUBLIC_PORTAL_URL || 'https://portal.bkb.cl';
+  const PORTAL = import.meta.env.PUBLIC_PORTAL_URL || 'https://portal.empresabkb.cl';
   export const PORTAL_URLS = {
     home: PORTAL,
     cliente: `${PORTAL}/accounts/login/?perfil=cliente`,
@@ -392,7 +392,7 @@ apps/web/src/
   - **No usar `faena-4.jpg`** (D7).
 - [ ] **5.3** `PortalShowcase.astro` (líneas 217–263, README §8): `id="portal"`, dos columnas.
   - Izquierda: eyebrow, H2 y 3 viñetas con punto salmón de 8 px.
-  - Derecha: maqueta de ventana **siempre oscura** con puntos rojo/ámbar/verde, URL falsa `portal.bkb.cl/obras/sopraval-tdf` y 4 filas (TE1 vigente en verde, Plano DWG 2.4 MB, Informe termográfico 1.1 MB y fila bloqueada con candado en SVG).
+  - Derecha: maqueta de ventana **siempre oscura** con puntos rojo/ámbar/verde, URL falsa `portal.empresabkb.cl/obras/sopraval-tdf` y 4 filas (TE1 vigente en verde, Plano DWG 2.4 MB, Informe termográfico 1.1 MB y fila bloqueada con candado en SVG).
   - Toda la maqueta lleva `aria-hidden="true"` y, junto a ella, una descripción `sr-only`: "Ejemplo ilustrativo del portal documental".
 - [ ] **5.4** `QuoteSection.astro` (líneas 266–299, README §9): `id="cotizar"`, grilla `0.9fr 1.1fr` con gap de 40 px (1 columna bajo 900 px).
   - **Tarjeta de Guardia 24/7** (siempre oscura): degradado de 155°, borde salmón, pill "GUARDIA DE URGENCIA 24/7", título, texto, teléfono como enlace grande `SITE.phoneHref` y datos de oficina y cobertura.

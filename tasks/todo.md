@@ -59,7 +59,7 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] `DEBUG` es `False` por defecto
 - [ ] Sin `SECRET_KEY` real y con `DEBUG=False`, el servidor se niega a arrancar; con `DEBUG=True` usa una clave de desarrollo
 - [ ] `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')` configurado
-- [ ] `ALLOWED_HOSTS` sale del entorno, sin `portal-staging.bkb.cl` por defecto
+- [ ] `ALLOWED_HOSTS` sale del entorno, sin `portal-staging.bkb.cl` (dominio que no existe) por defecto
 - [ ] `django-csp` activo con política estricta: `default-src 'self'`, sin `unsafe-inline`, `frame-ancestors 'none'` (las tareas 8 y 12 le agregan el nonce y el dominio del Space)
 - [ ] Con `DEBUG=False`, cookies con prefijo `__Host-` (`SESSION_COOKIE_NAME`, `CSRF_COOKIE_NAME`), como pide `docs/04`
 **Verificación:**
@@ -255,20 +255,20 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 **Dependencias:** 12, 13, 14 · **Alcance:** S · **Archivos:** `config/settings.py`, `.do/app.yaml`, `apps/portal/README.md`
 
 ### [ ] Tarea 16: Puesta en marcha en DigitalOcean
-**Descripción:** Crear los recursos y publicar en `portal.bkb.cl`. Sin código: yo te guío y tú apruebas cada paso.
+**Descripción:** Crear los recursos y publicar en `portal.empresabkb.cl`. Sin código: yo te guío y tú apruebas cada paso.
 **Criterios:**
 - [ ] PostgreSQL gestionado y la aplicación creados en **NYC3**, la región del Space
 - [ ] Variables de entorno cargadas en App Platform, con prefijo `portal/` y la clave dedicada
-- [ ] Dominio `portal.bkb.cl` con HTTPS
-- [ ] CORS del Space actualizado con `https://portal.bkb.cl`
+- [ ] Dominio `portal.empresabkb.cl` con HTTPS
+- [ ] CORS del Space actualizado con `https://portal.empresabkb.cl`
 - [ ] Primer administrador creado desde la consola de la app
 **Verificación:**
-- [ ] `https://portal.bkb.cl/health/` responde
+- [ ] `https://portal.empresabkb.cl/health/` responde
 - [ ] Sin redirecciones infinitas y con cookies seguras
-**Dependencias:** 15 · **Requiere de ti:** aprobar gasto y acceso al DNS · **Alcance:** M
+**Dependencias:** 15 · **Requiere de ti:** aprobar gasto (el DNS de `empresabkb.cl` ya está en DigitalOcean) · **Alcance:** M
 
 ### Checkpoint E (tras 16)
-- [ ] El login funciona en `portal.bkb.cl` con HTTPS
+- [ ] El login funciona en `portal.empresabkb.cl` con HTTPS
 - [ ] Una subida y una descarga reales funcionan en producción
 
 ### [ ] Tarea 17: Piloto y documentación
