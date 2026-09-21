@@ -37,3 +37,8 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Herramientas locales (no versionar)
+.mcp.json
+graphify-out/
+.graphifyignore

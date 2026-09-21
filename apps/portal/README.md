@@ -1,32 +1,26 @@
-# apps/portal · Portal de Clientes y Gestión Documental BKB (Django)
+# apps/portal · Portal de Archivos BKB (Django)
 
-Backend y panel web interactivo para clientes y técnicos de **BKB**, diseñado con arquitectura monolítica segura en Django y plantillas server-side (HTMX + Tailwind CSS).
+Portal donde el **personal de BKB sube documentos y fotos de cada proyecto** y los **clientes los consultan y descargan**, cada uno solo en los proyectos que se le asignan. Monolito Django con plantillas en servidor.
 
-## Objetivos del Portal
-1. **Acceso de Clientes:** Descarga de certificados SEC TE1, planos As-Built y dossiers de obras ejecutadas.
-2. **Autorización Granular:** Políticas estrictas por rol (`Cliente`, `Técnico`, `Administrador`) e identificación UUID.
-3. **Almacenamiento Privado:** Documentos alojados en DigitalOcean Spaces con URLs prefirmadas de 60 segundos (sin enlaces públicos).
-4. **Auditoría de Descargas:** Registro inmutable de cada visualización y descarga (quién, qué documento, fecha, IP).
+> **Estado:** solo existe el esqueleto (`config/` y `/health/`). La especificación está en [`docs/03-portal-django.md`](../../docs/03-portal-django.md), el plan en [`tasks/plan.md`](../../tasks/plan.md) y las tareas en [`tasks/todo.md`](../../tasks/todo.md).
 
-## Estructura
-- `config/settings.py`: Parámetros de seguridad ASVS Nivel 2, Argon2id y soporte PostgreSQL.
-- `config/urls.py`: Enrutamiento base y endpoint de health check (`/health/`).
-- `config/wsgi.py`: Entrada WSGI para despliegue en DigitalOcean App Platform con Gunicorn.
+## Qué hará (resumen)
+1. **Dos tipos de usuario:** personal (ve todos los proyectos y sube archivos) y cliente (solo ve y descarga, y solo los proyectos que se le asignan). El administrador es el superusuario de Django.
+2. **Visibilidad:** lo que sube el personal se ve de inmediato para los clientes asignados al proyecto. No hay revisión previa dentro del sistema.
+3. **Archivos:** en un DigitalOcean Space privado, bajo el prefijo `portal/`. Descarga con URL prefirmada de 60 segundos.
+4. **Auditoría:** registro de cada descarga (quién, qué archivo, fecha e IP).
+
+## Estructura actual
+- `config/settings.py`: configuración de seguridad (Argon2id, cookies y HTTPS). Tiene brechas conocidas que corrige la tarea 2 del plan.
+- `config/urls.py`: enrutamiento base y endpoint `/health/`.
+- `config/wsgi.py`: entrada WSGI para Gunicorn en DigitalOcean App Platform.
 
 ## Preparación del Entorno de Desarrollo
-```bash
-# Crear entorno virtual Python
+Python 3.12. Desde `apps/portal/`:
+```powershell
 python -m venv .venv
-
-# Activar entorno virtual
-# En Windows:
-.venv\Scripts\activate
-# En Linux/macOS:
-source .venv/bin/activate
-
-# Instalar dependencias
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-
-# Ejecutar servidor de desarrollo
 python manage.py runserver
 ```
+Las variables de entorno van en un archivo `.env` local que **nunca** se versiona. Su plantilla (`.env.example`) se crea en la tarea 1 del plan.

@@ -5,6 +5,8 @@
 > Si una **Decisión** (sección 2) no está confirmada por el usuario, usa la opción marcada como **(Recomendada)** y déjalo anotado en el PR.
 > No inventes colores, textos ni datos: la fuente de verdad es la referencia del handoff (sección 1) y lo que este plan indique explícitamente.
 
+> **Estado (20-09-2026):** según los commits de la rama `benjamin/2026-09-15-rediseno-landing`, las fases 1 a 7 están implementadas. Falta verificar las fases 8 a 10 (imágenes y rendimiento, control de calidad, documentación) y validar el contenido de la lista D7. Las casillas `[ ]` de este documento no se marcaron una a una.
+
 ---
 
 ## 0. Resumen
@@ -107,7 +109,7 @@ El proyecto declara cumplir WCAG 2.2 AA, pero varios pares de colores del handof
 
 ### D4 · Envío del formulario de cotización
 El sitio es estático y el portal Django todavía no tiene endpoint.
-- **(Recomendada) A:** Formulario con `method="post"` y `action` tomado de la variable de entorno `PUBLIC_QUOTE_ENDPOINT`. Si la variable está vacía, el botón queda deshabilitado y se muestra el aviso "Formulario en habilitación. Escríbenos a contacto@bkb.cl o llama al +56 9 8249 1403". **Nunca** debe quedar un `<form>` sin `method`, porque hace un GET con datos personales en la URL (pendiente #1 del doc 07).
+- **(Recomendada) A:** Formulario con `method="post"` y `action` tomado de la variable de entorno `PUBLIC_QUOTE_ENDPOINT`. Si la variable está vacía, el botón queda deshabilitado y se muestra el aviso "Formulario en habilitación. Escríbenos a contacto@bkb.cl o llama al +56 9 8249 1403". **Nunca** debe quedar un `<form>` sin `method`, porque hace un GET con datos personales en la URL (pendiente #1 de la revisión del 15-09).
 - B: Integrar un servicio externo de formularios (requiere aprobar el proveedor por la Ley 21.719).
 - *Afecta:* Fase 5, tarea 5.4.
 
@@ -134,7 +136,7 @@ Estos puntos **no bloquean el desarrollo**. Implementa con lo que trae el handof
 - [ ] **Nombre de la empresa:** el logo nuevo dice "Ingeniería Eléctrica & Servicios", pero la documentación y la metadata dicen "Obras Eléctricas & Servicios". Definir cuál va en `<title>`, Schema.org y footer.
 - [ ] **Métricas:** 150+ proyectos, 40+ clientes y 100 % de certificaciones aprobadas.
 - [ ] **Obras:** Sopraval 450 kVA (Quilpué), ESVAL 800 kVA (Valparaíso) y Castaño con S7-1500 (Santiago).
-- [ ] **Datos de contacto:** teléfono `+56 9 8249 1403`, oficina en Quilpué y `contacto@bkb.cl`. El handoff resuelve el pendiente #3 del doc 07, pero hay que confirmarlo.
+- [ ] **Datos de contacto:** teléfono `+56 9 8249 1403`, oficina en Quilpué y `contacto@bkb.cl`. El handoff resuelve el pendiente #3 de la revisión del 15-09, pero hay que confirmarlo.
 
 ---
 
@@ -183,7 +185,7 @@ apps/web/src/
 
 ### 3.2 Reglas que aplican a todas las fases
 1. Todo enlace interno y todo asset pasa por `getPath()`. En páginas distintas de `/`, las anclas se construyen como `` `${getPath('/')}#servicios` ``.
-2. Prohibido usar clases con hex arbitrario (`bg-[#FA5A36]`). Usar utilidades mapeadas a tokens (`bg-salmon-500`, `bg-page`, `text-muted`…). Esto resuelve el pendiente #10 del doc 07.
+2. Prohibido usar clases con hex arbitrario (`bg-[#FA5A36]`). Usar utilidades mapeadas a tokens (`bg-salmon-500`, `bg-page`, `text-muted`…). Esto resuelve el pendiente #10 de la revisión del 15-09.
 3. El contenido debe verse **sin JavaScript**. Las clases que ocultan elementos para animarlos (`.reveal`, `.hero-in`) solo aplican bajo `html.js`, y el script de `<head>` agrega la clase `js`.
 4. Respetar `prefers-reduced-motion: reduce`: sin animaciones, estado final inmediato.
 5. Toda imagen decorativa lleva `alt=""`, y toda imagen con contenido, un `alt` descriptivo.
@@ -338,7 +340,7 @@ apps/web/src/
   - Barra inferior: © con año dinámico, Términos → `getPath('/terminos')`, Privacidad (Ley 21.719) → `getPath('/privacidad')`, "Portal de clientes →" y **agregar** "Trabaja con nosotros" → `getPath('/trabaja-con-nosotros')` (esa página existe y el handoff no la enlaza).
   - Color de enlaces según D3.
 
-**Criterio de aceptación:** a 1360, 1180, 1100, 1024, 900, 768 y 375 px, nada se parte en dos líneas ni se desborda (esto resuelve el pendiente #2 del doc 07). Navegable completo con teclado. En tablet y móvil, el menú hamburguesa llega a todas las secciones.
+**Criterio de aceptación:** a 1360, 1180, 1100, 1024, 900, 768 y 375 px, nada se parte en dos líneas ni se desborda (esto resuelve el pendiente #2 de la revisión del 15-09). Navegable completo con teclado. En tablet y móvil, el menú hamburguesa llega a todas las secciones.
 **Commit:** `feat(web): header con aparición por scroll, menú móvil y footer oscuro`
 
 ---
@@ -436,7 +438,7 @@ apps/web/src/
   }
   ```
   Verificar que con `GITHUB_PAGES=true` el HTML de redirección apunte a `/BKB/#…`. Si Astro no aplica `base` a los destinos, generar las páginas de redirección manualmente con `<meta http-equiv="refresh">` y `getPath`.
-- [ ] **7.2** Eliminar `pages/servicios.astro`, `obras.astro`, `nosotros.astro` y `contacto.astro`. Esto deja sin efecto los pendientes #6 y #7 del doc 07, porque su contenido desaparece.
+- [ ] **7.2** Eliminar `pages/servicios.astro`, `obras.astro`, `nosotros.astro` y `contacto.astro`. Esto deja sin efecto los pendientes #6 y #7 de la revisión del 15-09, porque su contenido desaparece.
 - [ ] **7.3** Reestilizar `trabaja-con-nosotros.astro`, `privacidad.astro` y `terminos.astro` con `headerMode="solid"`, tokens v2, `Card`, `PillButton` y `SectionHeading`.
   - En el formulario de CV aplicar la misma regla que D4: `method="post"` y `enctype="multipart/form-data"`; si no hay endpoint, deshabilitado con aviso.
   - Corregir la clase inválida `border-[#sand-200]` si sobrevive algún resto (pendiente #8).
@@ -445,7 +447,7 @@ apps/web/src/
   ```bash
   grep -rn "card-bkb\|btn-primary\|display-lg\|container-bkb\|Button.astro" apps/web/src
   ```
-- [ ] **7.6** Unificar todos los enlaces al portal a través de `PORTAL_URLS` (pendiente #9 del doc 07).
+- [ ] **7.6** Unificar todos los enlaces al portal a través de `PORTAL_URLS` (pendiente #9 de la revisión del 15-09).
 - [ ] **7.7** Confirmar que no queda ningún hex arbitrario: `grep -rn "\[#" apps/web/src` debe devolver 0 resultados (pendiente #10).
 
 **Criterio de aceptación:** las rutas antiguas redirigen a su ancla en local y con base `/BKB`. Build sin advertencias. No hay código muerto.
@@ -484,9 +486,9 @@ apps/web/src/
 - [ ] **10.1** Actualizar `docs/01-tokens-y-sistema-diseno.md` a v2: paleta salmón, temas, superficies nocturnas fijas, tabla de contraste final (D3) y reglas de uso.
 - [ ] **10.2** Actualizar `docs/02-sitio-web-astro.md`: nuevo mapa de rutas y redirecciones, componentes y scripts de tema y movimiento.
 - [ ] **10.3** Actualizar `docs/00-contexto-proyecto.md` (estado del repositorio) y agregar una entrada con fecha a `docs/06-bitacora-avances.md`.
-- [ ] **10.4** Actualizar `docs/07-revision-frontend-pendientes.md` marcando cada pendiente según corresponda:
+- [x] **10.4** El documento de revisión (`docs/07`) se eliminó el 20-09-2026. Así resolvió este plan sus 10 pendientes:
 
-  | # del doc 07 | Resolución con este plan |
+  | # de la revisión del 15-09 | Resolución con este plan |
   |---|---|
   | 1 Formularios GET | Fase 5.4 / 7.3 (D4) |
   | 2 Header 1024–1240 px | Fase 3.1 (header nuevo) |
