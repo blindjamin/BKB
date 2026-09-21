@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from .permisos import proyectos_visibles, archivos_visibles, puede_subir
 from .models import Archivo, DescargaLog
 from .storage import url_descarga
@@ -58,3 +59,27 @@ def descargar_archivo(request, pk):
     # Obtener URL y redirigir
     url = url_descarga(archivo.clave_space, archivo.nombre_original)
     return redirect(url)
+
+@login_required
+@require_POST
+def eliminar_archivo(request, pk):
+    archivo = get_object_or_404(Archivo, pk=pk)
+    
+    # Validar que es personal o superuser
+    from accounts.models import Rol
+    if request.user.rol != Rol.PERSONAL and not request.user.is_superuser:
+        from django.http import JsonResponse
+        return JsonResponse({'error': 'No tienes permisos.'}, status=403)
+        
+    if not request.user.is_superuser and archivo.subido_por != request.user:
+        from django.http import JsonResponse
+        return JsonResponse({'error': 'Sólo puedes borrar tus propios archivos.'}, status=403)
+        
+    from django.utils import timezone
+    if archivo.eliminado_en is None:
+        archivo.eliminado_en = timezone.now()
+        archivo.eliminado_por = request.user
+        archivo.save()
+        
+    # Recargar a la vista del proyecto
+    return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)

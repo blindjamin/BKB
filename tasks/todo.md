@@ -220,17 +220,17 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] Manual: descargar una foto real del Space con `portal-dev/` como personal y como cliente asignado
 **Dependencias:** 6, 10 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `documentos/tests/test_descarga.py`
 
-### [ ] Tarea 14: Borrar lo propio
+### [x] Tarea 14: Borrar lo propio
 **Descripción:** El personal borra los archivos que subió y el administrador cualquiera. Es un borrado lógico: el archivo desaparece al instante para todos.
 **Criterios:**
-- [ ] `POST /archivos/<uuid>/eliminar/` marca `eliminado_en` y `eliminado_por`; el objeto queda en el Space
-- [ ] El personal solo borra lo que él subió (lo ajeno responde 403); el superusuario borra cualquiera; el cliente recibe 403
-- [ ] Botón "Eliminar" con confirmación ("El archivo dejará de verse para todos"), visible solo para quien puede borrar
-- [ ] Un archivo eliminado desaparece de la lista de inmediato y su descarga responde 404
+- [x] `POST /archivos/<uuid>/eliminar/` marca `eliminado_en` y `eliminado_por`; el objeto queda en el Space
+- [x] El personal solo borra lo que él subió (lo ajeno responde 403); el superusuario borra cualquiera; el cliente recibe 403
+- [x] Botón "Eliminar" con confirmación ("El archivo dejará de verse para todos"), visible solo para quien puede borrar
+- [x] Un archivo eliminado desaparece de la lista de inmediato y su descarga responde 404
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_borrar`: autor, otro personal, superusuario, cliente, archivo ya eliminado y descarga posterior
-- [ ] Manual: subir como personal, borrarlo, y comprobar que un cliente asignado ya no lo ve
-**Dependencias:** 5, 10, 12 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/archivos.html`, `documentos/tests/test_borrar.py`
+- [x] `python manage.py test documentos.tests.test_borrar`: autor, otro personal, superusuario, cliente, archivo ya eliminado y descarga posterior
+- [x] Manual: subir como personal, borrarlo, y comprobar que un cliente asignado ya no lo ve
+**Dependencias:** 12, 13 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/includes/archivo_item.html`, `documentos/tests/test_borrar.py`
 
 ### Checkpoint D (tras 14): la v1 funciona en local
 - [ ] Todas las pruebas pasan

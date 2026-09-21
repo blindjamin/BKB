@@ -10,4 +10,5 @@ urlpatterns = [
     path('proyectos/<uuid:pk>/subir/', subidas.iniciar_subida, name='iniciar_subida'),
     path('archivos/<uuid:pk>/confirmar/', subidas.confirmar_subida, name='confirmar_subida'),
     path('archivos/<uuid:pk>/descargar/', views.descargar_archivo, name='descargar_archivo'),
+    path('archivos/<uuid:pk>/eliminar/', views.eliminar_archivo, name='eliminar_archivo'),
 ]
