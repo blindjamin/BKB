@@ -131,16 +131,16 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 
 ## Fase 3 · Lo que ve el usuario
 
-### [ ] Tarea 7: Login, logout y bloqueo por intentos
+### [x] Tarea 7: Login, logout y bloqueo por intentos
 **Descripción:** El usuario entra con correo y contraseña, y el sistema bloquea la fuerza bruta.
 **Criterios:**
-- [ ] `django-axes` activo (aplicación, middleware y backend); bloqueo tras 5 intentos fallidos
-- [ ] El mensaje de error no revela si el correo existe
-- [ ] `/` exige sesión y redirige a `/login/`; el logout es por POST
-- [ ] Plantilla simple provisional del login (el diseño va en la tarea 8)
+- [x] `django-axes` activo (aplicación, middleware y backend); bloqueo tras 5 intentos fallidos
+- [x] El mensaje de error no revela si el correo existe
+- [x] `/` exige sesión y redirige a `/login/`; el logout es por POST
+- [x] Plantilla simple provisional del login (el diseño va en la tarea 8)
 **Verificación:**
-- [ ] `python manage.py test accounts.tests.test_login`: entrada correcta, error genérico, bloqueo al 5.º fallo, rutas protegidas
-- [ ] Manual: entrar y salir con un usuario creado en `/admin/`
+- [x] `python manage.py test accounts.tests.test_login`: entrada correcta, error genérico, bloqueo al 5.º fallo, rutas protegidas
+- [x] Manual: entrar y salir con un usuario creado en `/admin/`
 **Dependencias:** 3 · **Alcance:** M · **Archivos:** `config/settings.py`, `config/urls.py`, `templates/login.html`, `accounts/tests/test_login.py`
 
 ### [ ] Tarea 8: Base visual y tema claro/oscuro
