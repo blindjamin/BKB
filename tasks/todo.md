@@ -40,16 +40,16 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 **Verificación:** `git status` limpio y `git log` muestra el commit `docs: spec, plan y limpieza de documentación`
 **Dependencias:** ninguna · **Alcance:** XS · **Archivos:** `docs/*`, `README.md`, `apps/portal/README.md`, `tasks/*`, `.gitignore`
 
-### [ ] Tarea 1: Entorno y dependencias
+### [x] Tarea 1: Entorno y dependencias
 **Descripción:** Fijar Django 5.2 LTS, quitar dependencias que la v1 no usa y recrear el entorno virtual limpio.
 **Criterios:**
-- [ ] `requirements.txt`: `django>=5.2,<5.3`; se quitan `django-htmx`, `rules` y `django-allauth`
-- [ ] `pyproject.toml`: mismas dependencias y sin `[tool.pytest.ini_options]`
-- [ ] `.env.example` con todas las variables de la sección 4 de la spec, con `SPACES_REGION=nyc3` y `SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com`
+- [x] `requirements.txt`: `django>=5.2,<5.3`; se quitan `django-htmx`, `rules` y `django-allauth`
+- [x] `pyproject.toml`: mismas dependencias y sin `[tool.pytest.ini_options]`
+- [x] `.env.example` con todas las variables de la sección 4 de la spec, con `SPACES_REGION=nyc3` y `SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com`
 **Verificación:**
-- [ ] Entorno nuevo (`python -m venv .venv`) e `pip install -r requirements.txt` sin errores
-- [ ] `python -c "import django; print(django.VERSION)"` muestra 5.2.x
-- [ ] `python manage.py check` sin errores
+- [x] Entorno nuevo (`python -m venv .venv`) e `pip install -r requirements.txt` sin errores
+- [x] `python -c "import django; print(django.VERSION)"` muestra 5.2.x
+- [x] `python manage.py check` sin errores
 **Dependencias:** 0 · **Alcance:** S · **Archivos:** `requirements.txt`, `pyproject.toml`, `.env.example`
 
 ### [ ] Tarea 2: Endurecer `settings.py`
