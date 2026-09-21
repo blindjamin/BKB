@@ -6,41 +6,107 @@ import SectionHeading from '../ui/SectionHeading.astro';
 
 <section id="servicios" class="py-24 max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10 scroll-mt-[80px]">
   <div class="reveal">
-    <SectionHeading eyebrow="QUÉ HACEMOS" title="Ingeniería integral para<br/>la continuidad operativa." />
+    <SectionHeading
+      eyebrow="QUÉ HACEMOS"
+      title="Nuestra propuesta de valor"
+      desc="Integración completa de ingeniería, automatización, fabricación y montaje bajo una sola responsabilidad, eliminando interfaces y asegurando coherencia técnica desde el diseño hasta la puesta en marcha."
+    />
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[22px]">
-    {servicios.map((s, index) => (
-      <div 
-        class="reveal group bg-card border border-card-border rounded-card p-7 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-salmon-500/50 flex flex-col h-full"
-        style={`transition-delay: ${index * 100}ms;`}
-      >
-        
-        <div class="w-[52px] h-[52px] rounded-[13px] bg-salmon-300/15 mb-6 flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-105 group-hover:-translate-y-1">
-          <Image 
-            src={s.icon} 
-            alt="" 
-            aria-hidden="true" 
-            style={`width: ${s.iconSize}; height: ${s.iconSize}; object-fit: ${s.iconFit};`} 
-            class={s.iconFit === 'cover' ? 'w-full h-full' : ''}
+  <div class="reveal relative" data-carousel>
+    <div
+      data-track
+      role="region"
+      aria-label="Servicios de BKB"
+      tabindex="0"
+      class="flex gap-[22px] overflow-x-auto snap-x snap-mandatory py-3 -my-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-bkb rounded-card"
+    >
+      {servicios.map((s) => (
+        <div class="group relative overflow-hidden rounded-card border border-white/10 bg-night-900 min-h-[340px] flex flex-col justify-center snap-start shrink-0 basis-[80%] sm:basis-[calc((100%-22px)/2.2)] lg:basis-[calc((100%-66px)/3.5)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-salmon-500/50">
+          <Image
+            src={s.image}
+            alt=""
+            aria-hidden="true"
+            class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
+          <div class="absolute inset-0 bg-gradient-to-b from-night-900/55 via-night-900/85 to-night-900/55"></div>
+
+          <div class="relative z-10 p-7 text-center">
+            <h3 class="font-display font-bold text-[20px] leading-[1.25] text-[#F8FAFC] mb-3">{s.title}</h3>
+            <p class="text-[14.5px] leading-[1.55] text-[#CBD5E1] m-0">{s.desc}</p>
+          </div>
         </div>
-        
-        <h3 class="font-display font-bold text-[20px] leading-[1.25] text-main mb-3">{s.title}</h3>
-        <p class="text-[14.5px] leading-[1.55] text-muted m-0 mb-6 flex-1">{s.desc}</p>
-        
-        <div class="pt-5 border-t border-card-border mt-auto">
-          <ul class="m-0 p-0 list-none flex flex-col gap-2">
-            {s.bullets.map(b => (
-              <li class="flex items-start gap-2 text-[13px] text-subtle font-medium">
-                <span class="text-salmon-500 text-[14px] leading-tight" aria-hidden="true">✓</span>
-                <span>{b}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        
-      </div>
-    ))}
+      ))}
+    </div>
+
+    <button type="button" data-prev aria-label="Servicio anterior" class="carousel-btn left-2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button type="button" data-next aria-label="Servicio siguiente" class="carousel-btn right-2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
   </div>
 </section>
+
+<style>
+  .carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 9999px;
+    background: rgba(11, 18, 32, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #F8FAFC;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+  }
+  .carousel-btn:hover { background: #FA5A36; }
+  .carousel-btn:focus-visible { outline: 2px solid #FA5A36; outline-offset: 2px; }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-carousel]').forEach((root) => {
+    const track = root.querySelector<HTMLElement>('[data-track]')!;
+    const prev = root.querySelector<HTMLButtonElement>('[data-prev]')!;
+    const next = root.querySelector<HTMLButtonElement>('[data-next]')!;
+    const cards = Array.from(track.children) as HTMLElement[];
+
+    // Bucle infinito: [copia][originales][copia]. Al salir del tramo de originales se salta, sin que se note, al equivalente.
+    const copy = () => cards.map((c) => {
+      const el = c.cloneNode(true) as HTMLElement;
+      el.setAttribute('aria-hidden', 'true');
+      return el;
+    });
+    track.prepend(...copy());
+    track.append(...copy());
+
+    const gap = 22;
+    const step = () => cards[0].offsetWidth + gap; // un paso = una tarjeta + gap
+    const setWidth = () => cards.length * step();
+    const behavior = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+
+    let touching = false;
+    let timer: number;
+    const wrap = () => {
+      if (touching) return;
+      const w = setWidth();
+      if (track.scrollLeft < w) track.scrollLeft += w;
+      else if (track.scrollLeft >= 2 * w) track.scrollLeft -= w;
+    };
+
+    prev.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: behavior() }));
+    next.addEventListener('click', () => track.scrollBy({ left: step(), behavior: behavior() }));
+    track.addEventListener('scroll', () => { clearTimeout(timer); timer = window.setTimeout(wrap, 120); }, { passive: true });
+    track.addEventListener('touchstart', () => { touching = true; }, { passive: true });
+    track.addEventListener('touchend', () => { touching = false; wrap(); }, { passive: true });
+    window.addEventListener('resize', () => { track.scrollLeft = setWidth(); });
+
+    track.scrollLeft = setWidth(); // arranca en la primera tarjeta real
+  });
+</script>

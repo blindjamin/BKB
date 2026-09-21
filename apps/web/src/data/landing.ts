@@ -15,14 +15,10 @@ import ingefrio from '../assets/clients/brand-ingefrio.png';
 import ingenproyect from '../assets/clients/brand-ingenproyect.png';
 import shs from '../assets/clients/brand-shs.jpg';
 
-import electric from '../assets/icons/electric.png';
-import electronic from '../assets/icons/electronic.png';
-import civil from '../assets/icons/civil.jpg';
-import maintance from '../assets/icons/maintance.png';
-
 import faena1 from '../assets/landing/faena-1.jpg';
 import faena2 from '../assets/landing/faena-2.jpg';
 import faena3 from '../assets/landing/faena-3.jpg';
+import faenaHero from '../assets/landing/faena-hero.jpg';
 
 export interface StatItem {
   target: number;
@@ -32,7 +28,7 @@ export interface StatItem {
 }
 
 export const stats: StatItem[] = [
-  { target: 25, suffix: '+', display: '25+', label: 'Años de trayectoria continua' },
+  { target: 30, suffix: '+', display: '30+', label: 'Años de trayectoria continua' },
   { target: 150, suffix: '+', display: '150+', label: 'Proyectos de alta y baja tensión' },
   { target: 40, suffix: '+', display: '40+', label: 'Clientes corporativos activos' },
   { target: 100, suffix: '%', display: '100%', label: 'Certificaciones SEC aprobadas' }
@@ -51,19 +47,19 @@ export const mercados: MercadoItem[] = [
 ];
 
 export interface ServicioItem {
-  icon: ImageMetadata;
-  iconSize: string;
-  iconFit: 'contain' | 'cover';
+  image: ImageMetadata;
   title: string;
   desc: string;
-  bullets: string[];
 }
 
+// Textos de los 4 primeros servicios: verificados (empresabkb.cl). Arriendo: dato entregado por el cliente.
+// TODO: fotos provisorias (faena), reemplazar por fotos de cada servicio
 export const servicios: ServicioItem[] = [
-  { icon: electric, iconSize: '28px', iconFit: 'contain', title: 'Ingeniería Eléctrica', desc: 'Montaje de TDF/TDA, mallas a tierra y bandejas portacables pesadas.', bullets: ['Declaración SEC TE1', 'Diseño BT/MT'] },
-  { icon: electronic, iconSize: '30px', iconFit: 'contain', title: 'Automatización & PLC', desc: 'Programación Siemens S7 / Allen-Bradley, pantallas HMI y SCADA.', bullets: ['Variadores de frecuencia', 'Integración SCADA'] },
-  { icon: civil, iconSize: '130%', iconFit: 'cover', title: 'Obras Civiles Industriales', desc: 'Salas eléctricas modulares climatizadas y zanjas para ductos subterráneos.', bullets: ['Radieres técnicos', 'Ductos subterráneos'] },
-  { icon: maintance, iconSize: '28px', iconFit: 'contain', title: 'Mantención & Guardia 24/7', desc: 'Termografía infrarroja de tableros y calibración de protecciones.', bullets: ['Atención de contingencias', 'Termografía IR'] }
+  { image: faena1, title: 'Ingeniería Eléctrica', desc: 'Diseño y ejecución de proyectos eléctricos completos: canalización, alimentación, tableros y sistemas de control.' },
+  { image: faena2, title: 'Automatización PLC', desc: 'Programación y desarrollo de sistemas PLC y HMI con pruebas FAT/SAT e integración SCADA.' },
+  { image: faena3, title: 'Fabricación Propia', desc: 'Fabricación de Sistemas Kit: Bombeo, Filtrado, Lubricación y otros componentes especializados.' },
+  { image: faenaHero, title: 'Montaje y Soporte', desc: 'Montaje en terreno y puesta en marcha con soporte técnico post-entrega garantizado.' },
+  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo de instrumentación eléctrica: analizadores, medidores de tierra, de fuga y de aislación, y equipos de calibración.' }
 ];
 
 export interface PortfolioItem {
