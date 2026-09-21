@@ -109,22 +109,22 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] Toda rama de `permisos.py` tiene al menos una prueba
 **Dependencias:** 4 · **Alcance:** S · **Archivos:** `documentos/permisos.py`, `documentos/tests/test_permisos.py`
 
-### [ ] Tarea 6: Conexión con el Space
+### [x] Tarea 6: Conexión con el Space
 **Descripción:** Módulo que firma URLs y confirma objetos en el Space, sin salir nunca del prefijo del portal.
 **Criterios:**
 - [x] `storage.py`: `clave_para(proyecto, archivo)` (prefijo + UUID), URL de descarga de 60 s como adjunto con el nombre original, POST prefirmado con límite de tamaño y de tipo, y `tamano_en_space(clave)`
 - [x] No existen funciones para listar ni borrar
 - [x] Variables `SPACES_*` leídas de `settings.py` (el prefijo se valida al arrancar: vacío, sin `/` final o con `..` impide iniciar)
-- [ ] Prueba manual contra el Space real con prefijo `portal-dev/`
+- [x] Prueba manual contra el Space real con prefijo `portal-dev/`
 **Verificación:**
 - [x] `python manage.py test documentos.tests.test_storage` (firma real offline con claves falsas, y cliente simulado para `head_object`): toda clave empieza con el prefijo, la URL expira en 60 s, el POST incluye `content-length-range`
-- [ ] Manual (`python manage.py shell`): subir un archivo con el POST prefirmado desde un script, ver el objeto bajo `portal-dev/` en el panel de DigitalOcean y descargarlo con la URL prefirmada
+- [x] Manual (`python manage.py shell`): subir un archivo con el POST prefirmado desde un script, ver el objeto bajo `portal-dev/` en el panel de DigitalOcean y descargarlo con la URL prefirmada (hecho el 21-09-2026: subida 204, tamaño confirmado, descarga idéntica como adjunto; el Space rechazó 2 MB con límite de 1 MB, 0 bytes, `Content-Type` alterado o ausente y clave cambiada de carpeta; falta tu vistazo a los objetos en el panel)
 **Dependencias:** 4 · **Requiere de ti:** clave dedicada y CORS para `localhost` (ver plan) · **Alcance:** M · **Archivos:** `documentos/storage.py`, `documentos/tests/test_storage.py`, `config/settings.py`, `.env.example`
 
 ### Checkpoint A (tras 5) y B (tras 6)
-- [ ] Todas las pruebas pasan y `check` sin errores
+- [x] Todas las pruebas pasan y `check` sin errores (61 pruebas)
 - [ ] La matriz de permisos cubre los dos tipos de usuario y no deja casos sin probar
-- [ ] Un archivo subido al Space real con la URL prefirmada se descarga bien
+- [x] Un archivo subido al Space real con la URL prefirmada se descarga bien
 - [ ] **Revisión contigo antes de seguir**
 
 ---
