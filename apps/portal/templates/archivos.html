@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}{{ proyecto.nombre }} - Archivos{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; width: 100%;">
+    <div style="margin-bottom: 2rem;">
+        <a href="{% url 'documentos:lista_proyectos' %}" style="color: var(--bkb-salmon-700); text-decoration: none; font-weight: bold; margin-bottom: 1rem; display: inline-block;">← Volver a Proyectos</a>
+        <h1 style="margin: 0 0 0.5rem 0; color: var(--text-main);">{{ proyecto.nombre }}</h1>
+        <div style="color: var(--text-muted); font-size: 0.875rem;">
+            🏢 {{ proyecto.empresa.nombre }}
+        </div>
+    </div>
+    
+    <div class="tabs" style="display: flex; gap: 1rem; border-bottom: 1px solid var(--card-border); margin-bottom: 1.5rem;">
+        <button class="tab-btn active" data-target="docs" style="background: none; border: none; padding: 0.75rem 1rem; font-weight: bold; cursor: pointer; color: var(--bkb-salmon-700); border-bottom: 2px solid var(--bkb-salmon-700);">
+            Documentos ({{ documentos|length }})
+        </button>
+        <button class="tab-btn" data-target="fotos" style="background: none; border: none; padding: 0.75rem 1rem; font-weight: bold; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent;">
+            Fotos ({{ fotos|length }})
+        </button>
+    </div>
+    
+    <div id="docs-content" class="tab-content" style="display: block;">
+        {% if documentos %}
+            <div style="display: grid; gap: 1rem;">
+                {% for archivo in documentos %}
+                    {% include "includes/archivo_item.html" with archivo=archivo %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: var(--text-muted);">
+                No hay documentos en este proyecto.
+            </div>
+        {% endif %}
+    </div>
+
+    <div id="fotos-content" class="tab-content" style="display: none;">
+        {% if fotos %}
+            <div style="display: grid; gap: 1rem;">
+                {% for archivo in fotos %}
+                    {% include "includes/archivo_item.html" with archivo=archivo %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: var(--text-muted);">
+                No hay fotos en este proyecto.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script nonce="{{ request.csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+    const btns = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+    
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btns.forEach(b => {
+                b.style.color = 'var(--text-muted)';
+                b.style.borderBottomColor = 'transparent';
+            });
+            contents.forEach(c => c.style.display = 'none');
+            
+            btn.style.color = 'var(--bkb-salmon-700)';
+            btn.style.borderBottomColor = 'var(--bkb-salmon-700)';
+            
+            const target = btn.getAttribute('data-target');
+            document.getElementById(target + '-content').style.display = 'block';
+        });
+    });
+});
+</script>
+{% endblock %}

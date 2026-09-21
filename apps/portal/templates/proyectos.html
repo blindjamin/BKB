@@ -9,7 +9,7 @@
     {% if proyectos %}
         <div style="display: grid; gap: 1rem;">
             {% for proyecto in proyectos %}
-                <div class="project-card" style="padding: 1.5rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;">
+                <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="project-card" style="text-decoration: none; display: block; padding: 1.5rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: inherit; transition: transform 0.2s, box-shadow 0.2s;">
                     <h2 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">{{ proyecto.nombre }}</h2>
                     <div style="display: flex; gap: 1rem; color: var(--text-muted); font-size: 0.875rem;">
                         <span>🏢 {{ proyecto.empresa.nombre }}</span>
@@ -21,7 +21,7 @@
                             {% endif %}
                         </span>
                     </div>
-                </div>
+                </a>
             {% endfor %}
         </div>
     {% else %}
@@ -30,4 +30,11 @@
         </div>
     {% endif %}
 </div>
+<style nonce="{{ request.csp_nonce }}">
+    .project-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border-color: var(--bkb-salmon-300) !important;
+    }
+</style>
 {% endblock %}

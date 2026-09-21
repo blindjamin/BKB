@@ -168,15 +168,15 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] Manual con un usuario personal y uno cliente
 **Dependencias:** 5, 8 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/proyectos.html`, `documentos/tests/test_vistas_proyectos.py`
 
-### [ ] Tarea 10: Archivos de un proyecto
+### [x] Tarea 10: Archivos de un proyecto
 **Descripción:** Detalle de un proyecto con su lista de archivos.
 **Criterios:**
-- [ ] `/proyectos/<uuid>/` lista `archivos_visibles` con nombre, tamaño, fecha y quién lo subió
-- [ ] Filtro Fotos/Documentos según el tipo del archivo
-- [ ] Un proyecto no asignado a un cliente responde 404
+- [x] `/proyectos/<uuid>/` lista `archivos_visibles` con nombre, tamaño, fecha y quién lo subió
+- [x] Filtro Fotos/Documentos según el tipo del archivo
+- [x] Un proyecto no asignado a un cliente responde 404
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_vistas_archivos`: el HTML entregado a un cliente **no contiene** proyectos ni archivos de proyectos no asignados, ni archivos eliminados o pendientes
-- [ ] Manual: crear un `Archivo` de prueba desde `/admin/` con la clave del objeto subido en la tarea 6, y verlo como personal y como cliente asignado
+- [x] `python manage.py test documentos.tests.test_vistas_archivos`: el HTML entregado a un cliente **no contiene** proyectos ni archivos de proyectos no asignados, ni archivos eliminados o pendientes
+- [x] Manual: crear un `Archivo` de prueba desde `/admin/` con la clave del objeto subido en la tarea 6, y verlo como personal y como cliente asignado
 **Dependencias:** 9 · **Alcance:** M · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/archivos.html`, `documentos/tests/test_vistas_archivos.py`
 
 ### [ ] Tarea 11: Subida: servidor
