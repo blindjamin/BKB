@@ -52,5 +52,6 @@
     </main>
 
     <script src="{% static 'tema.js' %}" nonce="{{ request.csp_nonce }}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

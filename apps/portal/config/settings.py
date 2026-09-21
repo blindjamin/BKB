@@ -148,6 +148,11 @@ X_FRAME_OPTIONS = 'DENY'
 
 # Content-Security-Policy estricta, sin 'unsafe-inline'.
 # Las tareas 8 y 12 agregan el nonce del script del tema y el dominio del Space.
+space_host = SPACES_ENDPOINT.replace('https://', '')
+if not space_host.startswith(f"{SPACES_BUCKET}."):
+    space_host = f"{SPACES_BUCKET}.{space_host}"
+space_host_url = f"https://{space_host}"
+
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': [SELF],
@@ -155,11 +160,12 @@ CONTENT_SECURITY_POLICY = {
         'style-src': [SELF],
         'frame-ancestors': [NONE],
         'base-uri': [SELF],
-        'form-action': [SELF],
+        'form-action': [SELF, space_host_url],
         'object-src': [NONE],
+        'connect-src': [SELF, space_host_url],
     },
 }
-CSP_INCLUDE_NONCE_IN = ['script-src']
+CSP_INCLUDE_NONCE_IN = ['script-src', 'style-src']
 
 # Parámetros estrictos de producción activables vía SSL
 if not DEBUG:

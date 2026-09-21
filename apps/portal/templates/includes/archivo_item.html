@@ -9,6 +9,6 @@
         <div style="font-size: 0.875rem; font-weight: bold; color: var(--text-main);">
             {{ archivo.tamano|filesizeformat }}
         </div>
-        <a href="#" style="font-size: 0.75rem; color: var(--bkb-salmon-700); font-weight: bold; text-decoration: none;">⬇ Descargar</a>
+        <a href="{% url 'documentos:descargar_archivo' archivo.pk %}" style="font-size: 0.75rem; color: var(--bkb-salmon-700); font-weight: bold; text-decoration: none;">⬇ Descargar</a>
     </div>
 </div>

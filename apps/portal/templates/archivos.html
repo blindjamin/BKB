@@ -1,15 +1,31 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ proyecto.nombre }} - Archivos{% endblock %}
 
 {% block content %}
 <div style="max-width: 900px; margin: 0 auto; width: 100%;">
-    <div style="margin-bottom: 2rem;">
-        <a href="{% url 'documentos:lista_proyectos' %}" style="color: var(--bkb-salmon-700); text-decoration: none; font-weight: bold; margin-bottom: 1rem; display: inline-block;">← Volver a Proyectos</a>
-        <h1 style="margin: 0 0 0.5rem 0; color: var(--text-main);">{{ proyecto.nombre }}</h1>
-        <div style="color: var(--text-muted); font-size: 0.875rem;">
-            🏢 {{ proyecto.empresa.nombre }}
+    <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <a href="{% url 'documentos:lista_proyectos' %}" style="color: var(--bkb-salmon-700); text-decoration: none; font-weight: bold; margin-bottom: 1rem; display: inline-block;">← Volver a Proyectos</a>
+            <h1 style="margin: 0 0 0.5rem 0; color: var(--text-main);">{{ proyecto.nombre }}</h1>
+            <div style="color: var(--text-muted); font-size: 0.875rem;">
+                🏢 {{ proyecto.empresa.nombre }}
+            </div>
         </div>
+        
+        {% if puede_subir %}
+        <div style="text-align: right;">
+            <input type="file" id="archivo-input" style="display: none;" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf" capture="environment" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}">
+            <button onclick="document.getElementById('archivo-input').click()" style="background-color: var(--bkb-salmon-600); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                Subir Archivo
+            </button>
+            <div id="upload-status" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted); display: none;">
+                <progress id="progreso-subida" value="0" max="100" style="width: 100%; margin-bottom: 0.25rem;"></progress>
+                <span id="upload-text">Subiendo...</span>
+            </div>
+        </div>
+        {% endif %}
     </div>
     
     <div class="tabs" style="display: flex; gap: 1rem; border-bottom: 1px solid var(--card-border); margin-bottom: 1.5rem;">
@@ -72,4 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+{% endblock %}
+
+{% block extra_js %}
+{% if puede_subir %}
+<script src="{% static 'subir.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endif %}
 {% endblock %}
