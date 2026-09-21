@@ -21,3 +21,5 @@ def detalle_proyecto(request, pk):
         'documentos': documentos,
     }
     return render(request, 'archivos.html', context)
+
+
