@@ -11,7 +11,7 @@ class LoginTests(TestCase):
             rol='personal'
         )
         self.login_url = reverse('login')
-        self.index_url = reverse('index')
+        self.index_url = reverse('documentos:lista_proyectos')
 
     def test_rutas_protegidas(self):
         """Un usuario sin sesión es redirigido a login al intentar acceder a la raíz."""

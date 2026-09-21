@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Proyectos - BKB Portal{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; width: 100%;">
+    <h1 style="margin-bottom: 2rem; color: var(--text-main);">Proyectos</h1>
+    
+    {% if proyectos %}
+        <div style="display: grid; gap: 1rem;">
+            {% for proyecto in proyectos %}
+                <div class="project-card" style="padding: 1.5rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;">
+                    <h2 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">{{ proyecto.nombre }}</h2>
+                    <div style="display: flex; gap: 1rem; color: var(--text-muted); font-size: 0.875rem;">
+                        <span>🏢 {{ proyecto.empresa.nombre }}</span>
+                        <span>
+                            {% if proyecto.estado == 'activo' %}
+                                <span style="color: var(--bkb-sec-ok-text); background-color: var(--bkb-sec-ok-bg); padding: 0.125rem 0.5rem; border-radius: 99px; font-weight: bold; font-size: 0.75rem;">ACTIVO</span>
+                            {% else %}
+                                <span style="color: var(--bkb-sec-reserved-text); background-color: var(--bkb-sec-reserved-bg); padding: 0.125rem 0.5rem; border-radius: 99px; font-weight: bold; font-size: 0.75rem;">CERRADO</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 4rem 2rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;">
+            <p style="color: var(--text-muted); font-size: 1.125rem; margin: 0;">No tienes proyectos asignados actualmente.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

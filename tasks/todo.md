@@ -157,15 +157,15 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] **Revisión visual contigo** (referencias: `Mockup-Preliminar/BKB_Portal_-_Propuesta_de_interfaz.pptx` y la landing)
 **Dependencias:** 7 · **Alcance:** M · **Archivos:** `templates/base.html`, `templates/login.html`, `static/portal.css`, `static/tema.js`, `static/tokens/*`
 
-### [ ] Tarea 9: Lista de proyectos
+### [x] Tarea 9: Lista de proyectos
 **Descripción:** Al entrar, el personal ve todos los proyectos y cada cliente solo los suyos.
 **Criterios:**
-- [ ] `/` lista `proyectos_visibles(usuario)` con empresa y estado
-- [ ] Mensaje claro cuando un cliente no tiene proyectos asignados
-- [ ] El personal ve todos y el cliente no ve los ajenos
+- [x] `/` lista `proyectos_visibles(usuario)` con empresa y estado
+- [x] Mensaje claro cuando un cliente no tiene proyectos asignados
+- [x] El personal ve todos y el cliente no ve los ajenos
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_vistas_proyectos`
-- [ ] Manual con un usuario personal y uno cliente
+- [x] `python manage.py test documentos.tests.test_vistas_proyectos`
+- [x] Manual con un usuario personal y uno cliente
 **Dependencias:** 5, 8 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/proyectos.html`, `documentos/tests/test_vistas_proyectos.py`
 
 ### [ ] Tarea 10: Archivos de un proyecto
