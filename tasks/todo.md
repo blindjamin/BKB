@@ -85,17 +85,17 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] `python manage.py migrate` desde cero sin errores
 **Dependencias:** 2 · **Alcance:** M · **Archivos:** `accounts/{apps,models,admin}.py`, `accounts/migrations/0001_initial.py`, `accounts/tests/test_usuario.py`, `config/settings.py`
 
-### [ ] Tarea 4: Modelos de dominio y panel de administración
+### [x] Tarea 4: Modelos de dominio y panel de administración
 **Descripción:** Empresa, proyecto, asignaciones de clientes, archivos y registro de descargas, administrables desde el panel de Django.
 **Criterios:**
-- [ ] Modelos `Empresa`, `Proyecto`, `Membresia` (único por usuario y proyecto), `Archivo` (sin campo de visibilidad; con `eliminado_en` y `eliminado_por`) y `DescargaLog`, con UUID como clave, según la spec
-- [ ] `Membresia` solo admite usuarios de tipo `cliente`: asignar personal se rechaza con un mensaje claro
-- [ ] Panel: `Membresia` como inline de `Proyecto`, mostrando la empresa del proyecto
-- [ ] Panel: acción "Marcar como eliminado" (borrado lógico que registra quién lo hizo); `Archivo` se puede crear a mano para pruebas
+- [x] Modelos `Empresa`, `Proyecto`, `Membresia` (único por usuario y proyecto), `Archivo` (sin campo de visibilidad; con `eliminado_en` y `eliminado_por`) y `DescargaLog`, con UUID como clave, según la spec
+- [x] `Membresia` solo admite usuarios de tipo `cliente`: asignar personal se rechaza con un mensaje claro
+- [x] Panel: `Membresia` como inline de `Proyecto`, mostrando la empresa del proyecto
+- [x] Panel: acción "Marcar como eliminado" (borrado lógico que registra quién lo hizo); `Archivo` se puede crear a mano para pruebas
 **Verificación:**
-- [ ] `python manage.py makemigrations --check` sin cambios pendientes
-- [ ] `python manage.py test documentos.tests.test_modelos` (par único, asignar personal rechazado, UUID)
-- [ ] Manual: en `/admin/` crear empresa, proyecto, usuario cliente y asignarlo
+- [x] `python manage.py makemigrations --check` sin cambios pendientes
+- [x] `python manage.py test documentos.tests.test_modelos` (par único, asignar personal rechazado, UUID)
+- [x] Manual: en `/admin/` crear empresa, proyecto, usuario cliente y asignarlo (hecho con el cliente de pruebas sobre `/admin/`: `test_flujo_empresa_cliente_proyecto_y_asignacion`; falta tu vistazo en el navegador)
 **Dependencias:** 3 · **Alcance:** M · **Archivos:** `documentos/{apps,models,admin}.py`, `documentos/migrations/0001_initial.py`, `documentos/tests/test_modelos.py`
 
 ### [ ] Tarea 5: Permisos y matriz de pruebas

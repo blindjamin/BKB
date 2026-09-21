@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     # Aplicaciones del portal
     'accounts',
+    'documentos',
 ]
 
 # Usuario propio (entra con correo). No se cambia después del primer migrate.
