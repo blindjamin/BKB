@@ -52,20 +52,20 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] `python manage.py check` sin errores
 **Dependencias:** 0 · **Alcance:** S · **Archivos:** `requirements.txt`, `pyproject.toml`, `.env.example`
 
-### [ ] Tarea 2: Endurecer `settings.py`
+### [x] Tarea 2: Endurecer `settings.py`
 **Descripción:** Cerrar las brechas de seguridad de la configuración antes de agregar código.
 **Criterios:**
-- [ ] `settings.py` lee `.env` con `load_dotenv()`
-- [ ] `DEBUG` es `False` por defecto
-- [ ] Sin `SECRET_KEY` real y con `DEBUG=False`, el servidor se niega a arrancar; con `DEBUG=True` usa una clave de desarrollo
-- [ ] `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')` configurado
-- [ ] `ALLOWED_HOSTS` sale del entorno, sin `portal-staging.bkb.cl` (dominio que no existe) por defecto
-- [ ] `django-csp` activo con política estricta: `default-src 'self'`, sin `unsafe-inline`, `frame-ancestors 'none'` (las tareas 8 y 12 le agregan el nonce y el dominio del Space)
-- [ ] Con `DEBUG=False`, cookies con prefijo `__Host-` (`SESSION_COOKIE_NAME`, `CSRF_COOKIE_NAME`), como pide `docs/04`
+- [x] `settings.py` lee `.env` con `load_dotenv()`
+- [x] `DEBUG` es `False` por defecto
+- [x] Sin `SECRET_KEY` real y con `DEBUG=False`, el servidor se niega a arrancar; con `DEBUG=True` usa una clave de desarrollo
+- [x] `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')` configurado
+- [x] `ALLOWED_HOSTS` sale del entorno, sin `portal-staging.bkb.cl` (dominio que no existe) por defecto
+- [x] `django-csp` activo con política estricta: `default-src 'self'`, sin `unsafe-inline`, `frame-ancestors 'none'` (las tareas 8 y 12 le agregan el nonce y el dominio del Space)
+- [x] Con `DEBUG=False`, cookies con prefijo `__Host-` (`SESSION_COOKIE_NAME`, `CSRF_COOKIE_NAME`), como pide `docs/04`
 **Verificación:**
-- [ ] `DJANGO_DEBUG=False` sin clave: `python manage.py check` falla con un mensaje claro
-- [ ] Con clave y hosts de producción: `python manage.py check --deploy` sin advertencias
-- [ ] `.env` local con `DJANGO_DEBUG=True`: `runserver` arranca y `/health/` responde con la cabecera `Content-Security-Policy`
+- [x] `DJANGO_DEBUG=False` sin clave: `python manage.py check` falla con un mensaje claro
+- [x] Con clave y hosts de producción: `python manage.py check --deploy` sin advertencias
+- [x] `.env` local con `DJANGO_DEBUG=True`: `runserver` arranca y `/health/` responde con la cabecera `Content-Security-Policy`
 **Dependencias:** 1 · **Alcance:** S · **Archivos:** `config/settings.py`, `.env.example`
 
 ---
