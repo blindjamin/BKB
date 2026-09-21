@@ -6,6 +6,8 @@
 > No inventes colores, textos ni datos: la fuente de verdad es la referencia del handoff (sección 1) y lo que este plan indique explícitamente.
 
 > **Estado (20-09-2026):** según los commits de la rama `benjamin/2026-09-15-rediseno-landing`, las fases 1 a 7 están implementadas. Falta verificar las fases 8 a 10 (imágenes y rendimiento, control de calidad, documentación) y validar el contenido de la lista D7. Las casillas `[ ]` de este documento no se marcaron una a una.
+>
+> **Actualización (21-09-2026):** después del handoff se hicieron ajustes de diseño (ver `06-bitacora-avances.md`, sesión 5). Ya no aplican: la sección 5.3 (`PortalShowcase`, eliminada del landing) ni "Soy BKB →" en la tarjeta del portal (solo queda "Soy Cliente →"). El carrusel de clientes va superpuesto al hero y "Qué hacemos" es un carrusel infinito con el contenido de `empresabkb.cl`.
 
 ---
 
@@ -137,6 +139,11 @@ Estos puntos **no bloquean el desarrollo**. Implementa con lo que trae el handof
 - [ ] **Métricas:** 150+ proyectos, 40+ clientes y 100 % de certificaciones aprobadas.
 - [ ] **Obras:** Sopraval 450 kVA (Quilpué), ESVAL 800 kVA (Valparaíso) y Castaño con S7-1500 (Santiago).
 - [ ] **Datos de contacto:** teléfono `+56 9 8249 1403`, oficina en Quilpué y `contacto@bkb.cl`. El handoff resuelve el pendiente #3 de la revisión del 15-09, pero hay que confirmarlo.
+
+**Actualización 21-09-2026:** el sitio antiguo `empresabkb.cl` es información verificada por el usuario y sirve para contrastar esta lista.
+- **Logo:** ya hay un `bkb-logo-final.png` circular con fondo transparente. A 44 px seguía sin leerse, por eso el header lo muestra a 52 px.
+- **Sin respaldo en `empresabkb.cl`:** métricas, obras y mercados de esta lista (además de Guardia 24/7 y SEC). Siguen pendientes de decisión.
+- **Teléfonos reales confirmados:** `+56 9 8975 3095` y `+56 9 6191 1593`. No coinciden con el del handoff.
 
 ---
 
