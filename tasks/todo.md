@@ -258,7 +258,7 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 **Descripción:** Crear los recursos y publicar en `portal.empresabkb.cl`. Sin código: yo te guío y tú apruebas cada paso.
 **Criterios:**
 - [ ] PostgreSQL gestionado y la aplicación creados en **NYC3**, la región del Space
-- [ ] Variables de entorno cargadas en App Platform, con prefijo `portal/` y la clave dedicada
+- [ ] Variables de entorno cargadas en App Platform, con prefijo `portal/` y una clave del Space **nueva para producción** (distinta de la de desarrollo; Limited, solo `bkb-space`, Read/Write/Delete, que es lo único que ofrece DigitalOcean)
 - [ ] Dominio `portal.empresabkb.cl` con HTTPS
 - [ ] CORS del Space actualizado con `https://portal.empresabkb.cl`
 - [ ] Primer administrador creado desde la consola de la app

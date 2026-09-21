@@ -83,7 +83,8 @@ Se hace una tarea a la vez (una sola persona). Lo único paralelizable es la doc
 
 | Antes de la tarea | Qué necesito de ti | Dónde |
 |---|---|---|
-| **6** | Crear una **clave de acceso del Space solo para el portal** (no la personal) y pasarla por `.env`, no por el chat | Panel de DigitalOcean → Spaces → Access Keys |
+| **6** | Crear una **clave de acceso del Space solo para el portal** (no la personal) y pasarla por `.env`, no por el chat. Hecho el 21-09-2026: tipo Limited, solo `bkb-space`, permiso **Read/Write/Delete** (DigitalOcean no ofrece Read/Write a secas) | Panel de DigitalOcean → Spaces → Access Keys |
+| **16** | Crear una **clave distinta** para producción (no reutilizar la de desarrollo), con los mismos ajustes, y cargarla solo en App Platform. Así una filtración se revoca sin afectar a la otra | Panel de DigitalOcean → Spaces → Access Keys |
 | **6 y 12** | Agregar **CORS** en `bkb-space` para `http://localhost:8000` (yo te doy la configuración exacta) | Panel de DigitalOcean → Space → Settings |
 | **16** | Aprobar el gasto del **PostgreSQL gestionado (≈ US$ 15/mes)** y de la instancia (≈ US$ 12/mes) | Panel de DigitalOcean |
 | **17** | Elegir un cliente de confianza y un proyecto de prueba para el piloto | — |
@@ -95,7 +96,7 @@ Se hace una tarea a la vez (una sola persona). Lo único paralelizable es la doc
 | Un cliente ve proyectos que no se le asignaron | **Alto** | Función única + matriz de pruebas (tarea 5) antes de construir cualquier pantalla + 404 uniforme |
 | Se sube por error un archivo que el cliente no debía ver, y se ve de inmediato | Medio | Personal capacitado; el autor o el administrador lo borra y el borrado lógico lo oculta al instante; `subido_por` y `eliminado_por` dejan trazabilidad. Si resulta insuficiente, se agrega la marca de visibilidad más adelante |
 | POST prefirmado o CORS mal configurados en el Space | Medio | Prueba manual contra el Space real en la tarea 6, antes de tocar la interfaz |
-| La clave del Space tiene acceso al bucket completo, incluidos los archivos antiguos | Medio | El código solo construye claves con UUID + prefijo, no lista ni borra, y hay pruebas que lo verifican. Clave dedicada, guardada solo en variables de entorno |
+| La clave del Space tiene acceso al bucket completo, incluidos los archivos antiguos, y puede **leer, escribir y borrar** (DigitalOcean no permite quitarle el borrado ni limitarla a un prefijo) | Medio | La protección es solo el código: `storage.py` no tiene funciones para listar ni borrar, valida toda clave contra el prefijo (con pruebas que lo verifican) y el borrado del portal es siempre lógico. Una clave por entorno (desarrollo y producción), guardadas solo en `.env` y en variables de App Platform. Si se sospecha una filtración, se revoca de inmediato en el panel |
 | Una sola instancia y sin staging: un despliegue malo afecta a producción | Medio | Todo se prueba en local con `check --deploy`. Despliegue solo desde `main` y por PR. Respaldo diario del PostgreSQL gestionado |
 | Una sola persona mantiene el sistema | Medio | Documentación al día en cada tarea (`docs/06`) y la spec (`docs/03`) marcada como implementada en la tarea 17 |
 | Django 5.2 con `django-axes` 8 o `django-csp` 4 podría chocar | Bajo | Se comprueba con una instalación limpia en la tarea 1, antes de escribir código |
