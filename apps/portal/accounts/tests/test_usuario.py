@@ -54,10 +54,13 @@ class CrearUsuarioTests(TestCase):
         self.assertIn('email', ctx.exception.message_dict)
 
     def test_entra_con_correo_sin_importar_mayusculas(self):
+        from django.http import HttpRequest
+        req = HttpRequest()
+        req.META['REMOTE_ADDR'] = '127.0.0.1'
         Usuario.objects.create_user('ana@bkb.cl', CLAVE)
-        self.assertIsNotNone(authenticate(username='Ana@BKB.cl', password=CLAVE))
-        self.assertIsNone(authenticate(username='ana@bkb.cl', password='otra'))
-        self.assertIsNone(authenticate(username='nadie@bkb.cl', password=CLAVE))
+        self.assertIsNotNone(authenticate(request=req, username='Ana@BKB.cl', password=CLAVE))
+        self.assertIsNone(authenticate(request=req, username='ana@bkb.cl', password='otra'))
+        self.assertIsNone(authenticate(request=req, username='nadie@bkb.cl', password=CLAVE))
 
 
 class SuperusuarioTests(TestCase):

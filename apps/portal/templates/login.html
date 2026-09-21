@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión - BKB Portal{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h1>Portal de Archivos</h1>
+    
+    {% if form.errors %}
+        <p class="text-danger text-center">Correo o contraseña incorrectos.</p>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_username">Correo</label>
+            <input type="email" name="username" id="id_username" required autofocus>
+        </div>
+        <div class="form-group">
+            <label for="id_password">Contraseña</label>
+            <input type="password" name="password" id="id_password" required>
+        </div>
+        <button type="submit" class="btn-primary">Entrar</button>
+    </form>
+</div>
+{% endblock %}

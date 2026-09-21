@@ -1,0 +1,19 @@
+@import "./colors.css";
+@import "./themes.css";
+@import "./typography.css";
+
+/* Reset y estilos base BKB */
+:root {
+  --bkb-radius-card: 16px;
+  --bkb-radius-card-lg: 18px;
+  --bkb-radius-input: 10px;
+  --bkb-radius-pill: 999px;
+  
+  --bkb-container: 1360px;
+  --bkb-gutter: 40px;
+}
+
+*:focus-visible {
+  outline: 3px solid var(--bkb-salmon-500);
+  outline-offset: 2px;
+}

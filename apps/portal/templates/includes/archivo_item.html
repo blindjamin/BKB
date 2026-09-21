@@ -1,0 +1,22 @@
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px;">
+    <div>
+        <div style="font-weight: bold; margin-bottom: 0.25rem;">{{ archivo.nombre_original }}</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">
+            Subido por {{ archivo.subido_por.email }} • {{ archivo.subido_en|date:"d M Y, H:i" }}
+        </div>
+    </div>
+    <div style="text-align: right;">
+        <div style="font-size: 0.875rem; font-weight: bold; color: var(--text-main);">
+            {{ archivo.tamano|filesizeformat }}
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="{% url 'documentos:descargar_archivo' archivo.pk %}" style="font-size: 0.75rem; color: var(--bkb-salmon-700); font-weight: bold; text-decoration: none;">⬇ Descargar</a>
+            {% if user.is_superuser or user == archivo.subido_por %}
+            <form action="{% url 'documentos:eliminar_archivo' archivo.pk %}" method="post" onsubmit="return confirm('¿Seguro? El archivo dejará de verse para todos.')" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" style="font-size: 0.75rem; color: #dc3545; font-weight: bold; background: none; border: none; cursor: pointer; padding: 0;">🗑 Eliminar</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>

@@ -6,17 +6,17 @@ import Services from '../components/landing/Services.astro';
 import Stats from '../components/landing/Stats.astro';
 import Markets from '../components/landing/Markets.astro';
 import Portfolio from '../components/landing/Portfolio.astro';
-import PortalShowcase from '../components/landing/PortalShowcase.astro';
 import QuoteSection from '../components/landing/QuoteSection.astro';
 ---
 
 <Layout title="BKB | Obras Eléctricas & Servicios" headerMode="reveal">
-  <Hero />
-  <ClientsMarquee />
+  <div class="relative">
+    <Hero />
+    <ClientsMarquee />
+  </div>
   <Services />
   <Stats />
   <Markets />
   <Portfolio />
-  <PortalShowcase />
   <QuoteSection />
 </Layout>

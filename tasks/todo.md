@@ -109,74 +109,74 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] Toda rama de `permisos.py` tiene al menos una prueba
 **Dependencias:** 4 · **Alcance:** S · **Archivos:** `documentos/permisos.py`, `documentos/tests/test_permisos.py`
 
-### [ ] Tarea 6: Conexión con el Space
+### [x] Tarea 6: Conexión con el Space
 **Descripción:** Módulo que firma URLs y confirma objetos en el Space, sin salir nunca del prefijo del portal.
 **Criterios:**
-- [ ] `storage.py`: `clave_para(proyecto, archivo)` (prefijo + UUID), URL de descarga de 60 s como adjunto con el nombre original, POST prefirmado con límite de tamaño y de tipo, y `tamano_en_space(clave)`
-- [ ] No existen funciones para listar ni borrar
-- [ ] Variables `SPACES_*` leídas de `settings.py`
-- [ ] Prueba manual contra el Space real con prefijo `portal-dev/`
+- [x] `storage.py`: `clave_para(proyecto, archivo)` (prefijo + UUID), URL de descarga de 60 s como adjunto con el nombre original, POST prefirmado con límite de tamaño y de tipo, y `tamano_en_space(clave)`
+- [x] No existen funciones para listar ni borrar
+- [x] Variables `SPACES_*` leídas de `settings.py` (el prefijo se valida al arrancar: vacío, sin `/` final o con `..` impide iniciar)
+- [x] Prueba manual contra el Space real con prefijo `portal-dev/`
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_storage` (cliente S3 simulado): toda clave empieza con el prefijo, la URL expira en 60 s, el POST incluye `content-length-range`
-- [ ] Manual (`python manage.py shell`): subir un archivo con el POST prefirmado desde un script, ver el objeto bajo `portal-dev/` en el panel de DigitalOcean y descargarlo con la URL prefirmada
+- [x] `python manage.py test documentos.tests.test_storage` (firma real offline con claves falsas, y cliente simulado para `head_object`): toda clave empieza con el prefijo, la URL expira en 60 s, el POST incluye `content-length-range`
+- [x] Manual (`python manage.py shell`): subir un archivo con el POST prefirmado desde un script, ver el objeto bajo `portal-dev/` en el panel de DigitalOcean y descargarlo con la URL prefirmada (hecho el 21-09-2026: subida 204, tamaño confirmado, descarga idéntica como adjunto; el Space rechazó 2 MB con límite de 1 MB, 0 bytes, `Content-Type` alterado o ausente y clave cambiada de carpeta; falta tu vistazo a los objetos en el panel)
 **Dependencias:** 4 · **Requiere de ti:** clave dedicada y CORS para `localhost` (ver plan) · **Alcance:** M · **Archivos:** `documentos/storage.py`, `documentos/tests/test_storage.py`, `config/settings.py`, `.env.example`
 
 ### Checkpoint A (tras 5) y B (tras 6)
-- [ ] Todas las pruebas pasan y `check` sin errores
+- [x] Todas las pruebas pasan y `check` sin errores (61 pruebas)
 - [ ] La matriz de permisos cubre los dos tipos de usuario y no deja casos sin probar
-- [ ] Un archivo subido al Space real con la URL prefirmada se descarga bien
+- [x] Un archivo subido al Space real con la URL prefirmada se descarga bien
 - [ ] **Revisión contigo antes de seguir**
 
 ---
 
 ## Fase 3 · Lo que ve el usuario
 
-### [ ] Tarea 7: Login, logout y bloqueo por intentos
+### [x] Tarea 7: Login, logout y bloqueo por intentos
 **Descripción:** El usuario entra con correo y contraseña, y el sistema bloquea la fuerza bruta.
 **Criterios:**
-- [ ] `django-axes` activo (aplicación, middleware y backend); bloqueo tras 5 intentos fallidos
-- [ ] El mensaje de error no revela si el correo existe
-- [ ] `/` exige sesión y redirige a `/login/`; el logout es por POST
-- [ ] Plantilla simple provisional del login (el diseño va en la tarea 8)
+- [x] `django-axes` activo (aplicación, middleware y backend); bloqueo tras 5 intentos fallidos
+- [x] El mensaje de error no revela si el correo existe
+- [x] `/` exige sesión y redirige a `/login/`; el logout es por POST
+- [x] Plantilla simple provisional del login (el diseño va en la tarea 8)
 **Verificación:**
-- [ ] `python manage.py test accounts.tests.test_login`: entrada correcta, error genérico, bloqueo al 5.º fallo, rutas protegidas
-- [ ] Manual: entrar y salir con un usuario creado en `/admin/`
+- [x] `python manage.py test accounts.tests.test_login`: entrada correcta, error genérico, bloqueo al 5.º fallo, rutas protegidas
+- [x] Manual: entrar y salir con un usuario creado en `/admin/`
 **Dependencias:** 3 · **Alcance:** M · **Archivos:** `config/settings.py`, `config/urls.py`, `templates/login.html`, `accounts/tests/test_login.py`
 
-### [ ] Tarea 8: Base visual y tema claro/oscuro
+### [x] Tarea 8: Base visual y tema claro/oscuro
 **Descripción:** Diseño del login y de la estructura común del portal, con los tokens de BKB.
 **Criterios:**
-- [ ] Tokens copiados a `static/tokens/` con el comando documentado
-- [ ] `base.html` con encabezado (logo, usuario, salir) y `portal.css`
-- [ ] Tema claro por defecto, con conmutador a oscuro que se recuerda sin parpadeo (`localStorage` dentro de `try/catch`). El script corto del `<head>` usa el nonce de `django-csp`, sin abrir `unsafe-inline`
-- [ ] La consola del navegador no muestra bloqueos de CSP
-- [ ] Login rediseñado; funciona con teclado, con foco visible y a 375 px
-- [ ] Botones y textos pequeños con contraste AA (usar los tokens `salmon-700`, `text-muted` de la landing)
+- [x] Tokens copiados a `static/tokens/` con el comando documentado
+- [x] `base.html` con encabezado (logo, usuario, salir) y `portal.css`
+- [x] Tema claro por defecto, con conmutador a oscuro que se recuerda sin parpadeo (`localStorage` dentro de `try/catch`). El script corto del `<head>` usa el nonce de `django-csp`, sin abrir `unsafe-inline`
+- [x] La consola del navegador no muestra bloqueos de CSP
+- [x] Login rediseñado; funciona con teclado, con foco visible y a 375 px
+- [x] Botones y textos pequeños con contraste AA (usar los tokens `salmon-700`, `text-muted` de la landing)
 **Verificación:**
-- [ ] Manual a 375 y 1280 px, en ambos temas, y navegación con Tab
-- [ ] **Revisión visual contigo** (referencias: `Mockup-Preliminar/BKB_Portal_-_Propuesta_de_interfaz.pptx` y la landing)
+- [x] Manual a 375 y 1280 px, en ambos temas, y navegación con Tab
+- [x] **Revisión visual contigo** (referencias: `Mockup-Preliminar/BKB_Portal_-_Propuesta_de_interfaz.pptx` y la landing)
 **Dependencias:** 7 · **Alcance:** M · **Archivos:** `templates/base.html`, `templates/login.html`, `static/portal.css`, `static/tema.js`, `static/tokens/*`
 
-### [ ] Tarea 9: Lista de proyectos
+### [x] Tarea 9: Lista de proyectos
 **Descripción:** Al entrar, el personal ve todos los proyectos y cada cliente solo los suyos.
 **Criterios:**
-- [ ] `/` lista `proyectos_visibles(usuario)` con empresa y estado
-- [ ] Mensaje claro cuando un cliente no tiene proyectos asignados
-- [ ] El personal ve todos y el cliente no ve los ajenos
+- [x] `/` lista `proyectos_visibles(usuario)` con empresa y estado
+- [x] Mensaje claro cuando un cliente no tiene proyectos asignados
+- [x] El personal ve todos y el cliente no ve los ajenos
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_vistas_proyectos`
-- [ ] Manual con un usuario personal y uno cliente
+- [x] `python manage.py test documentos.tests.test_vistas_proyectos`
+- [x] Manual con un usuario personal y uno cliente
 **Dependencias:** 5, 8 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/proyectos.html`, `documentos/tests/test_vistas_proyectos.py`
 
-### [ ] Tarea 10: Archivos de un proyecto
+### [x] Tarea 10: Archivos de un proyecto
 **Descripción:** Detalle de un proyecto con su lista de archivos.
 **Criterios:**
-- [ ] `/proyectos/<uuid>/` lista `archivos_visibles` con nombre, tamaño, fecha y quién lo subió
-- [ ] Filtro Fotos/Documentos según el tipo del archivo
-- [ ] Un proyecto no asignado a un cliente responde 404
+- [x] `/proyectos/<uuid>/` lista `archivos_visibles` con nombre, tamaño, fecha y quién lo subió
+- [x] Filtro Fotos/Documentos según el tipo del archivo
+- [x] Un proyecto no asignado a un cliente responde 404
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_vistas_archivos`: el HTML entregado a un cliente **no contiene** proyectos ni archivos de proyectos no asignados, ni archivos eliminados o pendientes
-- [ ] Manual: crear un `Archivo` de prueba desde `/admin/` con la clave del objeto subido en la tarea 6, y verlo como personal y como cliente asignado
+- [x] `python manage.py test documentos.tests.test_vistas_archivos`: el HTML entregado a un cliente **no contiene** proyectos ni archivos de proyectos no asignados, ni archivos eliminados o pendientes
+- [x] Manual: crear un `Archivo` de prueba desde `/admin/` con la clave del objeto subido en la tarea 6, y verlo como personal y como cliente asignado
 **Dependencias:** 9 · **Alcance:** M · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/archivos.html`, `documentos/tests/test_vistas_archivos.py`
 
 ### [ ] Tarea 11: Subida: servidor
@@ -196,7 +196,7 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Barra de avance y mensajes en español (archivo muy grande, tipo no permitido, error de red)
 - [ ] Al terminar, el archivo aparece en la lista
 - [ ] JS de unas 40 líneas, sin librerías
-- [ ] CSP: `connect-src` y `form-action` admiten solo el endpoint del Space (sale de `SPACES_ENDPOINT`), nada más
+- [ ] CSP: `connect-src` y `form-action` admiten solo el endpoint del Space (sale de `SPACES_ENDPOINT`), nada más. Ojo (tarea 6): el POST prefirmado va a `https://{SPACES_BUCKET}.nyc3.digitaloceanspaces.com`, no a `SPACES_ENDPOINT` a secas; el origen de la CSP debe ser ese host
 **Verificación:**
 - [ ] Manual como personal: subir una foto y un PDF reales a `portal-dev/`
 - [ ] Manual como cliente de prueba: no hay botón y un POST directo a la ruta da 403
@@ -209,28 +209,28 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Las pruebas pasan y `check` sin errores
 - [ ] **Revisión contigo**
 
-### [ ] Tarea 13: Descarga con registro
+### [x] Tarea 13: Descarga con registro
 **Descripción:** Descargar un archivo autorizado y dejar constancia.
 **Criterios:**
-- [ ] `/archivos/<uuid>/descargar/` responde 302 a la URL prefirmada de 60 s como adjunto, para personal y para clientes asignados
-- [ ] Se crea un `DescargaLog` (usuario, archivo, fecha e IP, tomando la IP real detrás del proxy)
-- [ ] Sin permiso o archivo inexistente: 404 y sin registro
+- [x] `/archivos/<uuid>/descargar/` responde 302 a la URL prefirmada de 60 s como adjunto, para personal y para clientes asignados
+- [x] Se crea un `DescargaLog` (usuario, archivo, fecha e IP, tomando la IP real detrás del proxy)
+- [x] Sin permiso o archivo inexistente: 404 y sin registro
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_descarga` (cliente S3 simulado)
-- [ ] Manual: descargar una foto real del Space con `portal-dev/` como personal y como cliente asignado
+- [x] `python manage.py test documentos.tests.test_descarga` (cliente S3 simulado)
+- [x] Manual: descargar una foto real del Space con `portal-dev/` como personal y como cliente asignado
 **Dependencias:** 6, 10 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `documentos/tests/test_descarga.py`
 
-### [ ] Tarea 14: Borrar lo propio
+### [x] Tarea 14: Borrar lo propio
 **Descripción:** El personal borra los archivos que subió y el administrador cualquiera. Es un borrado lógico: el archivo desaparece al instante para todos.
 **Criterios:**
-- [ ] `POST /archivos/<uuid>/eliminar/` marca `eliminado_en` y `eliminado_por`; el objeto queda en el Space
-- [ ] El personal solo borra lo que él subió (lo ajeno responde 403); el superusuario borra cualquiera; el cliente recibe 403
-- [ ] Botón "Eliminar" con confirmación ("El archivo dejará de verse para todos"), visible solo para quien puede borrar
-- [ ] Un archivo eliminado desaparece de la lista de inmediato y su descarga responde 404
+- [x] `POST /archivos/<uuid>/eliminar/` marca `eliminado_en` y `eliminado_por`; el objeto queda en el Space
+- [x] El personal solo borra lo que él subió (lo ajeno responde 403); el superusuario borra cualquiera; el cliente recibe 403
+- [x] Botón "Eliminar" con confirmación ("El archivo dejará de verse para todos"), visible solo para quien puede borrar
+- [x] Un archivo eliminado desaparece de la lista de inmediato y su descarga responde 404
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_borrar`: autor, otro personal, superusuario, cliente, archivo ya eliminado y descarga posterior
-- [ ] Manual: subir como personal, borrarlo, y comprobar que un cliente asignado ya no lo ve
-**Dependencias:** 5, 10, 12 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/archivos.html`, `documentos/tests/test_borrar.py`
+- [x] `python manage.py test documentos.tests.test_borrar`: autor, otro personal, superusuario, cliente, archivo ya eliminado y descarga posterior
+- [x] Manual: subir como personal, borrarlo, y comprobar que un cliente asignado ya no lo ve
+**Dependencias:** 12, 13 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/includes/archivo_item.html`, `documentos/tests/test_borrar.py`
 
 ### Checkpoint D (tras 14): la v1 funciona en local
 - [ ] Todas las pruebas pasan
@@ -258,7 +258,7 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 **Descripción:** Crear los recursos y publicar en `portal.empresabkb.cl`. Sin código: yo te guío y tú apruebas cada paso.
 **Criterios:**
 - [ ] PostgreSQL gestionado y la aplicación creados en **NYC3**, la región del Space
-- [ ] Variables de entorno cargadas en App Platform, con prefijo `portal/` y la clave dedicada
+- [ ] Variables de entorno cargadas en App Platform, con prefijo `portal/` y una clave del Space **nueva para producción** (distinta de la de desarrollo; Limited, solo `bkb-space`, Read/Write/Delete, que es lo único que ofrece DigitalOcean)
 - [ ] Dominio `portal.empresabkb.cl` con HTTPS
 - [ ] CORS del Space actualizado con `https://portal.empresabkb.cl`
 - [ ] Primer administrador creado desde la consola de la app

@@ -5,16 +5,15 @@ import { getPath } from '../../utils/paths';
 const year = new Date().getFullYear();
 const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '/BKB/';
 const serviciosHref = isHome ? '#servicios' : `${getPath('/')}#servicios`;
-const portalHref = isHome ? '#portal' : `${getPath('/')}#portal`;
 ---
 
 <footer class="bg-night-950 border-t border-[rgba(255,255,255,0.08)]">
   <div class="mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr] gap-10 px-5 sm:px-10 py-16" style="max-width: var(--bkb-container);">
     
     <div class="flex flex-col gap-3.5">
-      <img src={getPath('/assets/bkb-logo-final.png')} alt={SITE.name} width="auto" height="42" class="h-[42px] w-auto object-contain self-start" />
+      <img src={getPath('/assets/bkb-logo-final.png')} alt={SITE.name} width="auto" height="56" class="h-[56px] w-auto object-contain self-start" />
       <p class="text-[13.5px] leading-relaxed text-[#8391A7] m-0 max-w-[32ch]">
-        Más de 25 años de trayectoria en montaje eléctrico industrial y certificación SEC Clase A en Chile.
+        Más de 30 años de trayectoria en montaje eléctrico industrial y certificación SEC Clase A en Chile.
       </p>
     </div>
     
@@ -28,7 +27,6 @@ const portalHref = isHome ? '#portal' : `${getPath('/')}#portal`;
     
     <div class="flex flex-col gap-3">
       <span class="text-[13px] font-semibold text-[#F8FAFC]">Plataforma</span>
-      <a href={portalHref} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Portal SEC</a>
       <a href={PORTAL_URLS.cliente} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Acceso Clientes</a>
       <a href={PORTAL_URLS.colaborador} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Acceso Colaboradores</a>
     </div>

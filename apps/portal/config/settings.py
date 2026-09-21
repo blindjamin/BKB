@@ -42,7 +42,7 @@ INSTALLED_APPS = [
 
     # Paquetes de terceros
     'csp',
-    # 'axes',  # se activa en la tarea 7
+    'axes',  # se activa en la tarea 7
 
     # Aplicaciones del portal
     'accounts',
@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -123,6 +124,20 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# DigitalOcean Space (solo para firmar URLs; los archivos no pasan por Django)
+SPACES_KEY = os.environ.get('SPACES_KEY', '')
+SPACES_SECRET = os.environ.get('SPACES_SECRET', '')
+SPACES_BUCKET = os.environ.get('SPACES_BUCKET', 'bkb-space')
+SPACES_REGION = os.environ.get('SPACES_REGION', 'nyc3')
+SPACES_ENDPOINT = os.environ.get('SPACES_ENDPOINT', 'https://nyc3.digitaloceanspaces.com')
+# Todo lo que el portal escribe o firma vive bajo este prefijo. Vacío significaría todo el bucket.
+SPACES_PREFIX = os.environ.get('SPACES_PREFIX', 'portal-dev/')
+if not SPACES_PREFIX.endswith('/') or SPACES_PREFIX.startswith('/') or '..' in SPACES_PREFIX or SPACES_PREFIX == '/':
+    raise ImproperlyConfigured(
+        f"SPACES_PREFIX={SPACES_PREFIX!r} no es válido: debe ser una carpeta como 'portal-dev/' o 'portal/'."
+    )
+MAX_UPLOAD_MB = int(os.environ.get('MAX_UPLOAD_MB', '50'))
+
 # Seguridad de Sesiones y Cookies (Plan Sección 5)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
@@ -133,15 +148,24 @@ X_FRAME_OPTIONS = 'DENY'
 
 # Content-Security-Policy estricta, sin 'unsafe-inline'.
 # Las tareas 8 y 12 agregan el nonce del script del tema y el dominio del Space.
+space_host = SPACES_ENDPOINT.replace('https://', '')
+if not space_host.startswith(f"{SPACES_BUCKET}."):
+    space_host = f"{SPACES_BUCKET}.{space_host}"
+space_host_url = f"https://{space_host}"
+
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': [SELF],
+        'script-src': [SELF],
+        'style-src': [SELF],
         'frame-ancestors': [NONE],
         'base-uri': [SELF],
-        'form-action': [SELF],
+        'form-action': [SELF, space_host_url],
         'object-src': [NONE],
+        'connect-src': [SELF, space_host_url],
     },
 }
+CSP_INCLUDE_NONCE_IN = ['script-src', 'style-src']
 
 # Parámetros estrictos de producción activables vía SSL
 if not DEBUG:
@@ -156,3 +180,16 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# Configuración de django-axes
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+AXES_FAILURE_LIMIT = 5
+AXES_LOCKOUT_TEMPLATE = None
+
+# Rutas de autenticación
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
