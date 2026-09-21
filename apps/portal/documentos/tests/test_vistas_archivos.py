@@ -99,30 +99,3 @@ class VistasArchivosTests(TestCase):
         url_falsa = reverse('documentos:detalle_proyecto', args=[uuid.uuid4()])
         response = self.client.get(url_falsa)
         self.assertEqual(response.status_code, 404)
-
-    @patch('documentos.views.url_descarga')
-    def test_descarga_registra_log_y_redirige(self, mock_url_descarga):
-        mock_url_descarga.return_value = 'http://test-space.com/descarga.pdf'
-        
-        self.client.force_login(self.cliente)
-        url_descarga = reverse('documentos:descargar_archivo', args=[self.doc_valido.pk])
-        
-        response = self.client.get(url_descarga)
-        
-        # Redirige a la URL firmada
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, 'http://test-space.com/descarga.pdf')
-        
-        # Registra en DescargaLog
-        from documentos.models import DescargaLog
-        self.assertEqual(DescargaLog.objects.count(), 1)
-        log = DescargaLog.objects.first()
-        self.assertEqual(log.usuario, self.cliente)
-        self.assertEqual(log.archivo, self.doc_valido)
-        self.assertEqual(log.ip, '127.0.0.1')
-        
-    def test_descarga_archivo_ajeno_da_404(self):
-        self.client.force_login(self.cliente_ajeno)
-        url_descarga = reverse('documentos:descargar_archivo', args=[self.doc_valido.pk])
-        response = self.client.get(url_descarga)
-        self.assertEqual(response.status_code, 404)

@@ -209,15 +209,15 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Las pruebas pasan y `check` sin errores
 - [ ] **Revisión contigo**
 
-### [ ] Tarea 13: Descarga con registro
+### [x] Tarea 13: Descarga con registro
 **Descripción:** Descargar un archivo autorizado y dejar constancia.
 **Criterios:**
-- [ ] `/archivos/<uuid>/descargar/` responde 302 a la URL prefirmada de 60 s como adjunto, para personal y para clientes asignados
-- [ ] Se crea un `DescargaLog` (usuario, archivo, fecha e IP, tomando la IP real detrás del proxy)
-- [ ] Sin permiso o archivo inexistente: 404 y sin registro
+- [x] `/archivos/<uuid>/descargar/` responde 302 a la URL prefirmada de 60 s como adjunto, para personal y para clientes asignados
+- [x] Se crea un `DescargaLog` (usuario, archivo, fecha e IP, tomando la IP real detrás del proxy)
+- [x] Sin permiso o archivo inexistente: 404 y sin registro
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_descarga` (cliente S3 simulado)
-- [ ] Manual: descargar una foto real del Space con `portal-dev/` como personal y como cliente asignado
+- [x] `python manage.py test documentos.tests.test_descarga` (cliente S3 simulado)
+- [x] Manual: descargar una foto real del Space con `portal-dev/` como personal y como cliente asignado
 **Dependencias:** 6, 10 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `documentos/tests/test_descarga.py`
 
 ### [ ] Tarea 14: Borrar lo propio
