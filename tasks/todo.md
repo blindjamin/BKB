@@ -72,17 +72,17 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 
 ## Fase 2 · Núcleo: datos, permisos y Space
 
-### [ ] Tarea 3: Usuario con tipo (personal o cliente)
+### [x] Tarea 3: Usuario con tipo (personal o cliente)
 **Descripción:** Usuario personalizado que entra con correo y es de tipo personal o cliente. **Debe hacerse antes del primer `migrate`.**
 **Criterios:**
-- [ ] App `accounts` con `Usuario` (correo único como login, `rol`: `personal` o `cliente`) y su gestor
-- [ ] `AUTH_USER_MODEL = 'accounts.Usuario'`
-- [ ] `createsuperuser` crea un usuario de tipo `personal` con permisos de superusuario; solo el superusuario entra a `/admin/`
-- [ ] Registrado en el panel de administración, con el tipo visible
-- [ ] Se elimina el `db.sqlite3` local antes de migrar
+- [x] App `accounts` con `Usuario` (correo único como login, `rol`: `personal` o `cliente`) y su gestor
+- [x] `AUTH_USER_MODEL = 'accounts.Usuario'`
+- [x] `createsuperuser` crea un usuario de tipo `personal` con permisos de superusuario; solo el superusuario entra a `/admin/`
+- [x] Registrado en el panel de administración, con el tipo visible
+- [x] Se elimina el `db.sqlite3` local antes de migrar
 **Verificación:**
-- [ ] `python manage.py test accounts`: crear usuarios de los 2 tipos, correo duplicado rechazado, superusuario de tipo personal
-- [ ] `python manage.py migrate` desde cero sin errores
+- [x] `python manage.py test accounts`: crear usuarios de los 2 tipos, correo duplicado rechazado, superusuario de tipo personal
+- [x] `python manage.py migrate` desde cero sin errores
 **Dependencias:** 2 · **Alcance:** M · **Archivos:** `accounts/{apps,models,admin}.py`, `accounts/migrations/0001_initial.py`, `accounts/tests/test_usuario.py`, `config/settings.py`
 
 ### [ ] Tarea 4: Modelos de dominio y panel de administración

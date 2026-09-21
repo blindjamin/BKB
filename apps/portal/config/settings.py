@@ -43,7 +43,13 @@ INSTALLED_APPS = [
     # Paquetes de terceros
     'csp',
     # 'axes',  # se activa en la tarea 7
+
+    # Aplicaciones del portal
+    'accounts',
 ]
+
+# Usuario propio (entra con correo). No se cambia después del primer migrate.
+AUTH_USER_MODEL = 'accounts.Usuario'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
