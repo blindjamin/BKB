@@ -1,0 +1,49 @@
+:root {
+  /* Marca salmón (constante en ambos temas) */
+  --bkb-salmon-300: #FFA580;  /* acentos pequeños sobre oscuro */
+  --bkb-salmon-500: #FA5A36;  /* color de marca */
+  --bkb-salmon-600: #E04825;
+  --bkb-salmon-700: #C2410C;  /* D3: botón primario / texto salmón en claro */
+  --bkb-salmon-800: #9A3412;  /* D3: hover botón primario */
+  --bkb-salmon-soft: #FFF4EE;
+
+  /* Superficies nocturnas fijas (hero, guardia, maqueta portal, footer) */
+  --bkb-night-950: #05080E;   /* footer */
+  --bkb-night-900: #080C14;   /* fondo oscuro / overlay hero */
+  --bkb-night-800: #0F172A;   /* tarjetas oscuras */
+  --bkb-night-700: #162035;   /* barra de maqueta / degradado guardia */
+
+  /* Semánticos */
+  --bkb-success: #10B981;
+  --bkb-warning: #F59E0B;
+  --bkb-danger:  #EF4444;
+  --bkb-locked:  #7F7269;
+
+  /* Tinta y neutros cálidos (tema claro) */
+  --bkb-ink-900: #1A1513;
+  --bkb-sand-600: #7D6F64;
+  --bkb-sand-500: #9A8F86;
+  --bkb-sand-300: #F5D9C7;
+  --bkb-paper-100: #FAF6F2;
+
+  /* Semáforo normativo SEC: CONSERVAR los --bkb-sec-* actuales sin cambios (los usa el portal) */
+  --bkb-sec-ok-text: #1E6B47;
+  --bkb-sec-ok-bg: #E6F4EC;
+  --bkb-sec-ok-border: #C3E6D2;
+
+  --bkb-sec-warning-text: #B85D0A;
+  --bkb-sec-warning-bg: #FEF3E6;
+  --bkb-sec-warning-border: #FBD6B0;
+
+  --bkb-sec-danger-text: #A8271B;
+  --bkb-sec-danger-bg: #FDEEED;
+  --bkb-sec-danger-border: #F7C6C2;
+
+  --bkb-sec-info-text: #1B5887;
+  --bkb-sec-info-bg: #EBF3F9;
+  --bkb-sec-info-border: #CBE0F0;
+
+  --bkb-sec-reserved-text: #7F7269;
+  --bkb-sec-reserved-bg: #F0EAE3;
+  --bkb-sec-reserved-border: #DED5CC;
+}

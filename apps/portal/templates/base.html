@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BKB Portal{% endblock %}</title>
+    
+    <link rel="stylesheet" href="{% static 'portal.css' %}">
+    
+    <script nonce="{{ request.csp_nonce }}">
+        try {
+            var savedTheme = localStorage.getItem('bkb-theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        } catch (e) {}
+    </script>
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <header>
+        <div class="logo">
+            <svg width="60" height="24" viewBox="0 0 100 40" fill="var(--bkb-salmon-500)" aria-hidden="true">
+                <text x="0" y="30" font-family="sans-serif" font-weight="bold" font-size="30">BKB</text>
+            </svg>
+        </div>
+        <div class="header-actions">
+            <span class="header-email">{{ user.email }}</span>
+            <button class="theme-toggle" id="theme-toggle-btn" aria-label="Cambiar tema">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                </svg>
+            </button>
+            <form method="post" action="{% url 'logout' %}" style="display:inline; margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="btn-link">Salir</button>
+            </form>
+        </div>
+    </header>
+    {% endif %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{% static 'tema.js' %}" nonce="{{ request.csp_nonce }}"></script>
+</body>
+</html>

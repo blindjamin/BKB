@@ -1,0 +1,18 @@
+:root {
+  /* Familias tipográficas */
+  --bkb-font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --bkb-font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --bkb-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Escalas tipográficas Handoff */
+  --bkb-text-h1: clamp(2.25rem, 1.2rem + 4.2vw, 3.5rem);  /* 56px fluido */
+  --bkb-text-h2: clamp(1.75rem, 1.2rem + 1.8vw, 2.25rem); /* 36px fluido */
+  
+  --bkb-text-body-lg: 1.125rem;    /* 18px */
+  --bkb-text-body-base: 0.9375rem; /* 15px */
+  --bkb-text-body-sm: 0.875rem;    /* 14px */
+  --bkb-text-body-xs: 0.84375rem;  /* 13.5px */
+  
+  --bkb-text-mono-base: 0.75rem;   /* 12px */
+  --bkb-text-mono-sm: 0.65625rem;  /* 10.5px */
+}

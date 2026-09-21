@@ -24,3 +24,10 @@ pip install -r requirements.txt
 python manage.py runserver
 ```
 Las variables de entorno van en un archivo `.env` local que **nunca** se versiona. Su plantilla (`.env.example`) se crea en la tarea 1 del plan.
+
+## Actualizar Tokens de Diseño
+El portal usa los estilos definidos en `packages/tokens`. Para copiarlos al portal (ejecutar desde `apps/portal/`):
+```powershell
+New-Item -ItemType Directory -Force -Path static\tokens
+Copy-Item -Recurse -Force ..\..\packages\tokens\src\* static\tokens\
+```

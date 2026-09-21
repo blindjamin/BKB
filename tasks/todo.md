@@ -143,18 +143,18 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] Manual: entrar y salir con un usuario creado en `/admin/`
 **Dependencias:** 3 · **Alcance:** M · **Archivos:** `config/settings.py`, `config/urls.py`, `templates/login.html`, `accounts/tests/test_login.py`
 
-### [ ] Tarea 8: Base visual y tema claro/oscuro
+### [x] Tarea 8: Base visual y tema claro/oscuro
 **Descripción:** Diseño del login y de la estructura común del portal, con los tokens de BKB.
 **Criterios:**
-- [ ] Tokens copiados a `static/tokens/` con el comando documentado
-- [ ] `base.html` con encabezado (logo, usuario, salir) y `portal.css`
-- [ ] Tema claro por defecto, con conmutador a oscuro que se recuerda sin parpadeo (`localStorage` dentro de `try/catch`). El script corto del `<head>` usa el nonce de `django-csp`, sin abrir `unsafe-inline`
-- [ ] La consola del navegador no muestra bloqueos de CSP
-- [ ] Login rediseñado; funciona con teclado, con foco visible y a 375 px
-- [ ] Botones y textos pequeños con contraste AA (usar los tokens `salmon-700`, `text-muted` de la landing)
+- [x] Tokens copiados a `static/tokens/` con el comando documentado
+- [x] `base.html` con encabezado (logo, usuario, salir) y `portal.css`
+- [x] Tema claro por defecto, con conmutador a oscuro que se recuerda sin parpadeo (`localStorage` dentro de `try/catch`). El script corto del `<head>` usa el nonce de `django-csp`, sin abrir `unsafe-inline`
+- [x] La consola del navegador no muestra bloqueos de CSP
+- [x] Login rediseñado; funciona con teclado, con foco visible y a 375 px
+- [x] Botones y textos pequeños con contraste AA (usar los tokens `salmon-700`, `text-muted` de la landing)
 **Verificación:**
-- [ ] Manual a 375 y 1280 px, en ambos temas, y navegación con Tab
-- [ ] **Revisión visual contigo** (referencias: `Mockup-Preliminar/BKB_Portal_-_Propuesta_de_interfaz.pptx` y la landing)
+- [x] Manual a 375 y 1280 px, en ambos temas, y navegación con Tab
+- [x] **Revisión visual contigo** (referencias: `Mockup-Preliminar/BKB_Portal_-_Propuesta_de_interfaz.pptx` y la landing)
 **Dependencias:** 7 · **Alcance:** M · **Archivos:** `templates/base.html`, `templates/login.html`, `static/portal.css`, `static/tema.js`, `static/tokens/*`
 
 ### [ ] Tarea 9: Lista de proyectos

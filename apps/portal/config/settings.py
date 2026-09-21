@@ -151,12 +151,15 @@ X_FRAME_OPTIONS = 'DENY'
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': [SELF],
+        'script-src': [SELF],
+        'style-src': [SELF],
         'frame-ancestors': [NONE],
         'base-uri': [SELF],
         'form-action': [SELF],
         'object-src': [NONE],
     },
 }
+CSP_INCLUDE_NONCE_IN = ['script-src']
 
 # Parámetros estrictos de producción activables vía SSL
 if not DEBUG:
