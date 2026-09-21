@@ -57,7 +57,8 @@ Cada vez que se vaya a realizar una modificación o avance, se debe crear una ra
 
 3. **Verificar que la compilación y pruebas pasen en verde:**
    ```bash
-   npm run build:web
+   npm run build:web                        # si tocaste el sitio (apps/web)
+   cd apps/portal && python manage.py test  # si tocaste el portal
    ```
 
 4. **Hacer commit de los cambios:**
@@ -86,5 +87,6 @@ Cada vez que se vaya a realizar una modificación o avance, se debe crear una ra
 El repositorio cuenta con la acción `.github/workflows/deploy-pages.yml` activa:
 - Cada push o merge a la rama `desarrollo` compila automáticamente el sitio Astro con `GITHUB_PAGES=true` y lo publica en:
   **`https://blindjamin.github.io/BKB/`**
+- Solo publica el sitio estático (`apps/web`). El portal Django se despliega aparte en DigitalOcean App Platform (ver `docs/03-portal-django.md`).
 - Permite disponer de un enlace público funcional en cualquier momento sin costo de infraestructura mientras no se configure DigitalOcean.
 

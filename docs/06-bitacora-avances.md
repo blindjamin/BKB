@@ -66,3 +66,49 @@ Cuando se retome el trabajo en la siguiente sesión, la IA o desarrollador debe 
    - Crear siempre rama de tarea `benjamin/YYYY-MM-DD-descripcion`.
    - Push a la rama de tarea.
    - Entregar enlace de Pull Request al usuario para merge manual a `desarrollo`.
+
+---
+
+## Sesión 2 · 15 de Septiembre de 2026
+
+### Resumen
+- **Revisión del sitio:** se detectaron 10 pendientes (formularios que enviaban datos por la URL, header roto entre 1024 y 1240 px, contenido de relleno y otros). Se documentaron y el plan de rediseño los resolvió.
+- **Corrección del portal:** `requirements.txt` pasó a usar el paquete correcto `rules`.
+- **Handoff de Claude Design:** se incorporó a `docs/design/handoff-landing/` y se escribió `08-plan-rediseno-landing.md`.
+- **Rediseño implementado** en la rama `benjamin/2026-09-15-rediseno-landing` (ya subida a GitHub), en 4 commits:
+  1. Tokens v2: paleta salmón y temas oscuro y claro.
+  2. Layout v2, header con menú móvil y footer oscuro.
+  3. Landing ensamblada con animaciones, componentes de interfaz e imágenes.
+  4. Redirecciones de las rutas antiguas, páginas legales reestilizadas, limpieza y control de calidad.
+
+### Punto de partida
+Verificar las fases 8 a 10 del plan 08 y validar el contenido de la lista D7.
+
+---
+
+## Sesión 3 · 20 de Septiembre de 2026
+
+### Resumen
+- **Definición del portal:** por entrevista se acordó que el portal es un repositorio de documentos y fotos por proyecto, con tres roles (admin, funcionario, cliente). Lo que sube el cliente es visible de inmediato para todo el proyecto. Lo que sube un funcionario queda interno hasta que se comparte.
+- **Especificación aprobada:** `docs/03-portal-django.md` (sustituye al diseño anterior, en que el cliente no subía archivos).
+- **Plan de implementación:** `tasks/plan.md` y `tasks/todo.md` (17 tareas en 4 fases, con checkpoints).
+- **Decisiones técnicas:** Django 5.2 LTS (el entorno local traía 6.1.1), sin `pytest` (corredor de Django), se quitan `django-htmx`, `rules` y `django-allauth`, CSS propio con tokens en el portal, tema claro por defecto con conmutador, y los archivos antiguos del Space se dejan donde están (el portal usa el prefijo `portal/`).
+- **Limpieza:** se eliminaron `docs/07` (revisión ya resuelta por el rediseño), las copias `scratch_buenosvientos.*` (sitio ajeno), `Handoff de pagina.zip` (idéntico a `docs/design/handoff-landing/`) y `UI Kit/BKB UI Kit completo.zip` (copia anterior a la carpeta).
+- **Documentación actualizada:** `00`, `01`, `02`, `03`, `04`, `05`, `08` y los README del monorepo y del portal.
+
+### Punto de partida para la próxima sesión
+1. Crear la rama del portal desde `desarrollo` (tarea 0) y confirmar la limpieza y actualización de documentos.
+2. Antes de la tarea 6, crear en DigitalOcean una clave del Space solo para el portal y configurar CORS.
+3. Empezar por las tareas 1 y 2 (entorno y `settings.py`) y seguir el orden de `tasks/todo.md`.
+
+---
+
+## Sesión 4 · 21 de Septiembre de 2026
+
+### Resumen
+- **Cambio de requisito:** BKB indicó que el cliente **no puede subir archivos**, solo verlos. Se decidió: dos tipos de usuario (personal y cliente), sin marca interno/compartido (lo que sube el personal se ve de inmediato), el personal ve todos los proyectos y el cliente solo los que se le asignan. El administrador es el superusuario de Django.
+- **Spec v1.1** (`docs/03-portal-django.md`) y plan reescritos: de 17 a **16 tareas**. Se eliminó la tarea "Compartir con el cliente", se achicó la matriz de permisos y la subida pasó a ir antes que la descarga. El antivirus dejó de ser condición del lanzamiento.
+- **Documentación actualizada:** `00`, `03`, `04`, `tasks/plan.md`, `tasks/todo.md`, el README del portal y la nota de vigencia de `Plan-Implementacion-BKB.md`.
+
+### Punto de partida
+Igual que la sesión 3. Decisión posterior del mismo día: **el personal puede borrar lo que él subió y el administrador cualquier archivo** (el cliente nunca). Como el personal no entra al panel de Django, se agregó al plan la tarea 14 "Borrar lo propio": el plan queda en **17 tareas**.

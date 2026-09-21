@@ -1,42 +1,63 @@
 # 02 · Sitio Web Público (Astro)
 
 > **Nota para IAs y desarrolladores frontend:**  
-> Este documento describe la arquitectura, rutas, componentes y directrices de compilación de `apps/web`.
+> Describe la arquitectura, las rutas y los componentes de `apps/web` después del rediseño según el handoff de Claude Design. La referencia visual está en `docs/design/handoff-landing/` y el plan de ejecución en `08-plan-rediseno-landing.md`.
 
 ---
 
 ## 1. Stack Tecnológico
-- **Framework:** Astro 5+
-- **Modo:** Salida Estática (`output: 'static'`)
-- **Estilos:** Tailwind CSS v4 (`@tailwindcss/vite`) + `@bkb/tokens` con utilidades en `src/styles/global.css`.
-- **Activos:** Logotipos vectoriales en `public/` y galería de fotografías reales de obra y tableros en `public/assets/images/`.
-- **Cero JS del Lado del Cliente:** Todo el HTML se pre-renderiza en tiempo de compilación para máxima velocidad y seguridad. Solo pequeños scripts progresivos (menú responsive, copy al portapapeles) se usan en el cliente.
+- **Framework:** Astro 5, salida estática (`output: 'static'`), sin servidor.
+- **Estilos:** Tailwind CSS v4 (`@tailwindcss/vite`) más `@bkb/tokens`, mapeados a utilidades en `src/styles/global.css`. Ver `01-tokens-y-sistema-diseno.md`.
+- **Imágenes:** en `src/assets/` (`brand/`, `clients/`, `icons/`, `landing/`), optimizadas con `astro:assets`.
+- **JavaScript:** solo dos scripts pequeños y vanilla: tema (`src/scripts/theme.ts`) y movimiento (`src/scripts/motion.ts`). El contenido se ve completo sin JS y con `prefers-reduced-motion`.
+- **Hosting:** previsualización en GitHub Pages con base `/BKB`. Todo enlace interno y todo asset pasa por `getPath()` (`src/utils/paths.ts`).
 
 ---
 
 ## 2. Mapa de Rutas
-| Ruta | Archivo Fuente | Propósito |
+| Ruta | Archivo | Propósito |
 |---|---|---|
-| `/` | `src/pages/index.astro` | Portada institucional, propuesta de valor, métricas y banner del portal. |
-| `/servicios` | `src/pages/servicios.astro` | Catálogo de las 5 especialidades de BKB con anclas a cada una. |
-| `/obras` | `src/pages/obras.astro` | Portafolio de proyectos industriales destacados y credenciales. |
-| `/nosotros` | `src/pages/nosotros.astro` | Historia de BKB desde 1999, pilares de trabajo y seguridad en faena. |
-| `/contacto` | `src/pages/contacto.astro` | Formulario de cotización de obras con protección honeypot. |
-| `/trabaja-con-nosotros` | `src/pages/trabaja-con-nosotros.astro` | Convocatorias técnicas y subida de CV con consentimiento Ley 21.719. |
-| `/privacidad` | `src/pages/privacidad.astro` | Política de tratamiento y protección de datos personales. |
-| `/terminos` | `src/pages/terminos.astro` | Términos y condiciones del servicio y portal documental. |
+| `/` | `src/pages/index.astro` | Landing de una página con anclas: `#mercados`, `#servicios`, `#obras`, `#portal`, `#cotizar` |
+| `/trabaja-con-nosotros` | `src/pages/trabaja-con-nosotros.astro` | Postulaciones, con consentimiento de la Ley 21.719 |
+| `/privacidad` | `src/pages/privacidad.astro` | Política de datos personales |
+| `/terminos` | `src/pages/terminos.astro` | Términos y condiciones |
+| `404` | `src/pages/404.astro` | Página de error |
+
+**Redirecciones** (definidas en `astro.config.mjs`, para no romper enlaces ya compartidos): `/servicios` → `/#servicios`, `/obras` → `/#obras`, `/nosotros` → `/#mercados`, `/contacto` → `/#cotizar`.
 
 ---
 
-## 3. Componentes Clave
-- `src/layouts/Layout.astro`: Shell principal. Incluye encabezados de accesibilidad (skip to content), metadatos OpenGraph, Schema.org `LocalBusiness`, y llamada a Header y Footer.
-- `src/components/Header.astro`: Barra de navegación con logo SVG vectorial, estados activos por ruta y botón directo al portal de clientes.
-- `src/components/Footer.astro`: Pie de página institucional con franja de guardia de emergencia 24/7 y enlaces normativos.
-- `src/components/Button.astro`: Botón con variantes `primary`, `secondary` y `tertiary` adaptado a la sensación táctil de faena.
+## 3. Estructura de `src/`
+```
+config/site.ts         Teléfono, correo, oficina, URLs del portal y endpoint del formulario
+data/landing.ts        Datos de las secciones (servicios, métricas, mercados, obras, clientes)
+layouts/Layout.astro   Shell: metadata, Schema.org, script anti-parpadeo del tema, prop headerMode
+components/site/       SiteHeader, MobileNav, ThemeToggle, SiteFooter
+components/landing/    Hero, ClientsMarquee, Services, Stats, Markets, Portfolio, PortalShowcase, QuoteSection
+components/ui/         Card, Eyebrow, PillButton, SectionHeading
+scripts/               theme.ts (tema claro/oscuro), motion.ts (revelado, contadores, header)
+styles/global.css      Tailwind + tokens + keyframes
+```
+
+**Puntos clave**
+- `Layout.astro` recibe `headerMode`: `'reveal'` en la landing (el header aparece al hacer scroll) y `'solid'` en las páginas internas.
+- El tema se guarda en `localStorage['bkb-theme']` y un script `is:inline` lo aplica antes de pintar, para evitar el parpadeo. La landing es oscura por defecto.
+- `config/site.ts` lee `PUBLIC_PORTAL_URL` (por defecto `https://portal.empresabkb.cl`) y `PUBLIC_QUOTE_ENDPOINT`. La plantilla está en `apps/web/.env.example`.
+- **Formulario de cotización:** usa `method="POST"` con `action` igual a `PUBLIC_QUOTE_ENDPOINT`. Sin endpoint, el botón queda deshabilitado con un aviso. Nunca debe existir un `<form>` sin `method`, porque enviaría datos personales por la URL.
+- Los enlaces al portal salen de `PORTAL_URLS`; no escribir `https://portal.empresabkb.cl` a mano.
 
 ---
 
 ## 4. Reglas de Desarrollo
-1. Mantener todas las imágenes en formatos optimizados (SVG vectoriales para logos e íconos, WebP/AVIF para fotografías de faena).
-2. Asegurar que cada nueva página incluya títulos y metadescripciones únicos en las props de `Layout`.
-3. Validar la compilación ejecutando siempre `npm run build:web` antes de confirmar cambios.
+1. Prohibido usar colores hex arbitrarios en clases (`bg-[#FA5A36]`): usar utilidades mapeadas a tokens (`bg-salmon-500`, `bg-page`, `text-muted`).
+2. Todo enlace interno y todo asset pasa por `getPath()`.
+3. Los elementos que se ocultan para animarse (`.reveal`, `.hero-in`) solo lo hacen bajo `html.js`, de modo que sin JavaScript todo se ve.
+4. Cada página lleva título y metadescripción propios en las props de `Layout`.
+5. Botones y textos pequeños con contraste AA: ver decisión D3 en `01-tokens-y-sistema-diseno.md`.
+6. Validar con `npm run build:web` y con `GITHUB_PAGES=true npm run build:web` antes de confirmar cambios.
+
+---
+
+## 5. Pendientes conocidos
+- El botón de envío del formulario de cotización usa `bg-salmon-500` con texto blanco (3,19:1), por debajo del mínimo AA. Corresponde `salmon-700` según D3.
+- Validar el contenido de la lista D7 y verificar las fases 8 a 10 de `08-plan-rediseno-landing.md`.

@@ -6,21 +6,30 @@ Conforme al Plan de Implementación de BKB (Seguridad ASVS Nivel 2).
 import os
 from pathlib import Path
 
+from csp.constants import NONE, SELF
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Clave secreta obtenida desde variable de entorno
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-bkb-dev-key-change-in-production-f8319f3910c2'
-)
+# Lee apps/portal/.env (local, nunca versionado). Lo que ya esté en el entorno tiene prioridad.
+load_dotenv(BASE_DIR / '.env')
 
-# Debug controlado por entorno (falso por defecto en producción)
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
+# Debug controlado por entorno (falso por defecto)
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.environ.get(
-    'DJANGO_ALLOWED_HOSTS',
-    'localhost,127.0.0.1,portal.bkb.cl,portal-staging.bkb.cl'
-).split(',')
+# Clave secreta: obligatoria salvo en desarrollo local (DEBUG=True)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            'Falta DJANGO_SECRET_KEY: con DJANGO_DEBUG=False el portal no arranca sin una '
+            'clave real. Defínela en apps/portal/.env o en las variables del entorno.'
+        )
+    SECRET_KEY = 'django-insecure-bkb-solo-desarrollo-local'
+
+# Sin valores por defecto: con DEBUG=True Django ya acepta localhost y 127.0.0.1
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()]
 
 # Aplicaciones instaladas
 INSTALLED_APPS = [
@@ -30,16 +39,23 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    # Paquetes de terceros recomendados en el plan
-    # 'django_htmx',
-    # 'rules.apps.AutodiscoverRulesConfig',
-    # 'axes',
+
+    # Paquetes de terceros
+    'csp',
+    # 'axes',  # se activa en la tarea 7
+
+    # Aplicaciones del portal
+    'accounts',
+    'documentos',
 ]
+
+# Usuario propio (entra con correo). No se cambia después del primer migrate.
+AUTH_USER_MODEL = 'accounts.Usuario'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'csp.middleware.CSPMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -115,8 +131,25 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Strict'
 X_FRAME_OPTIONS = 'DENY'
 
+# Content-Security-Policy estricta, sin 'unsafe-inline'.
+# Las tareas 8 y 12 agregan el nonce del script del tema y el dominio del Space.
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': [SELF],
+        'frame-ancestors': [NONE],
+        'base-uri': [SELF],
+        'form-action': [SELF],
+        'object-src': [NONE],
+    },
+}
+
 # Parámetros estrictos de producción activables vía SSL
 if not DEBUG:
+    # App Platform termina el HTTPS en su proxy: sin esto, SECURE_SSL_REDIRECT redirige sin fin.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Prefijo __Host-: el navegador solo lo acepta con Secure, Path=/ y sin Domain (docs/04).
+    SESSION_COOKIE_NAME = '__Host-sessionid'
+    CSRF_COOKIE_NAME = '__Host-csrftoken'
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
