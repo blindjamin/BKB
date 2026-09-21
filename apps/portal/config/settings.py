@@ -123,6 +123,20 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# DigitalOcean Space (solo para firmar URLs; los archivos no pasan por Django)
+SPACES_KEY = os.environ.get('SPACES_KEY', '')
+SPACES_SECRET = os.environ.get('SPACES_SECRET', '')
+SPACES_BUCKET = os.environ.get('SPACES_BUCKET', 'bkb-space')
+SPACES_REGION = os.environ.get('SPACES_REGION', 'nyc3')
+SPACES_ENDPOINT = os.environ.get('SPACES_ENDPOINT', 'https://nyc3.digitaloceanspaces.com')
+# Todo lo que el portal escribe o firma vive bajo este prefijo. Vacío significaría todo el bucket.
+SPACES_PREFIX = os.environ.get('SPACES_PREFIX', 'portal-dev/')
+if not SPACES_PREFIX.endswith('/') or SPACES_PREFIX.startswith('/') or '..' in SPACES_PREFIX or SPACES_PREFIX == '/':
+    raise ImproperlyConfigured(
+        f"SPACES_PREFIX={SPACES_PREFIX!r} no es válido: debe ser una carpeta como 'portal-dev/' o 'portal/'."
+    )
+MAX_UPLOAD_MB = int(os.environ.get('MAX_UPLOAD_MB', '50'))
+
 # Seguridad de Sesiones y Cookies (Plan Sección 5)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'

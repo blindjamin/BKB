@@ -112,12 +112,12 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 ### [ ] Tarea 6: Conexión con el Space
 **Descripción:** Módulo que firma URLs y confirma objetos en el Space, sin salir nunca del prefijo del portal.
 **Criterios:**
-- [ ] `storage.py`: `clave_para(proyecto, archivo)` (prefijo + UUID), URL de descarga de 60 s como adjunto con el nombre original, POST prefirmado con límite de tamaño y de tipo, y `tamano_en_space(clave)`
-- [ ] No existen funciones para listar ni borrar
-- [ ] Variables `SPACES_*` leídas de `settings.py`
+- [x] `storage.py`: `clave_para(proyecto, archivo)` (prefijo + UUID), URL de descarga de 60 s como adjunto con el nombre original, POST prefirmado con límite de tamaño y de tipo, y `tamano_en_space(clave)`
+- [x] No existen funciones para listar ni borrar
+- [x] Variables `SPACES_*` leídas de `settings.py` (el prefijo se valida al arrancar: vacío, sin `/` final o con `..` impide iniciar)
 - [ ] Prueba manual contra el Space real con prefijo `portal-dev/`
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_storage` (cliente S3 simulado): toda clave empieza con el prefijo, la URL expira en 60 s, el POST incluye `content-length-range`
+- [x] `python manage.py test documentos.tests.test_storage` (firma real offline con claves falsas, y cliente simulado para `head_object`): toda clave empieza con el prefijo, la URL expira en 60 s, el POST incluye `content-length-range`
 - [ ] Manual (`python manage.py shell`): subir un archivo con el POST prefirmado desde un script, ver el objeto bajo `portal-dev/` en el panel de DigitalOcean y descargarlo con la URL prefirmada
 **Dependencias:** 4 · **Requiere de ti:** clave dedicada y CORS para `localhost` (ver plan) · **Alcance:** M · **Archivos:** `documentos/storage.py`, `documentos/tests/test_storage.py`, `config/settings.py`, `.env.example`
 
@@ -196,7 +196,7 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Barra de avance y mensajes en español (archivo muy grande, tipo no permitido, error de red)
 - [ ] Al terminar, el archivo aparece en la lista
 - [ ] JS de unas 40 líneas, sin librerías
-- [ ] CSP: `connect-src` y `form-action` admiten solo el endpoint del Space (sale de `SPACES_ENDPOINT`), nada más
+- [ ] CSP: `connect-src` y `form-action` admiten solo el endpoint del Space (sale de `SPACES_ENDPOINT`), nada más. Ojo (tarea 6): el POST prefirmado va a `https://{SPACES_BUCKET}.nyc3.digitaloceanspaces.com`, no a `SPACES_ENDPOINT` a secas; el origen de la CSP debe ser ese host
 **Verificación:**
 - [ ] Manual como personal: subir una foto y un PDF reales a `portal-dev/`
 - [ ] Manual como cliente de prueba: no hay botón y un POST directo a la ruta da 403
