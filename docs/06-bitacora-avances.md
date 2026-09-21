@@ -112,3 +112,40 @@ Verificar las fases 8 a 10 del plan 08 y validar el contenido de la lista D7.
 
 ### Punto de partida
 Igual que la sesión 3. Decisión posterior del mismo día: **el personal puede borrar lo que él subió y el administrador cualquier archivo** (el cliente nunca). Como el personal no entra al panel de Django, se agregó al plan la tarea 14 "Borrar lo propio": el plan queda en **17 tareas**.
+
+
+---
+
+## Sesión 5 · 21 de Septiembre de 2026 (ajustes de diseño del landing)
+
+### Resumen
+Trabajo iterativo sobre `apps/web`, viendo el resultado en vivo. Los cambios de código ya están en `desarrollo` (commit `07336c1`, PR #4, junto con el portal). Esta rama solo agrega la documentación.
+
+- **Títulos:** en Tailwind v4, `text-[var(--bkb-text-h1)]` se interpreta como color y no como tamaño, así que el h1 del hero se renderizaba a 16 px. Se corrigió con `text-[length:var(--…)]` en `Hero` y `SectionHeading` (los títulos de todas las secciones estaban chicos).
+- **Hero:** ocupa toda la pantalla y el carrusel de clientes va superpuesto en la parte inferior, sin fondo, con el título "TRAYECTORIA COMPARTIDA" (antes "CONFÍAN EN BKB") en blanco. La etiqueta dice "Obras Eléctricas & Servicios Industriales · Más de 30 años de trayectoria" (25 pasó a 30 en hero, footer, métricas y metadescripción).
+- **Tarjeta del portal:** solo "Soy Cliente →" (se quitó "Soy BKB", porque el login entra siempre por ahí), subtítulo "Gestión Documental" (sin SEC TE1) y el logo circular en lugar del escudo.
+- **Logos:** los 16 logos de clientes tenían márgenes blancos distintos y se veían de tamaños dispares; se recortaron. El logo final es circular con fondo transparente (`public/assets/bkb-logo-final.png`). La ruta que pedían el header y el footer no existía y daba 404.
+- **Portal SEC:** se eliminó la sección `PortalShowcase` (maqueta del portal) para no mostrar la interfaz a personas ajenas, y también los enlaces "Portal SEC" del header y del footer.
+- **Qué hacemos:** tarjetas con foto de fondo y texto centrado. Contenido según empresabkb.cl, quinta tarjeta "Arriendo de Equipos" y carrusel manual infinito.
+
+### Contenido verificado
+El usuario confirmó que `https://empresabkb.cl/` (sitio antiguo en producción) es información real. Comparación con el landing:
+
+| Tema | empresabkb.cl (verificado) | Landing |
+|---|---|---|
+| Servicios | Ingeniería Eléctrica, Automatización PLC, Fabricación Propia, Montaje y Soporte | Ya alineado. Se sumó Arriendo de Equipos (dato del usuario) |
+| Mercados | Industrias primarias y minería, EPCs, shutdowns, modernización | Sin respaldo: Agroindustria, Recursos Hídricos, Energía |
+| Cifras | Ninguna | Sin respaldo: 150+ proyectos, 40+ clientes, 100 % certificaciones |
+| Obras | Ninguna | Sin respaldo: 3 proyectos con kVA |
+| Guardia 24/7 y SEC TE1/Clase A | No aparecen | Sin respaldo |
+| Cobertura | Chile, norte y centro | Valparaíso y Región Metropolitana |
+
+- **Arriendo de equipos:** instrumentación eléctrica, analizadores, y medidores de tierra, de fuga y de aislación, además de calibración.
+- **Teléfonos reales:** `+56 9 8975 3095` y `+56 9 6191 1593`. El landing usa `+56 9 8249 1403` (`config/site.ts`), que no coincide con ninguno.
+
+### Punto de partida
+1. Decidir qué hacer con lo que no tiene respaldo (Mercados, métricas, obras, Guardia 24/7, SEC): reescribirlo con el texto verificado, quitarlo, o conservar lo que el usuario confirme como real.
+2. Elegir el o los teléfonos que van en `config/site.ts`.
+3. Conseguir fotos definitivas para las tarjetas de servicios (hoy son fotos de faena repetidas).
+4. Alinear la lista de servicios del footer, que aún dice "Obras Civiles" y "Mantención 24/7".
+5. Definir el dominio (`empresabkb.cl` o `bkb.cl`) para el correo y el sitio.
