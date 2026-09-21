@@ -47,6 +47,7 @@ html {
   background-color: var(--page-bg);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
 }
 
 body {

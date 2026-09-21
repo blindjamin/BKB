@@ -8,48 +8,57 @@ const serviciosHref = isHome ? '#servicios' : `${getPath('/')}#servicios`;
 const portalHref = isHome ? '#portal' : `${getPath('/')}#portal`;
 ---
 
-<footer class="bg-night-950 border-t border-[rgba(255,255,255,0.08)]">
+<footer class="bg-card border-t border-card-border">
   <div class="mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr] gap-10 px-5 sm:px-10 py-16" style="max-width: var(--bkb-container);">
     
     <div class="flex flex-col gap-3.5">
       <img src={getPath('/assets/bkb-logo-final.png')} alt={SITE.name} width="auto" height="42" class="h-[42px] w-auto object-contain self-start" />
-      <p class="text-[13.5px] leading-relaxed text-[#8391A7] m-0 max-w-[32ch]">
+      <p class="text-[13.5px] leading-relaxed text-muted m-0 max-w-[32ch]">
         Más de 25 años de trayectoria en montaje eléctrico industrial y certificación SEC Clase A en Chile.
       </p>
     </div>
     
     <div class="flex flex-col gap-3">
-      <span class="text-[13px] font-semibold text-[#F8FAFC]">Especialidades</span>
-      <a href={serviciosHref} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Ingeniería Eléctrica</a>
-      <a href={serviciosHref} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Automatización PLC</a>
-      <a href={serviciosHref} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Obras Civiles</a>
-      <a href={serviciosHref} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Mantención 24/7</a>
+      <span class="text-[13px] font-semibold text-main">Especialidades</span>
+      <a href={serviciosHref} class="text-[13.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Ingeniería Eléctrica</a>
+      <a href={serviciosHref} class="text-[13.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Automatización PLC</a>
+      <a href={serviciosHref} class="text-[13.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Obras Civiles</a>
+      <a href={serviciosHref} class="text-[13.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Mantención 24/7</a>
     </div>
     
     <div class="flex flex-col gap-3">
-      <span class="text-[13px] font-semibold text-[#F8FAFC]">Plataforma</span>
-      <a href={portalHref} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Portal SEC</a>
-      <a href={PORTAL_URLS.cliente} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Acceso Clientes</a>
-      <a href={PORTAL_URLS.colaborador} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Acceso Colaboradores</a>
+      <span class="text-[13px] font-semibold text-main">Plataforma</span>
+      <a href={portalHref} class="text-[13.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Portal SEC</a>
+      <a href={PORTAL_URLS.cliente} class="text-[13.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Acceso Clientes</a>
+      <a href={PORTAL_URLS.colaborador} class="text-[13.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">Acceso Colaboradores</a>
     </div>
     
     <div class="flex flex-col gap-3">
-      <span class="text-[13px] font-semibold text-[#F8FAFC]">Contacto</span>
-      <span class="text-[13.5px] text-[#8391A7]">{SITE.office}</span>
-      <a href={SITE.phoneHref} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">{SITE.phoneDisplay}</a>
-      <a href={`mailto:${SITE.email}`} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">{SITE.email}</a>
+      <span class="text-[13px] font-semibold text-main">Contacto</span>
+      <span class="flex items-center gap-2 text-[13.5px] text-muted">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-salmon-500" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        {SITE.office}
+      </span>
+      <a href={SITE.phoneHref} class="flex items-center gap-2 text-[13.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-salmon-500" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+        {SITE.phoneDisplay}
+      </a>
+      <a href={`mailto:${SITE.email}`} class="flex items-center gap-2 text-[13.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-salmon-500" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        {SITE.email}
+      </a>
     </div>
     
   </div>
   
-  <div class="mx-auto border-t border-[rgba(255,255,255,0.07)] flex items-center justify-between flex-wrap gap-3 px-5 sm:px-10 py-5" style="max-width: var(--bkb-container);">
-    <span class="text-[12.5px] text-[#8391A7]">© {year} {SITE.name}</span>
+  <div class="mx-auto border-t border-card-border flex items-center justify-between flex-wrap gap-3 px-5 sm:px-10 py-5" style="max-width: var(--bkb-container);">
+    <span class="text-[12.5px] text-muted">© {year} {SITE.name}</span>
     
     <div class="flex flex-wrap items-center gap-5">
-      <a href={getPath('/trabaja-con-nosotros')} class="text-[12.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">Trabaja con nosotros</a>
-      <a href={getPath('/terminos')} class="text-[12.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">Términos de Servicio</a>
-      <a href={getPath('/privacidad')} class="text-[12.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">Privacidad (Ley 21.719)</a>
-      <a href={PORTAL_URLS.cliente} class="text-[12.5px] font-semibold text-salmon-300 no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">Portal de clientes →</a>
+      <a href={getPath('/trabaja-con-nosotros')} class="text-[12.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">Trabaja con nosotros</a>
+      <a href={getPath('/terminos')} class="text-[12.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">Términos de Servicio</a>
+      <a href={getPath('/privacidad')} class="text-[12.5px] text-muted no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">Privacidad (Ley 21.719)</a>
+      <a href={PORTAL_URLS.cliente} class="text-[12.5px] font-semibold text-accent-text no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">Portal de clientes →</a>
     </div>
   </div>
 </footer>

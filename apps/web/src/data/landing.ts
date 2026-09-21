@@ -15,11 +15,6 @@ import ingefrio from '../assets/clients/brand-ingefrio.png';
 import ingenproyect from '../assets/clients/brand-ingenproyect.png';
 import shs from '../assets/clients/brand-shs.jpg';
 
-import electric from '../assets/icons/electric.png';
-import electronic from '../assets/icons/electronic.png';
-import civil from '../assets/icons/civil.jpg';
-import maintance from '../assets/icons/maintance.png';
-
 import faena1 from '../assets/landing/faena-1.jpg';
 import faena2 from '../assets/landing/faena-2.jpg';
 import faena3 from '../assets/landing/faena-3.jpg';
@@ -51,19 +46,16 @@ export const mercados: MercadoItem[] = [
 ];
 
 export interface ServicioItem {
-  icon: ImageMetadata;
-  iconSize: string;
-  iconFit: 'contain' | 'cover';
   title: string;
   desc: string;
   bullets: string[];
 }
 
 export const servicios: ServicioItem[] = [
-  { icon: electric, iconSize: '28px', iconFit: 'contain', title: 'Ingeniería Eléctrica', desc: 'Montaje de TDF/TDA, mallas a tierra y bandejas portacables pesadas.', bullets: ['Declaración SEC TE1', 'Diseño BT/MT'] },
-  { icon: electronic, iconSize: '30px', iconFit: 'contain', title: 'Automatización & PLC', desc: 'Programación Siemens S7 / Allen-Bradley, pantallas HMI y SCADA.', bullets: ['Variadores de frecuencia', 'Integración SCADA'] },
-  { icon: civil, iconSize: '130%', iconFit: 'cover', title: 'Obras Civiles Industriales', desc: 'Salas eléctricas modulares climatizadas y zanjas para ductos subterráneos.', bullets: ['Radieres técnicos', 'Ductos subterráneos'] },
-  { icon: maintance, iconSize: '28px', iconFit: 'contain', title: 'Mantención & Guardia 24/7', desc: 'Termografía infrarroja de tableros y calibración de protecciones.', bullets: ['Atención de contingencias', 'Termografía IR'] }
+  { title: 'Ingeniería Eléctrica', desc: 'Montaje de TDF/TDA, mallas a tierra y bandejas portacables pesadas.', bullets: ['Declaración SEC TE1', 'Diseño BT/MT'] },
+  { title: 'Automatización & PLC', desc: 'Programación Siemens S7 / Allen-Bradley, pantallas HMI y SCADA.', bullets: ['Variadores de frecuencia', 'Integración SCADA'] },
+  { title: 'Obras Civiles Industriales', desc: 'Salas eléctricas modulares climatizadas y zanjas para ductos subterráneos.', bullets: ['Radieres técnicos', 'Ductos subterráneos'] },
+  { title: 'Mantención & Guardia 24/7', desc: 'Termografía infrarroja de tableros y calibración de protecciones.', bullets: ['Atención de contingencias', 'Termografía IR'] }
 ];
 
 export interface PortfolioItem {
@@ -103,3 +95,16 @@ export const brands: BrandItem[] = [
 ];
 
 export const quoteOptions: string[] = ['Montaje TDF', 'Automatización', 'Trámite TE1', 'Mantención'];
+
+export interface TestimonialItem {
+  quote: string;
+  name: string;
+  role: string;
+}
+
+// TODO: PLACEHOLDER FICTICIO — reemplazar por reseñas reales (Google/clientes) antes de publicar a producción.
+export const testimonials: TestimonialItem[] = [
+  { quote: 'El equipo de BKB respondió a una falla crítica de tablero fuera de horario y evitó varias horas de parada de línea. Profesionalismo total de principio a fin.', name: 'J. Contreras', role: 'Jefe de Mantención · Sector Agroindustrial' },
+  { quote: 'Cumplieron los plazos comprometidos en el montaje de la subestación y toda la documentación SEC quedó en regla desde el primer día.', name: 'M. Herrera', role: 'Gerente de Proyectos · Sector Sanitario' },
+  { quote: 'Llevamos años trabajando con BKB en mantenciones preventivas. Comunicación clara, orden en terreno y un equipo técnico muy capacitado.', name: 'R. Salinas', role: 'Superintendente Eléctrico · Sector Energía' },
+];

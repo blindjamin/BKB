@@ -4,19 +4,25 @@ import Hero from '../components/landing/Hero.astro';
 import ClientsMarquee from '../components/landing/ClientsMarquee.astro';
 import Services from '../components/landing/Services.astro';
 import Stats from '../components/landing/Stats.astro';
+import About from '../components/landing/About.astro';
 import Markets from '../components/landing/Markets.astro';
 import Portfolio from '../components/landing/Portfolio.astro';
+import Testimonials from '../components/landing/Testimonials.astro';
 import PortalShowcase from '../components/landing/PortalShowcase.astro';
 import QuoteSection from '../components/landing/QuoteSection.astro';
+import LocationMap from '../components/landing/LocationMap.astro';
 ---
 
-<Layout title="BKB | Obras Eléctricas & Servicios" headerMode="reveal">
+<Layout title="BKB | Obras Eléctricas & Servicios" headerMode="solid">
   <Hero />
   <ClientsMarquee />
   <Services />
   <Stats />
+  <About />
   <Markets />
   <Portfolio />
+  <Testimonials />
   <PortalShowcase />
   <QuoteSection />
+  <LocationMap />
 </Layout>

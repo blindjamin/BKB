@@ -3,7 +3,8 @@ export const SITE = {
   phoneDisplay: '+56 9 8249 1403',
   phoneHref: 'tel:+56982491403',
   email: 'contacto@bkb.cl',
-  office: 'Quilpué, Región de Valparaíso',
+  office: 'La Calera, Región de Valparaíso',
+  officeAddress: 'El Parque 110, La Calera, Región de Valparaíso',
   coverage: 'Valparaíso y Región Metropolitana',
 } as const;
 

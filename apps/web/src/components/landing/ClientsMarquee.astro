@@ -4,8 +4,8 @@ import { brands } from '../../data/landing';
 import Eyebrow from '../ui/Eyebrow.astro';
 ---
 
-<section class="py-12 border-y border-card-border overflow-hidden bg-page">
-  <div class="text-center mb-8 reveal">
+<section class="py-6 border-y border-card-border overflow-hidden bg-page">
+  <div class="text-center mb-4 reveal">
     <Eyebrow text="CONFÍAN EN BKB" />
   </div>
 
@@ -15,8 +15,8 @@ import Eyebrow from '../ui/Eyebrow.astro';
       <!-- Primera vuelta -->
       <ul class="marquee-list m-0 p-0 list-none flex items-center gap-6">
         {brands.map(brand => (
-          <li class="shrink-0 w-[150px] h-[84px] bg-white rounded-[10px] flex items-center justify-center p-3">
-            <Image src={brand.img} alt={brand.alt} class="w-full h-full object-contain mix-blend-multiply" />
+          <li class="shrink-0 w-[150px] h-[84px] flex items-center justify-center p-3">
+            <Image src={brand.img} alt={brand.alt} class="w-full h-full object-contain grayscale opacity-60 transition-all duration-300 hover:grayscale-0 hover:opacity-100 hover:scale-110" />
           </li>
         ))}
       </ul>
@@ -24,8 +24,8 @@ import Eyebrow from '../ui/Eyebrow.astro';
       <!-- Segunda vuelta (oculta para lectores de pantalla) -->
       <ul class="marquee-list m-0 p-0 list-none flex items-center gap-6" aria-hidden="true">
         {brands.map(brand => (
-          <li class="shrink-0 w-[150px] h-[84px] bg-white rounded-[10px] flex items-center justify-center p-3">
-            <Image src={brand.img} alt="" class="w-full h-full object-contain mix-blend-multiply" />
+          <li class="shrink-0 w-[150px] h-[84px] flex items-center justify-center p-3">
+            <Image src={brand.img} alt="" class="w-full h-full object-contain grayscale opacity-60 transition duration-300 hover:grayscale-0 hover:opacity-100" />
           </li>
         ))}
       </ul>
@@ -44,7 +44,10 @@ import Eyebrow from '../ui/Eyebrow.astro';
     display: flex;
     gap: 1.5rem; /* gap-6 (24px) */
     width: max-content;
-    animation: marqueeScroll 32s linear infinite;
+    animation: marqueeScroll 55s linear infinite;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
   }
 
   .pause {

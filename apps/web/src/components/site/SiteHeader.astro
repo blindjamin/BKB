@@ -12,6 +12,7 @@ const { mode = 'solid' } = Astro.props;
 const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '/BKB/';
 const navLinks = [
   { href: isHome ? '#top' : getPath('/'), label: 'Inicio' },
+  { href: isHome ? '#nosotros' : `${getPath('/')}#nosotros`, label: 'Nosotros' },
   { href: isHome ? '#mercados' : `${getPath('/')}#mercados`, label: 'Mercados' },
   { href: isHome ? '#servicios' : `${getPath('/')}#servicios`, label: 'Servicios' },
   { href: isHome ? '#obras' : `${getPath('/')}#obras`, label: 'Obras' },
@@ -21,7 +22,7 @@ const navLinks = [
 
 const headerClasses = mode === 'reveal' 
   ? 'site-header-reveal fixed top-0 left-0 right-0 z-50 pointer-events-none opacity-0 -translate-y-full'
-  : 'site-header-solid sticky top-0 z-50 transition-colors duration-300 backdrop-blur-md border-b bg-page/80 border-card-border';
+  : 'site-header-solid sticky top-0 z-50 transition-colors duration-300 backdrop-blur-md border-b bg-page/95 border-card-border shadow-sm';
 ---
 
 <header class={headerClasses} id="site-header" data-mode={mode}>
@@ -31,14 +32,15 @@ const headerClasses = mode === 'reveal'
       <a href={getPath('/')} class="focus-bkb rounded-sm block">
         <img src={getPath('/assets/bkb-logo-final.png')} alt="BKB Ingeniería Eléctrica & Servicios" width="auto" height="44" class="h-[44px] w-auto object-contain" />
       </a>
-      <span class="hidden xl:inline-flex items-center px-2.5 py-1 rounded-pill bg-success/10 text-success font-mono text-[11px] font-bold tracking-[0.04em] whitespace-nowrap">
-        SEC CLASE A
-      </span>
     </div>
 
     <nav class="hidden xl:flex items-center gap-[30px]" aria-label="Navegación principal">
       {navLinks.map(link => (
-        <a href={link.href} class="text-main font-medium text-sm transition-colors hover:text-salmon-500 focus-bkb rounded-sm p-1">
+        <a
+          href={link.href}
+          data-navlink={link.href.replace(/^.*#/, '')}
+          class="navlink relative text-main font-medium text-sm transition-colors hover:text-salmon-500 focus-bkb rounded-sm p-1"
+        >
           {link.label}
         </a>
       ))}
@@ -47,7 +49,7 @@ const headerClasses = mode === 'reveal'
     <div class="flex items-center gap-3">
       <ThemeToggle />
       
-      <a href={PORTAL_URLS.home} class="hidden xl:inline-flex items-center gap-2 px-[18px] py-[10px] rounded-pill bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.2)] text-main text-sm font-semibold backdrop-blur-[8px] transition-colors hover:border-salmon-500 hover:text-salmon-500 focus-bkb" style="html[data-theme='light'] & { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }">
+      <a href={PORTAL_URLS.home} class="hidden xl:inline-flex items-center gap-2 px-[18px] py-[10px] rounded-pill bg-card border border-card-border text-main text-sm font-semibold transition-colors hover:border-salmon-500 hover:text-salmon-500 focus-bkb">
         Acceso Portal
       </a>
       
@@ -89,4 +91,65 @@ const headerClasses = mode === 'reveal'
       padding: 14px 16px !important;
     }
   }
+
+  .navlink::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: -2px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--bkb-salmon-500);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .navlink:hover::after,
+  .navlink.is-active::after {
+    transform: scaleX(1);
+  }
+  .navlink.is-active {
+    color: var(--bkb-salmon-500);
+  }
 </style>
+
+<script>
+  function initActiveNav() {
+    const navLinks = document.querySelectorAll<HTMLAnchorElement>('.navlink[data-navlink]');
+    if (!navLinks.length) return;
+
+    const sections: { id: string; el: Element; link: HTMLAnchorElement }[] = [];
+    navLinks.forEach(link => {
+      const id = link.dataset.navlink;
+      if (!id) return;
+      const el = document.getElementById(id);
+      if (el) sections.push({ id, el, link });
+    });
+    if (!sections.length) return;
+
+    const setActive = (id: string | null) => {
+      navLinks.forEach(link => {
+        link.classList.toggle('is-active', link.dataset.navlink === id);
+      });
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter(e => e.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+      if (visible.length > 0) {
+        const match = sections.find(s => s.el === visible[0].target);
+        if (match) setActive(match.id);
+      }
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] });
+
+    sections.forEach(s => observer.observe(s.el));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initActiveNav);
+  } else {
+    initActiveNav();
+  }
+</script>

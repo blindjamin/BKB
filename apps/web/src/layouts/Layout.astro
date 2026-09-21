@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import SiteHeader from '../components/site/SiteHeader.astro';
 import SiteFooter from '../components/site/SiteFooter.astro';
+import WhatsAppButton from '../components/site/WhatsAppButton.astro';
 import { getPath } from '../utils/paths';
 import { SITE } from '../config/site';
 
@@ -39,7 +40,8 @@ const schemaOrg = {
   },
   "address": {
     "@type": "PostalAddress",
-    "addressLocality": "Quilpué",
+    "streetAddress": "El Parque 110",
+    "addressLocality": "La Calera",
     "addressRegion": "Valparaíso",
     "addressCountry": "CL"
   }
@@ -97,7 +99,8 @@ const schemaOrg = {
     </main>
 
     <SiteFooter />
-    
+    <WhatsAppButton />
+
     <script src="../scripts/theme.ts"></script>
     <script src="../scripts/motion.ts"></script>
   </body>

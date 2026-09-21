@@ -1,0 +1,48 @@
+---
+import { Image } from 'astro:assets';
+import SectionHeading from '../ui/SectionHeading.astro';
+import { SITE } from '../../config/site';
+import faena2 from '../../assets/landing/faena-2.jpg';
+---
+
+<section id="nosotros" class="py-24 border-t border-card-border scroll-mt-[80px]">
+  <div class="max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10 grid grid-cols-1 lg:grid-cols-[1fr_0.9fr] gap-12 lg:gap-16 items-start">
+
+    <div class="reveal flex flex-col gap-5 order-2 lg:order-1">
+      <SectionHeading eyebrow="NOSOTROS" title="Más de dos décadas construyendo confianza." />
+
+      <p class="text-[15.5px] leading-[1.7] text-muted m-0 -mt-6">
+        Desde nuestra base en {SITE.office}, ejecutamos montajes eléctricos, automatización industrial y mantención preventiva para plantas de alta exigencia operativa en {SITE.coverage}.
+      </p>
+      <p class="text-[15.5px] leading-[1.7] text-muted m-0">
+        Hemos completado más de 150 proyectos de alta y baja tensión para más de 40 clientes corporativos activos en agroindustria, recursos hídricos y generación de energía, siempre bajo declaración y certificación SEC vigente.
+      </p>
+
+      <div class="flex flex-wrap gap-3 mt-2">
+        <span class="inline-flex items-center px-3.5 py-2 rounded-pill bg-success/10 text-success font-mono text-[12px] font-bold tracking-[0.03em]">SEC CLASE A</span>
+        <span class="inline-flex items-center px-3.5 py-2 rounded-pill bg-card border border-card-border text-main font-mono text-[12px] font-bold tracking-[0.03em]">25+ AÑOS EN TERRENO</span>
+        <span class="inline-flex items-center px-3.5 py-2 rounded-pill bg-card border border-card-border text-main font-mono text-[12px] font-bold tracking-[0.03em]">GUARDIA 24/7</span>
+      </div>
+    </div>
+
+    <div class="reveal relative order-1 lg:order-2">
+      <div class="relative aspect-[4/3] rounded-[20px] overflow-hidden border border-card-border shadow-xl">
+        <Image src={faena2} alt="Equipo BKB en faena de montaje eléctrico industrial" class="w-full h-full object-cover" loading="lazy" />
+        <div class="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/70 to-transparent pointer-events-none"></div>
+
+        <div class="absolute bottom-5 right-5 flex items-center gap-3.5 bg-night-900/80 backdrop-blur-md border border-white/10 rounded-[14px] pl-4 pr-6 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
+          <div class="flex items-center justify-center w-11 h-11 rounded-full bg-salmon-500/15 text-salmon-500 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+            </svg>
+          </div>
+          <div class="flex flex-col leading-none">
+            <span class="font-display font-bold text-[26px] text-white">25+</span>
+            <span class="text-[11.5px] font-medium text-[#94A3B8] mt-1 whitespace-nowrap">Años de trayectoria</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
