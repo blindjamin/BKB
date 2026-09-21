@@ -45,6 +45,8 @@ html {
   font-family: var(--bkb-font-sans);
   color: var(--text-main);
   background-color: var(--page-bg);
+  background-image: var(--page-gradient);
+  background-repeat: no-repeat;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;

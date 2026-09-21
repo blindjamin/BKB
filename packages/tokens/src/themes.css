@@ -1,18 +1,23 @@
 :root, [data-theme="dark"] {
   color-scheme: dark;
-  --page-bg: #080C14;
-  --card-bg: #0F172A;
-  --card-border: rgba(255,255,255,0.09);
-  --text-main: #F8FAFC;
-  --text-muted: #94A3B8;
-  --text-subtle: #8391A7; /* D3: subir subtle de #64748B a #8391A7 para contraste */
-  --input-bg: rgba(255,255,255,0.04);
-  --input-border: rgba(255,255,255,0.16);
+  --page-bg: #17181C;
+  --page-gradient:
+    radial-gradient(1100px 560px at 85% 0%, rgba(250,90,54,0.14), transparent 60%),
+    radial-gradient(900px 520px at 0% 55%, rgba(255,255,255,0.05), transparent 65%),
+    linear-gradient(180deg, #08080A 0%, #24262C 40%, #101114 75%, #1C1E23 100%);
+  --card-bg: #1F2126;
+  --card-border: rgba(255,255,255,0.10);
+  --text-main: #F1F2F4;
+  --text-muted: #A9ADB8;
+  --text-subtle: #9A9EAA;
+  --input-bg: rgba(255,255,255,0.05);
+  --input-border: rgba(255,255,255,0.18);
   --accent-text: var(--bkb-salmon-500);
 }
 [data-theme="light"] {
   color-scheme: light;
   --page-bg: #FFF4EE;
+  --page-gradient: none;
   --card-bg: #FFFFFF;
   --card-border: #F5D9C7;
   --text-main: #1A1513;
