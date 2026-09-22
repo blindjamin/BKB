@@ -48,7 +48,7 @@ La spec v1.2 agrega **hitos con aviso y recepción obligatoria** (sección 12) y
                        Checkpoints G (tras 25) y H (tras 28) → Fase 4: 15 → 16 → 17
 ```
 
-**Orden de trabajo:** 18 → 19 → 12 (cierre) → 20 → 21 → 22 → 23 → 24 → 25 → **G** → 26 → 27 → 28 → **H** → 15 → 16 → 17.
+**Orden de trabajo:** 18 → 19 → 12 (cierre) → 20 → 21 → 22 → 23 → 24 → 25 → **G** → 26 → 27 → 28 → **H** → diseño DS-1 a DS-7 → 15 → 16 → 17. La tabla "Orden de ejecución" de `tasks/todo.md` es la referencia.
 Las tareas 22 a 25 (hitos) y 26 a 28 (gestión) solo comparten la 20 y la 21, así que los bloques podrían ir en otro orden. Se hacen primero los hitos porque son el pedido principal de BKB.
 
 **Diseño (DS-1 a DS-7 de `docs/09`):** no bloquea. Se hace después del checkpoint H y antes de la tarea 16. `docs/09` debe sumar las pantallas nuevas: formulario de proyecto, panel de hitos, aviso, Gestión y creación de contraseña.
