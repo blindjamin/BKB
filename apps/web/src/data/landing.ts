@@ -30,8 +30,7 @@ export interface StatItem {
 export const stats: StatItem[] = [
   { target: 30, suffix: '+', display: '30+', label: 'Años de trayectoria continua' },
   { target: 150, suffix: '+', display: '150+', label: 'Proyectos de alta y baja tensión' },
-  { target: 40, suffix: '+', display: '40+', label: 'Clientes corporativos activos' },
-  { target: 100, suffix: '%', display: '100%', label: 'Certificaciones SEC aprobadas' }
+  { target: 40, suffix: '+', display: '40+', label: 'Clientes corporativos activos' }
 ];
 
 export interface MercadoItem {
@@ -55,11 +54,11 @@ export interface ServicioItem {
 // Textos de los 4 primeros servicios: verificados (empresabkb.cl). Arriendo: dato entregado por el cliente.
 // TODO: fotos provisorias (faena), reemplazar por fotos de cada servicio
 export const servicios: ServicioItem[] = [
-  { image: faena1, title: 'Ingeniería Eléctrica', desc: 'Diseño y ejecución de proyectos eléctricos completos: canalización, alimentación, tableros y sistemas de control.' },
-  { image: faena2, title: 'Automatización PLC', desc: 'Programación y desarrollo de sistemas PLC y HMI con pruebas FAT/SAT e integración SCADA.' },
+  { image: faena1, title: 'Ingeniería Eléctrica', desc: 'Desarrollo de ingenierías conceptual, básica y de detalle. Diseño y ejecución de proyectos eléctricos completos: canalización, alimentación, tableros y sistemas de control.' },
+  { image: faena2, title: 'Automatización PLC', desc: 'Programación y desarrollo de sistemas PLC con pruebas FAT/SAT e integración SCADA.' },
   { image: faena3, title: 'Fabricación Propia', desc: 'Fabricación de Sistemas Kit: Bombeo, Filtrado, Lubricación y otros componentes especializados.' },
   { image: faenaHero, title: 'Montaje y Soporte', desc: 'Montaje en terreno y puesta en marcha con soporte técnico post-entrega garantizado.' },
-  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo de instrumentación eléctrica: analizadores, medidores de tierra, de fuga y de aislación, y equipos de calibración.' }
+  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo de instrumentación eléctrica: analizadores de red y medidores de tierra, de fuga y de aislación.' }
 ];
 
 export interface PortfolioItem {
