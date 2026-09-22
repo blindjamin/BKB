@@ -6,7 +6,7 @@ Conforme al Plan de Implementación de BKB (Seguridad ASVS Nivel 2).
 import os
 from pathlib import Path
 
-from csp.constants import NONE, SELF
+from csp.constants import NONE, NONCE, SELF
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
@@ -156,7 +156,7 @@ space_host_url = f"https://{space_host}"
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': [SELF],
-        'script-src': [SELF],
+        'script-src': [SELF, NONCE],
         'style-src': [SELF],
         'frame-ancestors': [NONE],
         'base-uri': [SELF],
@@ -165,7 +165,6 @@ CONTENT_SECURITY_POLICY = {
         'connect-src': [SELF, space_host_url],
     },
 }
-CSP_INCLUDE_NONCE_IN = ['script-src', 'style-src']
 
 # Parámetros estrictos de producción activables vía SSL
 if not DEBUG:

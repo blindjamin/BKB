@@ -1,12 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('archivo-input');
     if (!input) return;
+    const btnSubir = document.getElementById('btn-subir');
+    if (btnSubir) {
+        btnSubir.addEventListener('click', () => input.click());
+    }
     const s = document.getElementById('upload-status'), p = document.getElementById('progreso-subida'), t = document.getElementById('upload-text'), csrf = input.getAttribute('data-csrf');
 
     input.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
-        s.style.display = 'block';
+        s.classList.add('is-visible');
 
         for (let i = 0; i < files.length; i++) {
             const f = files[i];
@@ -41,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!res2.ok) throw new Error((await res2.json()).error || 'Error al confirmar');
             } catch (err) {
                 alert(`Error en ${f.name}: ${err.message}`);
-                s.style.display = 'none';
+                s.classList.remove('is-visible');
                 input.value = '';
                 return;
             }

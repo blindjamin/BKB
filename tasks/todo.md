@@ -12,8 +12,8 @@
 | Paso | Tarea | Rama |
 |---|---|---|
 | 1 | [x] **Tarea 18:** todas las vistas de archivo pasan por `permisos.py` (y se marca la 11) | `benjamin/AAAA-MM-DD-portal-hitos` |
-| 2 | **Tarea 19:** DS-0, la CSP con nonce ← **empezar aquí** | la misma |
-| 3 | Cierre de la tarea 12 (subida en el navegador) | la misma |
+| 2 | [x] **Tarea 19:** DS-0, la CSP con nonce | la misma |
+| 3 | **Cierre de la tarea 12** (subida en el navegador) ← **empezar aquí** | la misma |
 | 4 | Tarea 20: rol jefe y nombre | la misma |
 | 5 | Tarea 21: hitos, recepción y bloqueo (núcleo) | la misma |
 | 6 | Tarea 22: crear y editar un proyecto | la misma |
@@ -285,12 +285,12 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] `grep -n "is_superuser\|Rol\." documentos/views.py` no encuentra reglas de acceso
 **Dependencias:** ninguna · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/permisos.py`, `templates/includes/archivo_item.html`, `documentos/tests/test_descarga.py`
 
-### [ ] Tarea 19: DS-0 — CSP con nonce y sin estilos ni manejadores en línea
+### [x] Tarea 19: DS-0 — CSP con nonce y sin estilos ni manejadores en línea
 **Descripción:** Es la tarea DS-0 de `docs/09-plan-diseno-portal.md`, sin cambios de alcance. Sin ella no funcionan el aviso, la confirmación de borrado ni el botón de subida.
 **Criterios:** los de DS-0 en `docs/09`. En resumen: nonce real en `script-src`, cero `style="..."`, `onclick` y `onsubmit` en las plantillas, pestañas y confirmación de borrado con JS externo, y una prueba que falle si vuelve a aparecer algo en línea.
 **Verificación:**
-- [ ] `python manage.py test` pasa, incluida la prueba de contrato nueva
-- [ ] Manual: la consola del navegador no muestra errores de CSP en login, proyectos y archivos; "Eliminar" pide confirmación
+- [x] `python manage.py test` pasa, incluida la prueba de contrato nueva
+- [x] Manual: la consola del navegador no muestra errores de CSP en login, proyectos y archivos; "Eliminar" pide confirmación
 **Dependencias:** ninguna · **Alcance:** M · **Archivos:** los de DS-0 en `docs/09`
 
 > **Cierre de la tarea 12** (entre la 19 y la 20): con la CSP reparada, completar los criterios pendientes de la tarea 12 (subida real de una foto y un PDF, cliente sin botón, 375 px).

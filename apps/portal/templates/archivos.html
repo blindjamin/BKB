@@ -4,93 +4,71 @@
 {% block title %}{{ proyecto.nombre }} - Archivos{% endblock %}
 
 {% block content %}
-<div style="max-width: 900px; margin: 0 auto; width: 100%;">
-    <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-start;">
+<div class="archivos-container">
+    <div class="archivos-header">
         <div>
-            <a href="{% url 'documentos:lista_proyectos' %}" style="color: var(--bkb-salmon-700); text-decoration: none; font-weight: bold; margin-bottom: 1rem; display: inline-block;">← Volver a Proyectos</a>
-            <h1 style="margin: 0 0 0.5rem 0; color: var(--text-main);">{{ proyecto.nombre }}</h1>
-            <div style="color: var(--text-muted); font-size: 0.875rem;">
+            <a href="{% url 'documentos:lista_proyectos' %}" class="link-volver">← Volver a Proyectos</a>
+            <h1 class="archivos-title">{{ proyecto.nombre }}</h1>
+            <div class="archivos-meta">
                 🏢 {{ proyecto.empresa.nombre }}
             </div>
         </div>
         
         {% if puede_subir %}
-        <div style="text-align: right;">
-            <input type="file" id="archivo-input" style="display: none;" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf" capture="environment" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}">
-            <button onclick="document.getElementById('archivo-input').click()" style="background-color: var(--bkb-salmon-600); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold; cursor: pointer;">
+        <div class="archivos-actions">
+            <input type="file" id="archivo-input" class="archivo-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf" capture="environment" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}">
+            <button type="button" id="btn-subir" class="btn-subir">
                 Subir Archivo
             </button>
-            <div id="upload-status" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted); display: none;">
-                <progress id="progreso-subida" value="0" max="100" style="width: 100%; margin-bottom: 0.25rem;"></progress>
+            <div id="upload-status" class="upload-status">
+                <progress id="progreso-subida" class="progreso-subida" value="0" max="100"></progress>
                 <span id="upload-text">Subiendo...</span>
             </div>
         </div>
         {% endif %}
     </div>
     
-    <div class="tabs" style="display: flex; gap: 1rem; border-bottom: 1px solid var(--card-border); margin-bottom: 1.5rem;">
-        <button class="tab-btn active" data-target="docs" style="background: none; border: none; padding: 0.75rem 1rem; font-weight: bold; cursor: pointer; color: var(--bkb-salmon-700); border-bottom: 2px solid var(--bkb-salmon-700);">
+    <div class="tabs">
+        <button type="button" class="tab-btn active" data-target="docs">
             Documentos ({{ documentos|length }})
         </button>
-        <button class="tab-btn" data-target="fotos" style="background: none; border: none; padding: 0.75rem 1rem; font-weight: bold; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent;">
+        <button type="button" class="tab-btn" data-target="fotos">
             Fotos ({{ fotos|length }})
         </button>
     </div>
     
-    <div id="docs-content" class="tab-content" style="display: block;">
+    <div id="docs-content" class="tab-content">
         {% if documentos %}
-            <div style="display: grid; gap: 1rem;">
+            <div class="archivos-grid">
                 {% for archivo in documentos %}
                     {% include "includes/archivo_item.html" with archivo=archivo puede_borrar=archivo.puede_borrar %}
                 {% endfor %}
             </div>
         {% else %}
-            <div style="text-align: center; padding: 3rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: var(--text-muted);">
+            <div class="archivos-empty">
                 No hay documentos en este proyecto.
             </div>
         {% endif %}
     </div>
 
-    <div id="fotos-content" class="tab-content" style="display: none;">
+    <div id="fotos-content" class="tab-content is-hidden">
         {% if fotos %}
-            <div style="display: grid; gap: 1rem;">
+            <div class="archivos-grid">
                 {% for archivo in fotos %}
                     {% include "includes/archivo_item.html" with archivo=archivo puede_borrar=archivo.puede_borrar %}
                 {% endfor %}
             </div>
         {% else %}
-            <div style="text-align: center; padding: 3rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: var(--text-muted);">
+            <div class="archivos-empty">
                 No hay fotos en este proyecto.
             </div>
         {% endif %}
     </div>
 </div>
-
-<script nonce="{{ request.csp_nonce }}">
-document.addEventListener('DOMContentLoaded', () => {
-    const btns = document.querySelectorAll('.tab-btn');
-    const contents = document.querySelectorAll('.tab-content');
-    
-    btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            btns.forEach(b => {
-                b.style.color = 'var(--text-muted)';
-                b.style.borderBottomColor = 'transparent';
-            });
-            contents.forEach(c => c.style.display = 'none');
-            
-            btn.style.color = 'var(--bkb-salmon-700)';
-            btn.style.borderBottomColor = 'var(--bkb-salmon-700)';
-            
-            const target = btn.getAttribute('data-target');
-            document.getElementById(target + '-content').style.display = 'block';
-        });
-    });
-});
-</script>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'archivos.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% if puede_subir %}
 <script src="{% static 'subir.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endif %}
