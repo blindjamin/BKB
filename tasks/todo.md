@@ -14,8 +14,8 @@
 | 1 | [x] **Tarea 18:** todas las vistas de archivo pasan por `permisos.py` (y se marca la 11) | `benjamin/AAAA-MM-DD-portal-hitos` |
 | 2 | [x] **Tarea 19:** DS-0, la CSP con nonce | la misma |
 | 3 | [x] **Cierre de la tarea 12** (subida en el navegador) | la misma |
-| 4 | **Tarea 20:** rol jefe y nombre ← **empezar aquí** | la misma |
-| 5 | Tarea 21: hitos, recepción y bloqueo (núcleo) | la misma |
+| 4 | [x] **Tarea 20:** rol jefe y nombre | la misma |
+| 5 | **Tarea 21:** hitos, recepción y bloqueo (núcleo) ← **empezar aquí** | la misma |
 | 6 | Tarea 22: crear y editar un proyecto | la misma |
 | 7 | Tarea 23: marcar hitos | la misma |
 | 8 | Tarea 24: aviso al cliente | la misma |
@@ -232,10 +232,10 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 **Dependencias:** 10, 11 · **Requiere de ti:** CORS del Space para `localhost` · **Alcance:** M · **Archivos:** `templates/archivos.html`, `static/subir.js`, `static/portal.css`
 
 ### Checkpoint C (tras 12)
-- [ ] El personal entra, ve todos los proyectos y sube archivos que aparecen en la lista
-- [ ] Un cliente de prueba asignado a un solo proyecto ve ese proyecto y sus archivos, y no ve los demás
-- [ ] Las pruebas pasan y `check` sin errores
-- [ ] **Revisión contigo**
+- [x] El personal entra, ve todos los proyectos y sube archivos que aparecen en la lista
+- [x] Un cliente de prueba asignado a un solo proyecto ve ese proyecto y sus archivos, y no ve los demás
+- [x] Las pruebas pasan y `check` sin errores
+- [x] **Revisión contigo**
 
 ### [x] Tarea 13: Descarga con registro
 **Descripción:** Descargar un archivo autorizado y dejar constancia.
@@ -295,16 +295,16 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 
 > **Cierre de la tarea 12** (entre la 19 y la 20): con la CSP reparada, completar los criterios pendientes de la tarea 12 (subida real de una foto y un PDF, cliente sin botón, 375 px).
 
-### [ ] Tarea 20: Rol jefe y nombre de usuario
+### [x] Tarea 20: Rol jefe y nombre de usuario
 **Descripción:** Agregar el tercer valor de `rol` y el campo `nombre`, y actualizar las reglas.
 **Criterios:**
-- [ ] `Rol.JEFE = 'jefe'` y `Usuario.nombre` (texto, opcional en la base y obligatorio en los formularios de Gestión); migración nueva
-- [ ] Solo puede existir un jefe activo: `clean()` lo rechaza con un mensaje claro, también al guardar desde `/admin/`
-- [ ] `permisos.py`: `_es_personal` incluye al jefe, se agrega `es_jefe` y `puede_borrar` permite al jefe borrar cualquier archivo
-- [ ] `Membresia` sigue rechazando todo lo que no sea cliente (también al jefe)
+- [x] `Rol.JEFE = 'jefe'` y `Usuario.nombre` (texto, opcional en la base y obligatorio en los formularios de Gestión); migración nueva
+- [x] Solo puede existir un jefe activo: `clean()` lo rechaza con un mensaje claro, también al guardar desde `/admin/`
+- [x] `permisos.py`: `_es_personal` incluye al jefe, se agrega `es_jefe` y `puede_borrar` permite al jefe borrar cualquier archivo
+- [x] `Membresia` sigue rechazando todo lo que no sea cliente (también al jefe)
 **Verificación:**
-- [ ] `python manage.py test accounts documentos.tests.test_permisos`: el jefe ve todo, sube y borra cualquier archivo; un segundo jefe activo se rechaza; un jefe desactivado no ve nada
-- [ ] `python manage.py makemigrations --check` sin cambios pendientes
+- [x] `python manage.py test accounts documentos.tests.test_permisos`: el jefe ve todo, sube y borra cualquier archivo; un segundo jefe activo se rechaza; un jefe desactivado no ve nada
+- [x] `python manage.py makemigrations --check` sin cambios pendientes
 **Dependencias:** 18 · **Alcance:** S · **Archivos:** `accounts/models.py`, `accounts/admin.py`, `accounts/migrations/`, `documentos/permisos.py`, `documentos/tests/test_permisos.py`
 
 ### [ ] Tarea 21: Hitos, recepción y bloqueo (núcleo, sin pantallas)

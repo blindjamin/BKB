@@ -16,7 +16,11 @@ def _activo(usuario):
 
 
 def _es_personal(usuario):
-    return _activo(usuario) and usuario.rol == Rol.PERSONAL
+    return _activo(usuario) and usuario.rol in (Rol.PERSONAL, Rol.JEFE)
+
+
+def es_jefe(usuario):
+    return _activo(usuario) and usuario.rol == Rol.JEFE
 
 
 def proyectos_visibles(usuario):
@@ -48,5 +52,7 @@ def puede_subir(usuario):
 
 
 def puede_borrar(usuario, archivo):
-    """El personal borra lo que subió; el superusuario (siempre personal), cualquiera; el cliente, nunca."""
-    return _es_personal(usuario) and (usuario.is_superuser or archivo.subido_por_id == usuario.pk)
+    """El personal borra lo que subió; el superusuario y el jefe, cualquiera; el cliente, nunca."""
+    return _es_personal(usuario) and (
+        usuario.is_superuser or es_jefe(usuario) or archivo.subido_por_id == usuario.pk
+    )

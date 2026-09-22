@@ -62,7 +62,7 @@ class Membresia(models.Model):
         super().clean()
         if self.usuario_id and self.usuario.rol != Rol.CLIENTE:
             raise ValidationError({
-                'usuario': f'{self.usuario} es de tipo personal y ya ve todos los proyectos. '
+                'usuario': f'{self.usuario} es de tipo {self.usuario.get_rol_display().lower()} y ya ve todos los proyectos. '
                            'Solo se asignan usuarios de tipo cliente.'
             })
 

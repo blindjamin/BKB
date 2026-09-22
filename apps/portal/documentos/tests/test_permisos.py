@@ -8,6 +8,7 @@ from documentos.models import Empresa, EstadoArchivo, Membresia, Proyecto
 from documentos.permisos import (
     archivos_visibles,
     archivos_visibles_para,
+    es_jefe,
     proyectos_visibles,
     puede_borrar,
     puede_subir,
@@ -40,6 +41,7 @@ class Datos(TestCase):
     def setUpTestData(cls):
         cls.personal = Usuario.objects.create_user('ana@bkb.cl', rol=Rol.PERSONAL)
         cls.otro_personal = Usuario.objects.create_user('luis@bkb.cl', rol=Rol.PERSONAL)
+        cls.jefe = Usuario.objects.create_user('jefe@bkb.cl', rol=Rol.JEFE)
         cls.admin = Usuario.objects.create_superuser('root@bkb.cl')
         cls.cliente = Usuario.objects.create_user('cli@sur.cl', rol=Rol.CLIENTE)
         cls.otro_cliente = Usuario.objects.create_user('otro@este.cl', rol=Rol.CLIENTE)
@@ -124,11 +126,30 @@ class ArchivosVisiblesParaTests(Datos):
             with self.subTest(usuario=str(usuario)):
                 self.assertEqual(list(archivos_visibles_para(usuario)), [])
 
+    def test_jefe_ve_todos_los_archivos_disponibles(self):
+        visibles = archivos_visibles_para(self.jefe)
+        self.assertIn(self.archivos[('asignado', 'disponible')], visibles)
+        self.assertIn(self.archivos[('ajeno', 'disponible')], visibles)
+        self.assertNotIn(self.archivos[('asignado', 'pendiente')], visibles)
+        self.assertNotIn(self.archivos[('asignado', 'eliminado')], visibles)
+
+    def test_jefe_inactivo_no_ve_archivos(self):
+        inactivo = Usuario.objects.create_user('jefe_inact_arch@bkb.cl', rol=Rol.JEFE, is_active=False)
+        self.assertEqual(list(archivos_visibles_para(inactivo)), [])
+        self.assertEqual(list(archivos_visibles(inactivo, self.asignado)), [])
+
 
 class ProyectosVisiblesTests(Datos):
     def test_personal_y_admin_ven_todos_los_proyectos(self):
         for usuario in (self.personal, self.otro_personal, self.admin):
             self.assertEqual(set(proyectos_visibles(usuario)), {self.asignado, self.ajeno})
+
+    def test_jefe_ve_todos_los_proyectos(self):
+        self.assertEqual(set(proyectos_visibles(self.jefe)), {self.asignado, self.ajeno})
+
+    def test_jefe_inactivo_no_ve_proyectos(self):
+        inactivo = Usuario.objects.create_user('jefe_baja_proj@bkb.cl', rol=Rol.JEFE, is_active=False)
+        self.assertEqual(list(proyectos_visibles(inactivo)), [])
 
     def test_cliente_solo_ve_los_asignados(self):
         self.assertEqual(list(proyectos_visibles(self.cliente)), [self.asignado])
@@ -161,17 +182,34 @@ class ProyectosVisiblesTests(Datos):
                 self.assertEqual(list(archivos_visibles(usuario, self.asignado)), [])
 
 
+class EsJefeTests(Datos):
+    def test_solo_el_jefe_activo_es_jefe(self):
+        self.assertTrue(es_jefe(self.jefe))
+        self.assertFalse(es_jefe(self.personal))
+        self.assertFalse(es_jefe(self.otro_personal))
+        self.assertFalse(es_jefe(self.admin))
+        self.assertFalse(es_jefe(self.cliente))
+        self.assertFalse(es_jefe(AnonymousUser()))
+
+    def test_jefe_inactivo_no_es_jefe(self):
+        inactivo = Usuario.objects.create_user('inactivo_jefe@bkb.cl', rol=Rol.JEFE, is_active=False)
+        self.assertFalse(es_jefe(inactivo))
+
+
 class PuedeSubirTests(Datos):
     def test_solo_el_personal_sube(self):
         self.assertTrue(puede_subir(self.personal))
         self.assertTrue(puede_subir(self.otro_personal))
+        self.assertTrue(puede_subir(self.jefe))
         self.assertTrue(puede_subir(self.admin))
         self.assertFalse(puede_subir(self.cliente))
 
     def test_anonimo_e_inactivo_no_suben(self):
         inactivo = Usuario.objects.create_user('baja@bkb.cl', rol=Rol.PERSONAL, is_active=False)
+        inactivo_jefe = Usuario.objects.create_user('baja_jefe@bkb.cl', rol=Rol.JEFE, is_active=False)
         self.assertFalse(puede_subir(AnonymousUser()))
         self.assertFalse(puede_subir(inactivo))
+        self.assertFalse(puede_subir(inactivo_jefe))
 
 
 class PuedeBorrarTests(Datos):
@@ -188,6 +226,12 @@ class PuedeBorrarTests(Datos):
         self.assertTrue(puede_borrar(self.admin, self.archivo))
         self.assertTrue(puede_borrar(self.admin, self.archivos[('ajeno', 'disponible')]))
 
+    def test_el_jefe_borra_cualquier_archivo(self):
+        # El jefe puede borrar archivos subidos por otro personal
+        self.assertTrue(puede_borrar(self.jefe, self.archivo))
+        # Y de cualquier proyecto
+        self.assertTrue(puede_borrar(self.jefe, self.archivos[('ajeno', 'disponible')]))
+
     def test_el_cliente_nunca_borra(self):
         self.assertFalse(puede_borrar(self.cliente, self.archivo))
         # Ni siquiera si figurara como quien lo subió (dato inconsistente).
@@ -196,6 +240,8 @@ class PuedeBorrarTests(Datos):
 
     def test_anonimo_e_inactivo_no_borran(self):
         inactivo = Usuario.objects.create_user('baja@bkb.cl', rol=Rol.PERSONAL, is_active=False)
+        inactivo_jefe = Usuario.objects.create_user('baja_jefe_borrar@bkb.cl', rol=Rol.JEFE, is_active=False)
         propio = crear_archivo(self.asignado, inactivo, n=8)
         self.assertFalse(puede_borrar(AnonymousUser(), self.archivo))
         self.assertFalse(puede_borrar(inactivo, propio))
+        self.assertFalse(puede_borrar(inactivo_jefe, self.archivo))
