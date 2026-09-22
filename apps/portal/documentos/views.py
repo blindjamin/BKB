@@ -1,17 +1,24 @@
+from django.db.models import Count, Q
+from django.http import HttpResponseForbidden, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from django.http import HttpResponseForbidden
 from django.utils import timezone
 
+from .forms import EmpresaForm, ProyectoForm
 from .permisos import (
+    _es_personal,
     proyectos_visibles,
+    proyectos_de_empresa,
+    empresas_visibles,
+    puede_ver_empresa,
+    puede_gestionar_estructura,
     archivos_visibles,
     archivos_visibles_para,
     puede_subir,
     puede_borrar,
 )
-from .models import Archivo, DescargaLog
+from .models import Archivo, DescargaLog, Empresa, EstadoProyecto, Proyecto
 from .storage import url_descarga
 
 
@@ -24,8 +31,93 @@ def _get_client_ip(request):
 
 @login_required
 def lista_proyectos(request):
+    if _es_personal(request.user):
+        empresas = empresas_visibles(request.user).annotate(
+            proyectos_activos_count=Count('proyectos', filter=Q(proyectos__estado=EstadoProyecto.ACTIVO))
+        )
+        return render(request, 'empresas.html', {'empresas': empresas})
+
     proyectos = proyectos_visibles(request.user).select_related('empresa')
     return render(request, 'proyectos.html', {'proyectos': proyectos})
+
+
+@login_required
+def crear_empresa(request):
+    if not puede_gestionar_estructura(request.user):
+        return HttpResponseForbidden("No tienes permisos para crear empresas.")
+
+    if request.method == 'POST':
+        form = EmpresaForm(request.POST)
+        if form.is_valid():
+            empresa = form.save()
+            return redirect('documentos:detalle_empresa', pk=empresa.pk)
+    else:
+        form = EmpresaForm()
+
+    return render(request, 'empresa_form.html', {'form': form})
+
+
+@login_required
+def detalle_empresa(request, pk):
+    empresa = get_object_or_404(Empresa, pk=pk)
+    if not puede_ver_empresa(request.user, empresa):
+        raise Http404("No tienes acceso a esta empresa.")
+
+    proyectos = proyectos_de_empresa(request.user, empresa)
+    context = {
+        'empresa': empresa,
+        'proyectos': proyectos,
+        'puede_gestionar': puede_gestionar_estructura(request.user),
+    }
+    return render(request, 'empresa_detalle.html', context)
+
+
+@login_required
+def crear_proyecto(request):
+    if not puede_gestionar_estructura(request.user):
+        return HttpResponseForbidden("No tienes permisos para crear proyectos.")
+
+    initial = {}
+    empresa_id = request.GET.get('empresa')
+    if empresa_id:
+        initial['empresa'] = empresa_id
+
+    if request.method == 'POST':
+        form = ProyectoForm(request.POST)
+        if form.is_valid():
+            proyecto = form.save()
+            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+    else:
+        form = ProyectoForm(initial=initial)
+
+    return render(request, 'proyecto_form.html', {
+        'form': form,
+        'titulo': 'Nuevo Proyecto',
+        'accion': 'Crear Proyecto',
+    })
+
+
+@login_required
+def editar_proyecto(request, pk):
+    if not puede_gestionar_estructura(request.user):
+        return HttpResponseForbidden("No tienes permisos para editar proyectos.")
+
+    proyecto = get_object_or_404(Proyecto, pk=pk)
+
+    if request.method == 'POST':
+        form = ProyectoForm(request.POST, instance=proyecto)
+        if form.is_valid():
+            form.save()
+            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+    else:
+        form = ProyectoForm(instance=proyecto)
+
+    return render(request, 'proyecto_form.html', {
+        'form': form,
+        'proyecto': proyecto,
+        'titulo': f'Editar {proyecto.nombre}',
+        'accion': 'Guardar Cambios',
+    })
 
 
 @login_required
@@ -43,6 +135,7 @@ def detalle_proyecto(request, pk):
         'fotos': fotos,
         'documentos': documentos,
         'puede_subir': puede_subir(request.user),
+        'puede_gestionar': puede_gestionar_estructura(request.user),
     }
     return render(request, 'archivos.html', context)
 

@@ -7,10 +7,17 @@
 <div class="archivos-container">
     <div class="archivos-header">
         <div>
-            <a href="{% url 'documentos:lista_proyectos' %}" class="link-volver">← Volver a Proyectos</a>
+            {% if puede_gestionar %}
+                <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}" class="link-volver">&larr; Volver a {{ proyecto.empresa.nombre }}</a>
+            {% else %}
+                <a href="{% url 'documentos:lista_proyectos' %}" class="link-volver">&larr; Volver a Proyectos</a>
+            {% endif %}
             <h1 class="archivos-title">{{ proyecto.nombre }}</h1>
             <div class="archivos-meta">
-                🏢 {{ proyecto.empresa.nombre }}
+                <span>🏢 {{ proyecto.empresa.nombre }}</span>
+                {% if puede_gestionar %}
+                    <span>&middot; <a href="{% url 'documentos:editar_proyecto' proyecto.pk %}" class="btn-link">Editar proyecto</a></span>
+                {% endif %}
             </div>
         </div>
         

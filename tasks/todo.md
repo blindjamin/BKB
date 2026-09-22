@@ -16,8 +16,8 @@
 | 3 | [x] **Cierre de la tarea 12** (subida en el navegador) | la misma |
 | 4 | [x] **Tarea 20:** rol jefe y nombre | la misma |
 | 5 | [x] **Tarea 21:** hitos, recepción y bloqueo (núcleo) | la misma |
-| 6 | **Tarea 22:** estructura: Empresas activas y proyectos por empresa ← **empezar aquí** | la misma |
-| 7 | Tarea 23: carpetas por proyecto y organización de archivos | la misma |
+| 6 | [x] **Tarea 22:** estructura: Empresas activas y proyectos por empresa | la misma |
+| 7 | **Tarea 23:** carpetas por proyecto y organización de archivos ← **empezar aquí** | la misma |
 | 8 | Tarea 24: marcar hitos en proyecto | la misma |
 | 9 | Tarea 25: aviso al cliente | la misma |
 | 10 | Tarea 26: recepción obligatoria y correo | la misma |
@@ -320,15 +320,15 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] Toda rama nueva de `permisos.py` tiene al menos una prueba
 **Dependencias:** 20 · **Alcance:** M · **Archivos:** `documentos/models.py`, `documentos/migrations/`, `documentos/permisos.py`, `documentos/admin.py`, `documentos/tests/test_permisos.py`
 
-### [ ] Tarea 22: Estructura: Empresas activas y proyectos por empresa
+### [x] Tarea 22: Estructura: Empresas activas y proyectos por empresa
 **Descripción:** Implementar la jerarquía de 3 niveles. El personal y el jefe ven en `/` las empresas con proyectos vigentes (con botón `+ Nueva Empresa`), acceden al historial de proyectos de cada una (con botón `+ Nuevo Proyecto`) y crean proyectos. El cliente accede directamente a sus proyectos asignados.
 **Criterios:**
-- [ ] `/`: si es personal o jefe, lista empresas con proyectos vigentes (`permisos.empresas_visibles`) con cantidad de proyectos activos y botón destacado "Nueva empresa"; si es cliente, muestra directamente sus proyectos asignados (o selector de empresas si tiene varias asignadas)
-- [ ] `/empresas/nueva/`: formulario rápido `EmpresaForm` (nombre y RUT) accesible para personal y jefe; clientes reciben 403
-- [ ] `/empresas/<uuid>/`: listado histórico de proyectos de esa empresa (activos y cerrados) con badge de estado y botón destacado "Nuevo proyecto" (con empresa preseleccionada)
-- [ ] `/proyectos/nuevo/` y `/proyectos/<uuid>/editar/`: `ModelForm` de proyecto con empresa, nombre, hitos (uno por línea, al menos uno) y clientes asignados (activos). Clientes reciben 403
+- [x] `/`: si es personal o jefe, lista empresas con proyectos vigentes (`permisos.empresas_visibles`) con cantidad de proyectos activos y botón destacado "Nueva empresa"; si es cliente, muestra directamente sus proyectos asignados (o selector de empresas si tiene varias asignadas)
+- [x] `/empresas/nueva/`: formulario rápido `EmpresaForm` (nombre y RUT) accesible para personal y jefe; clientes reciben 403
+- [x] `/empresas/<uuid>/`: listado histórico de proyectos de esa empresa (activos y cerrados) con badge de estado y botón destacado "Nuevo proyecto" (con empresa preseleccionada)
+- [x] `/proyectos/nuevo/` y `/proyectos/<uuid>/editar/`: `ModelForm` de proyecto con empresa, nombre, hitos (uno por línea, al menos uno) y clientes asignados (activos). Clientes reciben 403
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_vistas_empresas`: personal y jefe ven empresas activas e histórico de proyectos; cliente solo ve lo asignado y no ve empresas ni proyectos ajenos; cliente recibe 403 al intentar crear empresa o proyecto; formulario de empresa y proyecto validan campos obligatorios
+- [x] `python manage.py test documentos.tests.test_vistas_empresas`: personal y jefe ven empresas activas e histórico de proyectos; cliente solo ve lo asignado y no ve empresas ni proyectos ajenos; cliente recibe 403 al intentar crear empresa o proyecto; formulario de empresa y proyecto validan campos obligatorios
 - [ ] Manual: entrar como personal → crear empresa rápida → crear proyecto en ella → verificar que un cliente asignado ve el proyecto
 **Dependencias:** 19, 20, 21 · **Alcance:** M · **Archivos:** `documentos/forms.py` (nuevo), `documentos/views.py`, `documentos/urls.py`, `documentos/permisos.py`, `templates/empresas.html` (nuevo), `templates/empresa_detalle.html` (nuevo), `templates/empresa_form.html` (nuevo), `templates/proyecto_form.html` (nuevo), `documentos/tests/test_vistas_empresas.py` (nuevo)
 

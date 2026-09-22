@@ -30,10 +30,17 @@ class VistasProyectosTests(TestCase):
 
     def test_personal_ve_todos(self):
         self.client.force_login(self.personal)
+        # En la jerarquía v1.3, en / el personal ve la empresa con proyectos vigentes
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Proyecto Asignado')
-        self.assertContains(response, 'Proyecto No Asignado')
+        self.assertContains(response, 'Empresa A')
+
+        # Y al ingresar a la empresa ve todos los proyectos de esa empresa
+        url_empresa = reverse('documentos:detalle_empresa', args=[self.empresa.pk])
+        resp_empresa = self.client.get(url_empresa)
+        self.assertEqual(resp_empresa.status_code, 200)
+        self.assertContains(resp_empresa, 'Proyecto Asignado')
+        self.assertContains(resp_empresa, 'Proyecto No Asignado')
 
     def test_cliente_ve_solo_asignados(self):
         self.client.force_login(self.cliente)

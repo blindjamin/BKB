@@ -7,7 +7,7 @@ son visibles para nadie, ni siquiera para quien los subió.
 
 from accounts.models import Rol
 
-from .models import Archivo, EstadoArchivo, Proyecto
+from .models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Proyecto
 
 
 class EstadoFlujoProyecto:
@@ -52,6 +52,42 @@ def proyectos_visibles(usuario):
     if _activo(usuario):  # cliente: solo los proyectos que se le asignaron
         return Proyecto.objects.filter(membresias__usuario=usuario)
     return Proyecto.objects.none()
+
+
+def empresas_visibles(usuario):
+    """Empresas visibles para el usuario (§14.3).
+
+    - Personal y jefe: empresas con proyectos vigentes (activos).
+    - Cliente: empresas que contienen proyectos asignados al cliente.
+    """
+    if _es_personal(usuario):
+        return Empresa.objects.filter(proyectos__estado=EstadoProyecto.ACTIVO).distinct()
+    if _activo(usuario):
+        return Empresa.objects.filter(proyectos__membresias__usuario=usuario).distinct()
+    return Empresa.objects.none()
+
+
+def puede_ver_empresa(usuario, empresa):
+    """Indica si el usuario puede acceder a la vista de una empresa."""
+    if _es_personal(usuario):
+        return True
+    if _activo(usuario):
+        return empresa.proyectos.filter(membresias__usuario=usuario).exists()
+    return False
+
+
+def proyectos_de_empresa(usuario, empresa):
+    """Proyectos visibles de una empresa para un usuario específico."""
+    if _es_personal(usuario):
+        return empresa.proyectos.all()
+    if _activo(usuario):
+        return empresa.proyectos.filter(membresias__usuario=usuario)
+    return Proyecto.objects.none()
+
+
+def puede_gestionar_estructura(usuario):
+    """Solo el personal y el jefe pueden crear empresas o crear/editar proyectos."""
+    return _es_personal(usuario)
 
 
 def archivos_visibles_para(usuario):

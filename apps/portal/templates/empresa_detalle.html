@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}{{ empresa.nombre }} - Proyectos - BKB Portal{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    {% if puede_gestionar %}
+    <nav class="breadcrumbs">
+        <a href="{% url 'documentos:lista_proyectos' %}">&larr; Volver a Empresas</a>
+    </nav>
+    {% endif %}
+
+    <div class="view-header">
+        <div>
+            <h1 class="proyectos-title">{{ empresa.nombre }}</h1>
+            {% if empresa.rut %}
+                <p class="view-subtitle">RUT: {{ empresa.rut }} &middot; Historial de proyectos</p>
+            {% else %}
+                <p class="view-subtitle">Historial de proyectos</p>
+            {% endif %}
+        </div>
+        {% if puede_gestionar %}
+        <div>
+            <a href="{% url 'documentos:crear_proyecto' %}?empresa={{ empresa.pk }}" class="btn-action">+ Nuevo Proyecto</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if proyectos %}
+        <div class="proyectos-grid">
+            {% for proyecto in proyectos %}
+                <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="project-card">
+                    <div class="project-card-header">
+                        <h2 class="project-card-title">{{ proyecto.nombre }}</h2>
+                        {% if proyecto.estado == 'activo' %}
+                            <span class="badge badge-activo">ACTIVO</span>
+                        {% else %}
+                            <span class="badge badge-cerrado">CERRADO</span>
+                        {% endif %}
+                    </div>
+                    <div class="project-card-meta">
+                        <span>Ingresar al proyecto &rarr;</span>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="proyectos-empty">
+            <p class="proyectos-empty-text">Esta empresa aún no cuenta con proyectos registrados.</p>
+            {% if puede_gestionar %}
+            <p><a href="{% url 'documentos:crear_proyecto' %}?empresa={{ empresa.pk }}" class="btn-action">+ Crear Primer Proyecto</a></p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
