@@ -27,6 +27,16 @@ def proyectos_visibles(usuario):
     return Proyecto.objects.none()
 
 
+def archivos_visibles_para(usuario):
+    """Archivos disponibles y no eliminados de todos los proyectos visibles para el usuario."""
+    proyectos = proyectos_visibles(usuario)
+    return Archivo.objects.filter(
+        proyecto__in=proyectos,
+        estado=EstadoArchivo.DISPONIBLE,
+        eliminado_en__isnull=True,
+    )
+
+
 def archivos_visibles(usuario, proyecto):
     if not proyectos_visibles(usuario).filter(pk=proyecto.pk).exists():
         return Archivo.objects.none()

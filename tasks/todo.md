@@ -11,8 +11,8 @@
 
 | Paso | Tarea | Rama |
 |---|---|---|
-| 1 | **Tarea 18:** todas las vistas de archivo pasan por `permisos.py` (y se marca la 11) ← **empezar aquí** | `benjamin/AAAA-MM-DD-portal-hitos` |
-| 2 | Tarea 19: DS-0, la CSP con nonce | la misma |
+| 1 | [x] **Tarea 18:** todas las vistas de archivo pasan por `permisos.py` (y se marca la 11) | `benjamin/AAAA-MM-DD-portal-hitos` |
+| 2 | **Tarea 19:** DS-0, la CSP con nonce ← **empezar aquí** | la misma |
 | 3 | Cierre de la tarea 12 (subida en el navegador) | la misma |
 | 4 | Tarea 20: rol jefe y nombre | la misma |
 | 5 | Tarea 21: hitos, recepción y bloqueo (núcleo) | la misma |
@@ -207,14 +207,14 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] Manual: crear un `Archivo` de prueba desde `/admin/` con la clave del objeto subido en la tarea 6, y verlo como personal y como cliente asignado
 **Dependencias:** 9 · **Alcance:** M · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/archivos.html`, `documentos/tests/test_vistas_archivos.py`
 
-### [ ] Tarea 11: Subida: servidor
+### [x] Tarea 11: Subida: servidor
 **Descripción:** Iniciar y confirmar subidas, solo para personal, con todas las validaciones.
 **Criterios:**
-- [ ] `POST /proyectos/<uuid>/subir/` valida que el usuario sea personal (un cliente recibe 403), extensión permitida y tamaño ≤ `MAX_UPLOAD_MB`; crea el `Archivo` como `pendiente` y devuelve el POST prefirmado
-- [ ] `POST /archivos/<uuid>/confirmar/`: solo quien lo subió; verifica en el Space que el objeto existe y que el tamaño coincide; recién ahí pasa a `disponible`
-- [ ] Una vez `disponible`, el archivo lo ven de inmediato los clientes asignados
+- [x] `POST /proyectos/<uuid>/subir/` valida que el usuario sea personal (un cliente recibe 403), extensión permitida y tamaño ≤ `MAX_UPLOAD_MB`; crea el `Archivo` como `pendiente` y devuelve el POST prefirmado
+- [x] `POST /archivos/<uuid>/confirmar/`: solo quien lo subió; verifica en el Space que el objeto existe y que el tamaño coincide; recién ahí pasa a `disponible`
+- [x] Una vez `disponible`, el archivo lo ven de inmediato los clientes asignados
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_subida`: cliente 403, personal correcto, tipo o tamaño no permitido, confirmar sin haber subido, confirmar ajeno, visibilidad inmediata para un cliente asignado
+- [x] `python manage.py test documentos.tests.test_subida`: cliente 403, personal correcto, tipo o tamaño no permitido, confirmar sin haber subido, confirmar ajeno, visibilidad inmediata para un cliente asignado
 **Dependencias:** 5, 6 · **Alcance:** M · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `documentos/subidas.py`, `documentos/tests/test_subida.py`
 
 ### [ ] Tarea 12: Subida: interfaz
@@ -273,16 +273,16 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 > Se hace **antes** de la Fase 4. Orden: 18 → 19 → cierre de 12 → 20 → 21 → 22 → 23 → 24 → 25 → **G** → 26 → 27 → 28 → **H**.
 > Leer también `docs/03` secciones 12 y 13. Rama por bloque: `benjamin/AAAA-MM-DD-portal-hitos` (18 a 25) y `benjamin/AAAA-MM-DD-portal-gestion` (26 a 28).
 
-### [ ] Tarea 18: Todas las vistas de archivo pasan por `permisos.py`
+### [x] Tarea 18: Todas las vistas de archivo pasan por `permisos.py`
 **Descripción:** Hoy `descargar_archivo` y `eliminar_archivo` deciden con ifs propios. El bloqueo de la v1.2 vive en `archivos_visibles`, así que sin este cambio el cliente podría descargar un archivo bloqueado por enlace directo. También se verifica y se marca la tarea 11, que ya está hecha.
 **Criterios:**
-- [ ] `descargar_archivo` obtiene el archivo con `get_object_or_404` sobre una consulta nueva de `permisos.py`, `archivos_visibles_para(usuario)`, que cubre todos los proyectos visibles (sin ifs propios)
-- [ ] `eliminar_archivo` decide con `permisos.puede_borrar`, y `archivo_item.html` recibe ese resultado desde la vista en vez de repetir la regla
-- [ ] `get_client_ip` usa la última IP de `X-Forwarded-For` que agrega el proxy, no la primera (observación de `docs/09` §11)
-- [ ] Tarea 11: sus criterios se marcan [x] después de correr `test_subida`
+- [x] `descargar_archivo` obtiene el archivo con `get_object_or_404` sobre una consulta nueva de `permisos.py`, `archivos_visibles_para(usuario)`, que cubre todos los proyectos visibles (sin ifs propios)
+- [x] `eliminar_archivo` decide con `permisos.puede_borrar`, y `archivo_item.html` recibe ese resultado desde la vista en vez de repetir la regla
+- [x] `get_client_ip` usa la última IP de `X-Forwarded-For` que agrega el proxy, no la primera (observación de `docs/09` §11)
+- [x] Tarea 11: sus criterios se marcan [x] después de correr `test_subida`
 **Verificación:**
-- [ ] `python manage.py test` pasa sin cambiar el resultado esperado de ninguna prueba existente
-- [ ] `grep -n "is_superuser\|Rol\." documentos/views.py` no encuentra reglas de acceso
+- [x] `python manage.py test` pasa sin cambiar el resultado esperado de ninguna prueba existente
+- [x] `grep -n "is_superuser\|Rol\." documentos/views.py` no encuentra reglas de acceso
 **Dependencias:** ninguna · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/permisos.py`, `templates/includes/archivo_item.html`, `documentos/tests/test_descarga.py`
 
 ### [ ] Tarea 19: DS-0 — CSP con nonce y sin estilos ni manejadores en línea

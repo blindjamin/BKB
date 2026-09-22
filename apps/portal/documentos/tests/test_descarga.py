@@ -54,3 +54,34 @@ class DescargaTests(TestCase):
         response = self.client.get(url_descarga)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(DescargaLog.objects.count(), 0)
+
+    @patch('documentos.views.url_descarga')
+    def test_descarga_registra_ultima_ip_de_x_forwarded_for(self, mock_url_descarga):
+        mock_url_descarga.return_value = 'http://test-space.com/descarga.pdf'
+
+        self.client.force_login(self.cliente)
+        url_descarga = reverse('documentos:descargar_archivo', args=[self.doc_valido.pk])
+
+        self.client.get(
+            url_descarga,
+            HTTP_X_FORWARDED_FOR='198.51.100.1, 203.0.113.195, 10.0.0.1',
+        )
+
+        log = DescargaLog.objects.latest('fecha')
+        self.assertEqual(log.ip, '10.0.0.1')
+
+    def test_descarga_archivo_pendiente_da_404(self):
+        pendiente = Archivo.objects.create(
+            proyecto=self.proyecto,
+            nombre_original='pendiente.pdf',
+            clave_space='portal/pendiente.pdf',
+            tamano=500,
+            tipo='application/pdf',
+            estado=EstadoArchivo.PENDIENTE,
+            subido_por=self.personal,
+        )
+        self.client.force_login(self.cliente)
+        url_descarga = reverse('documentos:descargar_archivo', args=[pendiente.pk])
+        response = self.client.get(url_descarga)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(DescargaLog.objects.count(), 0)

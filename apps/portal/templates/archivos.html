@@ -41,7 +41,7 @@
         {% if documentos %}
             <div style="display: grid; gap: 1rem;">
                 {% for archivo in documentos %}
-                    {% include "includes/archivo_item.html" with archivo=archivo %}
+                    {% include "includes/archivo_item.html" with archivo=archivo puede_borrar=archivo.puede_borrar %}
                 {% endfor %}
             </div>
         {% else %}
@@ -55,7 +55,7 @@
         {% if fotos %}
             <div style="display: grid; gap: 1rem;">
                 {% for archivo in fotos %}
-                    {% include "includes/archivo_item.html" with archivo=archivo %}
+                    {% include "includes/archivo_item.html" with archivo=archivo puede_borrar=archivo.puede_borrar %}
                 {% endfor %}
             </div>
         {% else %}

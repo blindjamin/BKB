@@ -5,7 +5,13 @@ from django.utils import timezone
 
 from accounts.models import Rol
 from documentos.models import Empresa, EstadoArchivo, Membresia, Proyecto
-from documentos.permisos import archivos_visibles, proyectos_visibles, puede_borrar, puede_subir
+from documentos.permisos import (
+    archivos_visibles,
+    archivos_visibles_para,
+    proyectos_visibles,
+    puede_borrar,
+    puede_subir,
+)
 from documentos.tests.test_modelos import crear_archivo
 
 Usuario = get_user_model()
@@ -85,6 +91,38 @@ class MatrizDeArchivosTests(Datos):
     def test_cliente_ajeno_no_ve_nada_del_proyecto_de_otro(self):
         self.assertEqual(list(archivos_visibles(self.otro_cliente, self.asignado)), [])
         self.assertEqual(list(archivos_visibles(self.cliente, self.ajeno)), [])
+
+
+class ArchivosVisiblesParaTests(Datos):
+    def test_personal_y_admin_ven_todos_los_archivos_disponibles(self):
+        disponibles = {self.archivos[('asignado', 'disponible')], self.archivos[('ajeno', 'disponible')]}
+        for usuario in (self.personal, self.otro_personal, self.admin):
+            with self.subTest(usuario=usuario.email):
+                self.assertEqual(set(archivos_visibles_para(usuario)), disponibles)
+
+    def test_cliente_solo_ve_archivos_de_proyectos_asignados(self):
+        self.assertEqual(
+            set(archivos_visibles_para(self.cliente)),
+            {self.archivos[('asignado', 'disponible')]},
+        )
+        self.assertEqual(
+            set(archivos_visibles_para(self.otro_cliente)),
+            {self.archivos[('ajeno', 'disponible')]},
+        )
+
+    def test_archivos_pendientes_y_eliminados_nunca_estan_en_visibles_para(self):
+        for usuario in (self.personal, self.admin, self.cliente):
+            with self.subTest(usuario=usuario.email):
+                visibles = set(archivos_visibles_para(usuario))
+                for estado in ('pendiente', 'eliminado'):
+                    self.assertNotIn(self.archivos[('asignado', estado)], visibles)
+                    self.assertNotIn(self.archivos[('ajeno', estado)], visibles)
+
+    def test_anonimo_e_inactivo_no_ven_archivos_en_visibles_para(self):
+        inactivo = Usuario.objects.create_user('baja_perm@bkb.cl', rol=Rol.PERSONAL, is_active=False)
+        for usuario in (AnonymousUser(), inactivo):
+            with self.subTest(usuario=str(usuario)):
+                self.assertEqual(list(archivos_visibles_para(usuario)), [])
 
 
 class ProyectosVisiblesTests(Datos):
