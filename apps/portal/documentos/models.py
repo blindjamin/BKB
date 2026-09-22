@@ -113,3 +113,48 @@ class DescargaLog(models.Model):
 
     def __str__(self):
         return f'{self.usuario} descargó {self.archivo}'
+
+
+class Hito(models.Model):
+    id = _uuid_pk()
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='hitos')
+    orden = models.PositiveSmallIntegerField()
+    nombre = models.CharField(max_length=200)
+    cumplido_en = models.DateTimeField(null=True, blank=True)
+    cumplido_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='hitos_cumplidos'
+    )
+
+    class Meta:
+        verbose_name = 'hito'
+        verbose_name_plural = 'hitos'
+        ordering = ['orden']
+        unique_together = [('proyecto', 'orden')]
+
+    @property
+    def cumplido(self):
+        return self.cumplido_en is not None
+
+    def __str__(self):
+        return f'{self.proyecto.nombre} - {self.orden}. {self.nombre}'
+
+
+class RespuestaRecepcion(models.Model):
+    id = _uuid_pk()
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='respuestas_recepcion')
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='respuestas_recepcion'
+    )
+    nombre_revisor = models.CharField(max_length=200)
+    conforme = models.BooleanField()
+    fecha = models.DateTimeField(auto_now_add=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'respuesta de recepción'
+        verbose_name_plural = 'respuestas de recepción'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        resultado = 'Conforme' if self.conforme else 'No conforme'
+        return f'{self.proyecto.nombre} - {resultado} ({self.nombre_revisor})'

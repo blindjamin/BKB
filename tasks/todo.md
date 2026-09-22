@@ -15,8 +15,8 @@
 | 2 | [x] **Tarea 19:** DS-0, la CSP con nonce | la misma |
 | 3 | [x] **Cierre de la tarea 12** (subida en el navegador) | la misma |
 | 4 | [x] **Tarea 20:** rol jefe y nombre | la misma |
-| 5 | **Tarea 21:** hitos, recepción y bloqueo (núcleo) ← **empezar aquí** | la misma |
-| 6 | Tarea 22: estructura: Empresas activas y proyectos por empresa | la misma |
+| 5 | [x] **Tarea 21:** hitos, recepción y bloqueo (núcleo) | la misma |
+| 6 | **Tarea 22:** estructura: Empresas activas y proyectos por empresa ← **empezar aquí** | la misma |
 | 7 | Tarea 23: carpetas por proyecto y organización de archivos | la misma |
 | 8 | Tarea 24: marcar hitos en proyecto | la misma |
 | 9 | Tarea 25: aviso al cliente | la misma |
@@ -307,17 +307,17 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] `python manage.py makemigrations --check` sin cambios pendientes
 **Dependencias:** 18 · **Alcance:** S · **Archivos:** `accounts/models.py`, `accounts/admin.py`, `accounts/migrations/`, `documentos/permisos.py`, `documentos/tests/test_permisos.py`
 
-### [ ] Tarea 21: Hitos, recepción y bloqueo (núcleo, sin pantallas)
+### [x] Tarea 21: Hitos, recepción y bloqueo (núcleo, sin pantallas)
 **Descripción:** Modelos y reglas del estado del proyecto. Es la tarea de mayor riesgo: va antes de cualquier pantalla.
 **Criterios:**
-- [ ] Modelos `Hito` (`proyecto`, `orden`, `nombre`, `cumplido_en`, `cumplido_por`; único por proyecto y orden) y `RespuestaRecepcion` (`proyecto`, `usuario`, `nombre_revisor`, `conforme`, `fecha`, `ip`), con UUID
-- [ ] `permisos.estado_proyecto(proyecto)` devuelve `en_curso`, `esperando_recepcion` o `recibido` según la sección 12.2 de la spec
-- [ ] `archivos_visibles` y `archivos_visibles_para` devuelven vacío para un **cliente** cuando el proyecto está en `esperando_recepcion`; para el personal y el jefe no cambian
-- [ ] `puede_gestionar_hitos(usuario)` (personal y jefe) y `puede_responder_recepcion(usuario, proyecto)` (cliente asignado y proyecto esperando recepción)
-- [ ] Solo lectura en `/admin/` para el superusuario (inline de hitos en `Proyecto` y listado de respuestas)
+- [x] Modelos `Hito` (`proyecto`, `orden`, `nombre`, `cumplido_en`, `cumplido_por`; único por proyecto y orden) y `RespuestaRecepcion` (`proyecto`, `usuario`, `nombre_revisor`, `conforme`, `fecha`, `ip`), con UUID
+- [x] `permisos.estado_proyecto(proyecto)` devuelve `en_curso`, `esperando_recepcion` o `recibido` según la sección 12.2 de la spec
+- [x] `archivos_visibles` y `archivos_visibles_para` devuelven vacío para un **cliente** cuando el proyecto está en `esperando_recepcion`; para el personal y el jefe no cambian
+- [x] `puede_gestionar_hitos(usuario)` (personal y jefe) y `puede_responder_recepcion(usuario, proyecto)` (cliente asignado y proyecto esperando recepción)
+- [x] Solo lectura en `/admin/` para el superusuario (inline de hitos en `Proyecto` y listado de respuestas)
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_permisos`: la matriz suma el eje de estado (en curso, esperando, recibido) × tipo de usuario, en **listado, descarga y UUID directo**. Casos: "no conforme" no desbloquea; una conforme desbloquea a todos los clientes del proyecto; un proyecto sin hitos queda en curso
-- [ ] Toda rama nueva de `permisos.py` tiene al menos una prueba
+- [x] `python manage.py test documentos.tests.test_permisos`: la matriz suma el eje de estado (en curso, esperando, recibido) × tipo de usuario, en **listado, descarga y UUID directo**. Casos: "no conforme" no desbloquea; una conforme desbloquea a todos los clientes del proyecto; un proyecto sin hitos queda en curso
+- [x] Toda rama nueva de `permisos.py` tiene al menos una prueba
 **Dependencias:** 20 · **Alcance:** M · **Archivos:** `documentos/models.py`, `documentos/migrations/`, `documentos/permisos.py`, `documentos/admin.py`, `documentos/tests/test_permisos.py`
 
 ### [ ] Tarea 22: Estructura: Empresas activas y proyectos por empresa

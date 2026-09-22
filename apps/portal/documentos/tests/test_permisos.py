@@ -4,13 +4,17 @@ from django.test import TestCase
 from django.utils import timezone
 
 from accounts.models import Rol
-from documentos.models import Empresa, EstadoArchivo, Membresia, Proyecto
+from documentos.models import Empresa, EstadoArchivo, Hito, Membresia, Proyecto, RespuestaRecepcion
 from documentos.permisos import (
+    EstadoFlujoProyecto,
     archivos_visibles,
     archivos_visibles_para,
     es_jefe,
+    estado_proyecto,
     proyectos_visibles,
     puede_borrar,
+    puede_gestionar_hitos,
+    puede_responder_recepcion,
     puede_subir,
 )
 from documentos.tests.test_modelos import crear_archivo
@@ -245,3 +249,329 @@ class PuedeBorrarTests(Datos):
         self.assertFalse(puede_borrar(AnonymousUser(), self.archivo))
         self.assertFalse(puede_borrar(inactivo, propio))
         self.assertFalse(puede_borrar(inactivo_jefe, self.archivo))
+
+
+class EstadoProyectoTests(TestCase):
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre='Empresa Test')
+        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Flujo')
+        self.personal = Usuario.objects.create_user('admin_flujo@bkb.cl', rol=Rol.PERSONAL)
+        self.cliente = Usuario.objects.create_user('cli_flujo@test.cl', rol=Rol.CLIENTE)
+
+    def test_proyecto_sin_hitos_queda_en_curso(self):
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.EN_CURSO)
+
+    def test_proyecto_con_hitos_pendientes_queda_en_curso(self):
+        h1 = Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Hito 1')
+        h2 = Hito.objects.create(proyecto=self.proyecto, orden=2, nombre='Hito 2')
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.EN_CURSO)
+
+        # Marcando solo uno
+        h1.cumplido_en = timezone.now()
+        h1.cumplido_por = self.personal
+        h1.save()
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.EN_CURSO)
+
+    def test_proyecto_con_todos_hitos_cumplidos_sin_respuesta_esperando_recepcion(self):
+        Hito.objects.create(
+            proyecto=self.proyecto, orden=1, nombre='Hito 1',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        Hito.objects.create(
+            proyecto=self.proyecto, orden=2, nombre='Hito 2',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.ESPERANDO_RECEPCION)
+
+    def test_respuesta_no_conforme_mantiene_esperando_recepcion(self):
+        Hito.objects.create(
+            proyecto=self.proyecto, orden=1, nombre='Hito 1',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente,
+            nombre_revisor='Revisor A', conforme=False
+        )
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.ESPERANDO_RECEPCION)
+
+    def test_respuesta_conforme_pasa_a_recibido(self):
+        Hito.objects.create(
+            proyecto=self.proyecto, orden=1, nombre='Hito 1',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente,
+            nombre_revisor='Revisor A', conforme=True
+        )
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.RECIBIDO)
+
+    def test_respuesta_conforme_prevalece_aunque_haya_respuesta_no_conforme_previa(self):
+        Hito.objects.create(
+            proyecto=self.proyecto, orden=1, nombre='Hito 1',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente,
+            nombre_revisor='Revisor A', conforme=False
+        )
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.ESPERANDO_RECEPCION)
+
+        RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente,
+            nombre_revisor='Revisor A', conforme=True
+        )
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.RECIBIDO)
+
+
+class MatrizEstadoBloqueoArchivosTests(TestCase):
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre='Empresa Matriz')
+        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Bloqueo')
+
+        self.personal = Usuario.objects.create_user('ana_matriz@bkb.cl', rol=Rol.PERSONAL)
+        self.jefe = Usuario.objects.create_user('jefe_matriz@bkb.cl', rol=Rol.JEFE)
+        self.admin = Usuario.objects.create_superuser('root_matriz@bkb.cl')
+        self.cliente1 = Usuario.objects.create_user('cli1@matriz.cl', rol=Rol.CLIENTE)
+        self.cliente2 = Usuario.objects.create_user('cli2@matriz.cl', rol=Rol.CLIENTE)
+        self.cliente_ajeno = Usuario.objects.create_user('ajeno@matriz.cl', rol=Rol.CLIENTE)
+
+        Membresia.objects.create(usuario=self.cliente1, proyecto=self.proyecto)
+        Membresia.objects.create(usuario=self.cliente2, proyecto=self.proyecto)
+
+        self.archivo = crear_archivo(self.proyecto, self.personal, estado=EstadoArchivo.DISPONIBLE)
+
+        self.h1 = Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Hito Inicial')
+        self.h2 = Hito.objects.create(proyecto=self.proyecto, orden=2, nombre='Hito Final')
+
+    def test_en_curso_personal_jefe_admin_y_clientes_asignados_ven_archivos(self):
+        # h1 cumplido, h2 pendiente -> en_curso
+        self.h1.cumplido_en = timezone.now()
+        self.h1.cumplido_por = self.personal
+        self.h1.save()
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.EN_CURSO)
+
+        # Listado y UUID directo
+        for usuario in (self.personal, self.jefe, self.admin, self.cliente1, self.cliente2):
+            with self.subTest(usuario=usuario.email, accion='listado_y_uuid'):
+                visibles = archivos_visibles(usuario, self.proyecto)
+                self.assertIn(self.archivo, visibles)
+                self.assertTrue(visibles.filter(pk=self.archivo.pk).exists())
+
+        # Descarga (archivos_visibles_para)
+        for usuario in (self.personal, self.jefe, self.admin, self.cliente1, self.cliente2):
+            with self.subTest(usuario=usuario.email, accion='descarga'):
+                visibles_para = archivos_visibles_para(usuario)
+                self.assertIn(self.archivo, visibles_para)
+                self.assertTrue(visibles_para.filter(pk=self.archivo.pk).exists())
+
+        # Cliente ajeno nunca ve
+        self.assertNotIn(self.archivo, archivos_visibles(self.cliente_ajeno, self.proyecto))
+        self.assertNotIn(self.archivo, archivos_visibles_para(self.cliente_ajeno))
+
+    def test_esperando_recepcion_bloquea_clientes_y_mantiene_personal_y_jefe(self):
+        # Ambos hitos cumplidos -> esperando_recepcion
+        self.h1.cumplido_en = timezone.now()
+        self.h1.cumplido_por = self.personal
+        self.h1.save()
+        self.h2.cumplido_en = timezone.now()
+        self.h2.cumplido_por = self.personal
+        self.h2.save()
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.ESPERANDO_RECEPCION)
+
+        # Personal, jefe y admin nunca quedan bloqueados (listado, UUID directo y descarga)
+        for usuario in (self.personal, self.jefe, self.admin):
+            with self.subTest(usuario=usuario.email):
+                visibles = archivos_visibles(usuario, self.proyecto)
+                self.assertIn(self.archivo, visibles)
+                self.assertTrue(visibles.filter(pk=self.archivo.pk).exists())
+                self.assertIn(self.archivo, archivos_visibles_para(usuario))
+
+        # Clientes asignados quedan COMPLETAMENTE bloqueados
+        for cliente in (self.cliente1, self.cliente2):
+            with self.subTest(cliente=cliente.email):
+                visibles = archivos_visibles(cliente, self.proyecto)
+                self.assertEqual(list(visibles), [])
+                self.assertFalse(visibles.filter(pk=self.archivo.pk).exists())
+                # Bloqueo en descarga / UUID directo por archivos_visibles_para
+                visibles_para = archivos_visibles_para(cliente)
+                self.assertNotIn(self.archivo, visibles_para)
+                self.assertFalse(visibles_para.filter(pk=self.archivo.pk).exists())
+
+    def test_no_conforme_mantiene_bloqueo_a_clientes(self):
+        self.h1.cumplido_en = timezone.now()
+        self.h1.cumplido_por = self.personal
+        self.h1.save()
+        self.h2.cumplido_en = timezone.now()
+        self.h2.cumplido_por = self.personal
+        self.h2.save()
+
+        # Respuesta no conforme registrada
+        RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente1,
+            nombre_revisor='Pedro Revisor', conforme=False
+        )
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.ESPERANDO_RECEPCION)
+
+        # Siguen bloqueados
+        for cliente in (self.cliente1, self.cliente2):
+            with self.subTest(cliente=cliente.email):
+                self.assertEqual(list(archivos_visibles(cliente, self.proyecto)), [])
+                self.assertNotIn(self.archivo, archivos_visibles_para(cliente))
+
+    def test_conforme_desbloquea_a_todos_los_clientes_del_proyecto(self):
+        self.h1.cumplido_en = timezone.now()
+        self.h1.cumplido_por = self.personal
+        self.h1.save()
+        self.h2.cumplido_en = timezone.now()
+        self.h2.cumplido_por = self.personal
+        self.h2.save()
+
+        # Respuesta conforme realizada por cliente1
+        RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente1,
+            nombre_revisor='Pedro Revisor', conforme=True
+        )
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.RECIBIDO)
+
+        # Desbloquea a cliente1 Y a cliente2
+        for cliente in (self.cliente1, self.cliente2):
+            with self.subTest(cliente=cliente.email):
+                visibles = archivos_visibles(cliente, self.proyecto)
+                self.assertIn(self.archivo, visibles)
+                self.assertTrue(visibles.filter(pk=self.archivo.pk).exists())
+                self.assertIn(self.archivo, archivos_visibles_para(cliente))
+
+        # Cliente ajeno sigue sin ver nada
+        self.assertEqual(list(archivos_visibles(self.cliente_ajeno, self.proyecto)), [])
+        self.assertNotIn(self.archivo, archivos_visibles_para(self.cliente_ajeno))
+
+
+class PuedeGestionarHitosTests(TestCase):
+    def setUp(self):
+        self.personal = Usuario.objects.create_user('pers_hitos@bkb.cl', rol=Rol.PERSONAL)
+        self.jefe = Usuario.objects.create_user('jefe_hitos@bkb.cl', rol=Rol.JEFE)
+        self.admin = Usuario.objects.create_superuser('admin_hitos@bkb.cl')
+        self.cliente = Usuario.objects.create_user('cli_hitos@emp.cl', rol=Rol.CLIENTE)
+
+    def test_personal_jefe_y_admin_pueden_gestionar_hitos(self):
+        self.assertTrue(puede_gestionar_hitos(self.personal))
+        self.assertTrue(puede_gestionar_hitos(self.jefe))
+        self.assertTrue(puede_gestionar_hitos(self.admin))
+
+    def test_cliente_no_puede_gestionar_hitos(self):
+        self.assertFalse(puede_gestionar_hitos(self.cliente))
+
+    def test_inactivo_y_anonimo_no_pueden_gestionar_hitos(self):
+        inactivo_pers = Usuario.objects.create_user('inact_pers@bkb.cl', rol=Rol.PERSONAL, is_active=False)
+        inactivo_jefe = Usuario.objects.create_user('inact_jefe@bkb.cl', rol=Rol.JEFE, is_active=False)
+        self.assertFalse(puede_gestionar_hitos(inactivo_pers))
+        self.assertFalse(puede_gestionar_hitos(inactivo_jefe))
+        self.assertFalse(puede_gestionar_hitos(AnonymousUser()))
+
+
+class PuedeResponderRecepcionTests(TestCase):
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre='Empresa Resp')
+        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Resp')
+        self.personal = Usuario.objects.create_user('pers_resp@bkb.cl', rol=Rol.PERSONAL)
+        self.jefe = Usuario.objects.create_user('jefe_resp@bkb.cl', rol=Rol.JEFE)
+        self.admin = Usuario.objects.create_superuser('admin_resp@bkb.cl')
+        self.cliente_asignado = Usuario.objects.create_user('cli_asig@emp.cl', rol=Rol.CLIENTE)
+        self.cliente_ajeno = Usuario.objects.create_user('cli_ajeno@emp.cl', rol=Rol.CLIENTE)
+
+        Membresia.objects.create(usuario=self.cliente_asignado, proyecto=self.proyecto)
+
+        self.hito = Hito.objects.create(
+            proyecto=self.proyecto, orden=1, nombre='Único Hito',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+
+    def test_cliente_asignado_puede_responder_en_esperando_recepcion(self):
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.ESPERANDO_RECEPCION)
+        self.assertTrue(puede_responder_recepcion(self.cliente_asignado, self.proyecto))
+
+    def test_cliente_ajeno_no_puede_responder(self):
+        self.assertFalse(puede_responder_recepcion(self.cliente_ajeno, self.proyecto))
+
+    def test_personal_jefe_y_admin_no_pueden_responder_recepcion(self):
+        self.assertFalse(puede_responder_recepcion(self.personal, self.proyecto))
+        self.assertFalse(puede_responder_recepcion(self.jefe, self.proyecto))
+        self.assertFalse(puede_responder_recepcion(self.admin, self.proyecto))
+
+    def test_cliente_asignado_no_puede_responder_si_esta_en_curso(self):
+        self.hito.cumplido_en = None
+        self.hito.cumplido_por = None
+        self.hito.save()
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.EN_CURSO)
+        self.assertFalse(puede_responder_recepcion(self.cliente_asignado, self.proyecto))
+
+    def test_cliente_asignado_no_puede_responder_si_ya_esta_recibido(self):
+        RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente_asignado,
+            nombre_revisor='Revisor', conforme=True
+        )
+        self.assertEqual(estado_proyecto(self.proyecto), EstadoFlujoProyecto.RECIBIDO)
+        self.assertFalse(puede_responder_recepcion(self.cliente_asignado, self.proyecto))
+
+    def test_usuario_inactivo_o_anonimo_no_puede_responder(self):
+        inactivo = Usuario.objects.create_user('cli_inactivo@emp.cl', rol=Rol.CLIENTE, is_active=False)
+        Membresia.objects.create(usuario=inactivo, proyecto=self.proyecto)
+        self.assertFalse(puede_responder_recepcion(inactivo, self.proyecto))
+        self.assertFalse(puede_responder_recepcion(AnonymousUser(), self.proyecto))
+
+
+class HitoYRespuestaRecepcionModelosYAdminTests(TestCase):
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre='Empresa Modelos')
+        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Modelos')
+        self.personal = Usuario.objects.create_user('pers_mod@bkb.cl', rol=Rol.PERSONAL)
+        self.cliente = Usuario.objects.create_user('cli_mod@emp.cl', rol=Rol.CLIENTE)
+
+    def test_hito_unique_together_proyecto_orden(self):
+        from django.db import IntegrityError
+        Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Hito A')
+        with self.assertRaises(IntegrityError):
+            Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Hito Duplicado')
+
+    def test_hito_propiedad_cumplido_y_str(self):
+        h = Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Hito A')
+        self.assertFalse(h.cumplido)
+        self.assertEqual(str(h), f'{self.proyecto.nombre} - 1. Hito A')
+
+        h.cumplido_en = timezone.now()
+        h.cumplido_por = self.personal
+        h.save()
+        self.assertTrue(h.cumplido)
+
+    def test_respuesta_recepcion_str(self):
+        r_conf = RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente,
+            nombre_revisor='Juan Perez', conforme=True
+        )
+        self.assertIn('Conforme (Juan Perez)', str(r_conf))
+
+        r_no_conf = RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente,
+            nombre_revisor='Pedro Gomez', conforme=False
+        )
+        self.assertIn('No conforme (Pedro Gomez)', str(r_no_conf))
+
+    def test_admin_configuracion_solo_lectura(self):
+        from django.contrib.admin.sites import site
+        from documentos.admin import HitoInline, RespuestaRecepcionAdmin
+
+        # HitoInline en ProyectoAdmin
+        self.assertIn(HitoInline, site._registry[Proyecto].inlines)
+
+        hito_inline = HitoInline(Proyecto, site)
+        self.assertFalse(hito_inline.has_add_permission(None))
+        self.assertFalse(hito_inline.has_change_permission(None))
+        self.assertFalse(hito_inline.has_delete_permission(None))
+
+        # RespuestaRecepcionAdmin
+        self.assertIn(RespuestaRecepcion, site._registry)
+        resp_admin = site._registry[RespuestaRecepcion]
+        self.assertIsInstance(resp_admin, RespuestaRecepcionAdmin)
+        self.assertFalse(resp_admin.has_add_permission(None))
+        self.assertFalse(resp_admin.has_change_permission(None))
+        self.assertFalse(resp_admin.has_delete_permission(None))
