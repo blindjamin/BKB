@@ -183,6 +183,18 @@ Seguir la tabla "Orden de ejecución" al inicio de `tasks/todo.md`, empezando po
   - `docs/03-portal-django.md`: Sección 14 incorporada con modelos, rutas y reglas de negocio.
   - `tasks/plan.md`: Decisiones de diseño v1.3 y secuencia de trabajo ajustada.
   - `tasks/todo.md`: Tareas 22 (Estructura de empresas y proyectos) y 23 (Carpetas por proyecto) adaptadas con criterios y pruebas completas.
+### Avances de Implementación (Tareas 21 y 22)
+- **Tarea 21 (Hitos, recepción y bloqueo — núcleo):**
+  - Modelos `Hito` (orden, nombre, cumplido_en, cumplido_por) y `RespuestaRecepcion` (usuario, revisor, conforme, fecha, IP).
+  - Cálculo derivado de estado en `permisos.estado_proyecto(proyecto)`: `en_curso`, `esperando_recepcion`, `recibido`.
+  - Bloqueo de acceso en el servidor: los clientes con proyectos en `esperando_recepcion` quedan bloqueados tanto en el listado de archivos como en la descarga directa por UUID (HTTP 404). Personal, jefe y superusuario nunca se bloquean.
+  - Registro de solo lectura en `/admin/` para hitos (inline) y respuestas de recepción.
+- **Tarea 22 (Estructura: Empresas activas y proyectos por empresa):**
+  - Inicio bifurcado en `/`: personal y jefe ven el catálogo de empresas vigentes con conteo de proyectos activos y botón de acceso rápido `+ Nueva Empresa`; clientes acceden directamente a sus proyectos asignados.
+  - Formulario `EmpresaForm` (`/empresas/nueva/`) y vista histórica de proyectos por empresa (`/empresas/<uuid>/`) con botón `+ Nuevo Proyecto`.
+  - Formulario `ProyectoForm` (`/proyectos/nuevo/` y `.../editar/`) con validación de hitos multilínea y asignación de clientes.
+  - Control de acceso estricto: intentos de acceso o creación por parte de clientes responden HTTP 403.
+  - 154 pruebas unitarias ejecutadas con éxito en el portal (100% aprobadas).
 
 ### Punto de partida
-Seguir la tabla "Orden de ejecución" de `tasks/todo.md`, comenzando por la **Tarea 21 (Hitos, recepción y bloqueo - núcleo)**.
+Seguir la tabla "Orden de ejecución" de `tasks/todo.md`, comenzando por la **Tarea 23 (Carpetas por proyecto y organización de archivos)**.
