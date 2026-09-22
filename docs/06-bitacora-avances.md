@@ -163,3 +163,26 @@ El usuario confirmó que `https://empresabkb.cl/` (sitio antiguo en producción)
 
 ### Punto de partida
 Seguir la tabla "Orden de ejecución" al inicio de `tasks/todo.md`, empezando por la **tarea 18**.
+
+---
+
+## Sesión 7 · 22 de Septiembre de 2026 (portal v1.3: jerarquía de 3 niveles y carpetas virtuales)
+
+### Resumen
+- **Diagnóstico de subida en dev server:** La subida de archivos al Space de DigitalOcean fallaba con HTTP 403 en la petición preflight `OPTIONS` al acceder desde `http://127.0.0.1:8000/`. El Space solo tenía `http://localhost:8000` en su lista blanca de CORS. Se indicó acceder por `http://localhost:8000/` o agregar `127.0.0.1` en la consola de DigitalOcean.
+- **Rediseño del flujo de navegación (3 niveles):**
+  1. Pantalla principal (`/`): Muestra las empresas/clientes con proyectos vigentes (con botón de acceso rápido `+ Nueva Empresa` para personal/jefe).
+  2. Vista de empresa (`/empresas/<uuid>/`): Muestra el historial completo de proyectos de dicha empresa (con botón rápido `+ Nuevo Proyecto`).
+  3. Detalle de proyecto (`/proyectos/<uuid>/`): Archivos organizados en raíz o carpetas, con botones `+ Nueva Carpeta` y `+ Subir Archivo`.
+  4. Los clientes entran directamente al listado histórico de sus proyectos asociados.
+- **Carpetas por proyecto (v1.3):**
+  - Personal y jefe pueden crear y eliminar carpetas (de 1 solo nivel, sin árboles anidados para preservar experiencia móvil de 375 px).
+  - El cliente tiene acceso de solo lectura al contenido organizado en carpetas.
+  - **Invariante de almacenamiento:** Las carpetas son 100% virtuales en la base de datos (modelo `Carpeta` y FK opcional en `Archivo`). En DigitalOcean Spaces la ruta del objeto se mantiene inalterada (`{SPACES_PREFIX}{proyecto_uuid}/{archivo_uuid}`). Crear o borrar carpetas tiene impacto cero en el Space.
+- **Documentación actualizada:**
+  - `docs/03-portal-django.md`: Sección 14 incorporada con modelos, rutas y reglas de negocio.
+  - `tasks/plan.md`: Decisiones de diseño v1.3 y secuencia de trabajo ajustada.
+  - `tasks/todo.md`: Tareas 22 (Estructura de empresas y proyectos) y 23 (Carpetas por proyecto) adaptadas con criterios y pruebas completas.
+
+### Punto de partida
+Seguir la tabla "Orden de ejecución" de `tasks/todo.md`, comenzando por la **Tarea 21 (Hitos, recepción y bloqueo - núcleo)**.

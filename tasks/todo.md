@@ -1,11 +1,11 @@
 # Tareas: Portal de Archivos BKB
 
-> Plan: [`tasks/plan.md`](plan.md) · Spec: [`docs/03-portal-django.md`](../docs/03-portal-django.md) (v1.2)
+> Plan: [`tasks/plan.md`](plan.md) · Spec: [`docs/03-portal-django.md`](../docs/03-portal-django.md) (v1.3)
 > Los comandos se ejecutan desde `apps/portal/` con el entorno virtual activo. Prueba: `python manage.py test`.
 > Cada tarea termina con un commit en la rama de la fase (`benjamin/AAAA-MM-DD-portal-<fase>`). El PR hacia `desarrollo` lo fusionas tú en cada checkpoint.
-> **Modelo de acceso (v1.2):** tres tipos de usuario (`personal`, `cliente` y `jefe`). El personal ve todo, sube, borra lo que subió, crea proyectos y marca hitos. El jefe hace lo mismo, borra cualquier archivo y usa Gestión. El cliente solo ve y descarga en sus proyectos asignados, y se queda sin archivos mientras el proyecto espera su recepción.
+> **Modelo de acceso (v1.3):** tres tipos de usuario (`personal`, `cliente` y `jefe`). Jerarquía: Empresa activa → Proyectos históricos → Carpetas y Archivos. El personal y el jefe crean empresas, proyectos y carpetas con botones de acceso rápido. El cliente solo ve y descarga en sus proyectos asignados, y se queda sin archivos mientras el proyecto espera su recepción.
 
-## ▶ Orden de ejecución (v1.2, plan aprobado el 22-09-2026)
+## ▶ Orden de ejecución (v1.3, plan aprobado el 22-09-2026)
 
 **Los números NO son el orden.** Se sigue esta secuencia, una tarea por sesión, y se detiene en cada checkpoint:
 
@@ -16,13 +16,13 @@
 | 3 | [x] **Cierre de la tarea 12** (subida en el navegador) | la misma |
 | 4 | [x] **Tarea 20:** rol jefe y nombre | la misma |
 | 5 | **Tarea 21:** hitos, recepción y bloqueo (núcleo) ← **empezar aquí** | la misma |
-| 6 | Tarea 22: crear y editar un proyecto | la misma |
-| 7 | Tarea 23: marcar hitos | la misma |
-| 8 | Tarea 24: aviso al cliente | la misma |
-| 9 | Tarea 25: recepción y correo | la misma |
-| ⏸ | **Checkpoint G**: revisión con el usuario y PR hacia `desarrollo` | — |
-| 10 | Tarea 26: Gestión de empresas | `benjamin/AAAA-MM-DD-portal-gestion` |
-| 11 | Tarea 27: Gestión de usuarios e invitación | la misma |
+| 6 | Tarea 22: estructura: Empresas activas y proyectos por empresa | la misma |
+| 7 | Tarea 23: carpetas por proyecto y organización de archivos | la misma |
+| 8 | Tarea 24: marcar hitos en proyecto | la misma |
+| 9 | Tarea 25: aviso al cliente | la misma |
+| 10 | Tarea 26: recepción obligatoria y correo | la misma |
+| ⏸ | **Checkpoint G**: revisión del flujo con el usuario y PR hacia `desarrollo` | — |
+| 11 | Tarea 27: Gestión de usuarios e invitación | `benjamin/AAAA-MM-DD-portal-gestion` |
 | 12 | Tarea 28: "¿Olvidaste tu contraseña?" | la misma |
 | ⏸ | **Checkpoint H**: revisión con el usuario y PR hacia `desarrollo` | — |
 | 13 | Diseño DS-1 a DS-7 (`docs/09`, ampliado con las pantallas nuevas) | `benjamin/AAAA-MM-DD-portal-diseno` |
@@ -320,40 +320,55 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Toda rama nueva de `permisos.py` tiene al menos una prueba
 **Dependencias:** 20 · **Alcance:** M · **Archivos:** `documentos/models.py`, `documentos/migrations/`, `documentos/permisos.py`, `documentos/admin.py`, `documentos/tests/test_permisos.py`
 
-### [ ] Tarea 22: Crear y editar un proyecto desde el portal
-**Descripción:** El personal y el jefe crean proyectos con sus hitos y clientes sin entrar a `/admin/`.
+### [ ] Tarea 22: Estructura: Empresas activas y proyectos por empresa
+**Descripción:** Implementar la jerarquía de 3 niveles. El personal y el jefe ven en `/` las empresas con proyectos vigentes (con botón `+ Nueva Empresa`), acceden al historial de proyectos de cada una (con botón `+ Nuevo Proyecto`) y crean proyectos. El cliente accede directamente a sus proyectos asignados.
 **Criterios:**
-- [ ] `/proyectos/nuevo/` y `/proyectos/<uuid>/editar/` con un `ModelForm`: empresa (lista existente), nombre, hitos (un campo de texto, uno por línea, en orden, al menos uno) y clientes (solo de tipo cliente y activos)
-- [ ] Al editar se pueden cambiar el nombre, los clientes y los hitos **no cumplidos** (renombrar, reordenar, agregar y quitar). Los cumplidos se muestran fijos. Después de una recepción conforme no se agregan hitos (spec, pregunta 8)
-- [ ] Botón "Nuevo proyecto" en la lista, visible solo para el personal y el jefe; un cliente recibe 403 en ambas rutas
+- [ ] `/`: si es personal o jefe, lista empresas con proyectos vigentes (`permisos.empresas_visibles`) con cantidad de proyectos activos y botón destacado "Nueva empresa"; si es cliente, muestra directamente sus proyectos asignados (o selector de empresas si tiene varias asignadas)
+- [ ] `/empresas/nueva/`: formulario rápido `EmpresaForm` (nombre y RUT) accesible para personal y jefe; clientes reciben 403
+- [ ] `/empresas/<uuid>/`: listado histórico de proyectos de esa empresa (activos y cerrados) con badge de estado y botón destacado "Nuevo proyecto" (con empresa preseleccionada)
+- [ ] `/proyectos/nuevo/` y `/proyectos/<uuid>/editar/`: `ModelForm` de proyecto con empresa, nombre, hitos (uno por línea, al menos uno) y clientes asignados (activos). Clientes reciben 403
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_proyecto_form`: crear con 3 hitos en orden, sin hitos se rechaza, un cliente recibe 403, no se puede asignar personal, editar no toca los hitos cumplidos
-- [ ] Manual: crear un proyecto como personal y verlo en la lista del cliente asignado
-**Dependencias:** 19, 21 · **Alcance:** M · **Archivos:** `documentos/forms.py` (nuevo), `documentos/views.py`, `documentos/urls.py`, `templates/proyecto_form.html` (nuevo), `documentos/tests/test_proyecto_form.py` (nuevo)
+- [ ] `python manage.py test documentos.tests.test_vistas_empresas`: personal y jefe ven empresas activas e histórico de proyectos; cliente solo ve lo asignado y no ve empresas ni proyectos ajenos; cliente recibe 403 al intentar crear empresa o proyecto; formulario de empresa y proyecto validan campos obligatorios
+- [ ] Manual: entrar como personal → crear empresa rápida → crear proyecto en ella → verificar que un cliente asignado ve el proyecto
+**Dependencias:** 19, 20, 21 · **Alcance:** M · **Archivos:** `documentos/forms.py` (nuevo), `documentos/views.py`, `documentos/urls.py`, `documentos/permisos.py`, `templates/empresas.html` (nuevo), `templates/empresa_detalle.html` (nuevo), `templates/empresa_form.html` (nuevo), `templates/proyecto_form.html` (nuevo), `documentos/tests/test_vistas_empresas.py` (nuevo)
 
-### [ ] Tarea 23: Marcar hitos (personal y jefe)
+### [ ] Tarea 23: Carpetas por proyecto y organización de archivos
+**Descripción:** Permitir al personal y al jefe crear carpetas dentro de un proyecto para organizar fotos y documentos de forma ordenada, con acceso rápido y sin alterar las claves del Space.
+**Criterios:**
+- [ ] Modelo `Carpeta` (`id`, `proyecto`, `nombre`, `creado_en`, `creado_por`; único por `proyecto` y `nombre`) y relación `Archivo.carpeta` (`ForeignKey`, opcional `null=True, blank=True, on_delete=models.SET_NULL`). Migración nueva
+- [ ] En la pantalla del proyecto (`templates/archivos.html`): listado de carpetas (tarjetas/pastillas), botón destacado "Nueva carpeta", migas de pan (*Empresa > Proyecto > Carpeta*) y visualización de archivos (raíz o dentro de la carpeta activa `?carpeta=<uuid>`)
+- [ ] `POST /proyectos/<uuid>/carpetas/nueva/`: solo personal y jefe; valida nombre no vacío y que no exista en el proyecto
+- [ ] `POST /carpetas/<uuid>/eliminar/`: solo personal y jefe; elimina carpeta vacía o devuelve sus archivos a la raíz (`SET_NULL`)
+- [ ] Subida (`subir.js` / `iniciar_subida`): acepta opcionalmente `carpeta_id` para subir directamente a la carpeta activa
+- [ ] El cliente ve carpetas y archivos en modo solo lectura (sin botones de crear carpeta, subir ni eliminar)
+**Verificación:**
+- [ ] `python manage.py test documentos.tests.test_carpetas`: personal y jefe crean y eliminan carpetas; cliente recibe 403; subida asocia `carpeta_id`; borrar carpeta no borra objetos en el Space; clave en el Space sigue inmutable (`{prefix}{proyecto_id}/{archivo_id}`)
+- [ ] Manual en el navegador a 375 y 1280 px: crear carpeta "Informes", subir un archivo dentro de ella, navegar entre carpetas y verificar que el cliente solo lee
+**Dependencias:** 22 · **Alcance:** M · **Archivos:** `documentos/models.py`, `documentos/migrations/`, `documentos/views.py`, `documentos/urls.py`, `documentos/subidas.py`, `static/subir.js`, `templates/archivos.html`, `documentos/tests/test_carpetas.py` (nuevo)
+
+### [ ] Tarea 24: Marcar hitos en proyecto (personal y jefe)
 **Descripción:** Panel de hitos con casillas en la pantalla del proyecto.
 **Criterios:**
 - [ ] `POST /proyectos/<uuid>/hitos/avanzar/` marca el siguiente hito sin cumplir y registra quién y cuándo; `.../retroceder/` desmarca el último cumplido
 - [ ] Retroceder se rechaza si ya hay una recepción conforme; avanzar sin hitos pendientes no hace nada
-- [ ] En la pantalla del proyecto, el personal ve la lista con el estado de cada hito y solo los botones que aplican
+- [ ] En la pantalla del proyecto, el personal y el jefe ven la lista con el estado de cada hito y solo los botones que aplican
 **Verificación:**
 - [ ] `python manage.py test documentos.tests.test_hitos`: avanza en orden, retrocede solo el último, cliente 403, no retrocede tras una conforme, dos avances seguidos dejan dos hitos marcados (sin saltos)
-**Dependencias:** 22 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/archivos.html`, `documentos/tests/test_hitos.py` (nuevo)
+**Dependencias:** 23 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/archivos.html`, `documentos/tests/test_hitos.py` (nuevo)
 
-### [ ] Tarea 24: Aviso al cliente
+### [ ] Tarea 25: Aviso al cliente
 **Descripción:** El cliente ve el avance cada vez que abre un proyecto.
 **Criterios:**
 - [ ] `templates/includes/aviso_hitos.html` con la lista de hitos (cumplidos, actual y pendientes) y un mensaje por estado
-- [ ] Un `<dialog>` que se abre al cargar con `static/aviso.js` (externo, sin nada en línea). En `en_curso` y `recibido` se cierra con "Cerrar"; en `esperando_recepcion` no se cierra (tampoco con Esc) y muestra el formulario de la tarea 25
+- [ ] Un `<dialog>` que se abre al cargar con `static/aviso.js` (externo, sin nada en línea). En `en_curso` y `recibido` se cierra con "Cerrar"; en `esperando_recepcion` no se cierra (tampoco con Esc) y muestra el formulario de recepción
 - [ ] Sin JS, el mismo contenido se ve arriba de la página
-- [ ] La lista de proyectos muestra el estado de cada uno, y "Pendiente de tu revisión" cuando espera recepción
+- [ ] El bloqueo en `esperando_recepcion` oculta los archivos de todas las carpetas y de la raíz para el cliente
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_vistas_archivos`: el cliente recibe el aviso en los tres estados; en `esperando_recepcion` la respuesta no contiene nombres de archivos; el personal no recibe el aviso
+- [ ] `python manage.py test documentos.tests.test_vistas_archivos`: el cliente recibe el aviso en los tres estados; en `esperando_recepcion` la respuesta no contiene archivos (ni en raíz ni en carpetas); el personal no recibe el aviso
 - [ ] Manual en el navegador a 375 y 1280 px: se abre, se cierra cuando corresponde y la consola no muestra errores de CSP
-**Dependencias:** 19, 21 · **Alcance:** M · **Archivos:** `templates/includes/aviso_hitos.html` (nuevo), `static/aviso.js` (nuevo), `static/portal.css`, `templates/archivos.html`, `templates/proyectos.html`
+**Dependencias:** 19, 21, 24 · **Alcance:** M · **Archivos:** `templates/includes/aviso_hitos.html` (nuevo), `static/aviso.js` (nuevo), `static/portal.css`, `templates/archivos.html`
 
-### [ ] Tarea 25: Recepción del cliente y correo
+### [ ] Tarea 26: Recepción obligatoria y correo
 **Descripción:** Confirmar o marcar "No conforme", con aviso por correo a direcciones fijas.
 **Criterios:**
 - [ ] `settings.py`: si `EMAIL_HOST` está vacío se usa `console.EmailBackend`; `AVISO_RECEPCION_CORREOS` sale del entorno como lista
@@ -363,40 +378,30 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 **Verificación:**
 - [ ] `python manage.py test documentos.tests.test_recepcion`: conforme desbloquea y deja 1 correo en `mail.outbox`; no conforme no desbloquea y deja 1 correo; sin nombre se rechaza; personal 403; cliente de otro proyecto 404; proyecto en curso 403; un fallo de correo simulado no pierde la respuesta
 - [ ] Manual: el correo aparece en la consola de `runserver`
-**Dependencias:** 24 · **Alcance:** M · **Archivos:** `config/settings.py`, `documentos/views.py`, `documentos/urls.py`, `documentos/avisos.py` (nuevo: arma y envía el correo), `documentos/tests/test_recepcion.py` (nuevo)
+**Dependencias:** 25 · **Alcance:** M · **Archivos:** `config/settings.py`, `documentos/views.py`, `documentos/urls.py`, `documentos/avisos.py` (nuevo), `documentos/tests/test_recepcion.py` (nuevo)
 
-### Checkpoint G (tras 25): hitos completos en local
+### Checkpoint G (tras 26): flujo completo en local
 - [ ] Todas las pruebas pasan y `check` sin errores
-- [ ] Flujo manual: el personal crea un proyecto con 3 hitos → el cliente ve el aviso y los archivos → el personal marca los 3 → el cliente queda bloqueado (también por enlace directo de descarga) → "No conforme" (correo en consola, sigue bloqueado) → confirma (correo, desbloqueado)
+- [ ] Flujo manual: el personal entra a `/` → crea empresa → entra a la empresa → crea proyecto con 3 hitos → crea carpetas y sube archivos en ellas → el cliente ve sus proyectos, carpetas y archivos → el personal marca los 3 hitos → el cliente queda bloqueado → "No conforme" (correo en consola, sigue bloqueado) → confirma (correo, desbloqueado)
 - [ ] **Revisión contigo** y PR hacia `desarrollo`
 
-### [ ] Tarea 26: Gestión de empresas (jefe)
-**Descripción:** Primera pantalla de Gestión.
-**Criterios:**
-- [ ] `/gestion/empresas/` (listado con cantidad de proyectos), `/gestion/empresas/nueva/` y `/gestion/empresas/<uuid>/` (editar nombre y RUT). Sin borrar
-- [ ] Todas las vistas de `/gestion/` exigen `permisos.es_jefe`; cualquier otro usuario con sesión recibe 403
-- [ ] Enlace "Gestión" en el encabezado, visible solo para el jefe
-**Verificación:**
-- [ ] `python manage.py test gestion`: el jefe crea y edita; personal y cliente reciben 403; un anónimo va al login
-**Dependencias:** 19, 20 · **Alcance:** M · **Archivos:** `gestion/` (app nueva: `views.py`, `urls.py`, `forms.py`, `tests.py`), `config/urls.py`, `config/settings.py`, `templates/gestion/empresas*.html`, `templates/base.html`
-
-### [ ] Tarea 27: Gestión de usuarios con invitación por correo
+### [ ] Tarea 27: Gestión de usuarios con invitación por correo (jefe)
 **Descripción:** El jefe da de alta al personal y a los clientes; cada uno crea su contraseña con un enlace.
 **Criterios:**
-- [ ] `/gestion/usuarios/` (listado con filtro por tipo y activo), `/nuevo/` y `/<uuid>/`: nombre, correo y tipo (**solo** `personal` o `cliente`). Se crea con `set_unusable_password()`
+- [ ] `/gestion/usuarios/` (listado con filtro por tipo y activo), `/gestion/usuarios/nuevo/` y `/gestion/usuarios/<uuid>/`: nombre, correo y tipo (**solo** `personal` o `cliente`). Se crea con `set_unusable_password()`
 - [ ] Al crear se envía la invitación con el enlace `/contrasena/crear/<uidb64>/<token>/` (`default_token_generator` y `PasswordResetConfirmView`, `PASSWORD_RESET_TIMEOUT` de 3 días). Botón "Reenviar invitación"
 - [ ] Desactivar y reactivar (sin borrar). El jefe no puede editar jefes ni superusuarios, cambiarse el tipo ni desactivarse (se valida en el servidor, no solo se ocultan opciones)
 - [ ] La pantalla de crear contraseña usa los validadores de Django y, al terminar, lleva al login
 **Verificación:**
 - [ ] `python manage.py test gestion`: crear un cliente deja 1 correo con un enlace válido; el enlace fija la contraseña y no sirve una segunda vez; un POST con `rol=jefe` se rechaza; editar un superusuario da 404; desactivarse se rechaza; un usuario desactivado no entra
 - [ ] Manual: crear un cliente, abrir el enlace desde la consola, crear la contraseña y entrar
-**Dependencias:** 26 · **Alcance:** M · **Archivos:** `gestion/views.py`, `gestion/forms.py`, `gestion/urls.py`, `config/urls.py`, `templates/gestion/usuarios*.html`, `templates/registration/` (invitación y crear contraseña)
+**Dependencias:** 20, 26 · **Alcance:** M · **Archivos:** `gestion/` (app nueva: `views.py`, `forms.py`, `urls.py`, `tests.py`), `config/urls.py`, `templates/gestion/usuarios*.html`, `templates/registration/`
 
 ### [ ] Tarea 28: "¿Olvidaste tu contraseña?"
 **Descripción:** Reutiliza la pieza de la tarea 27 para recuperar la contraseña desde el login.
 **Criterios:**
 - [ ] `/contrasena/olvide/` (`PasswordResetView`) enlazado desde el login; la respuesta es idéntica exista o no el correo, y no envía nada a usuarios desactivados
-- [ ] Límite simple: como máximo 5 pedidos por IP cada 15 minutos (contador en la caché de Django). Hay una sola instancia, así que la caché en memoria alcanza
+- [ ] Límite simple: como máximo 5 pedidos por IP cada 15 minutos (contador en la caché de Django)
 - [ ] Correo por consola en local
 **Verificación:**
 - [ ] `python manage.py test accounts.tests.test_contrasena`: la misma respuesta para un correo existente y uno inexistente, 1 correo solo en el caso existente, el 6.º pedido se rechaza
@@ -404,7 +409,7 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 
 ### Checkpoint H (tras 28): Gestión completa en local
 - [ ] Todas las pruebas pasan y `check --deploy` sin advertencias con variables de producción
-- [ ] Flujo manual: el jefe crea una empresa, un usuario del personal y un cliente → ambos crean su contraseña con el enlace → el personal crea un proyecto para ese cliente → se repite el flujo del checkpoint G
+- [ ] Flujo manual: el jefe crea personal y clientes desde `/gestion/usuarios/` → reciben correo y fijan contraseña → personal entra, crea empresa, proyecto, carpetas y sube archivos → cliente revisa y confirma
 - [ ] Ningún usuario del flujo necesitó `/admin/`
 - [ ] **Revisión contigo** y PR hacia `desarrollo`. Después va el diseño DS-1 a DS-7 (`docs/09`, ampliado con las pantallas nuevas), antes de la tarea 16
 

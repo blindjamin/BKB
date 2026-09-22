@@ -1,54 +1,59 @@
 # Plan de implementación: Portal de Archivos BKB
 
-> **Spec:** [`docs/03-portal-django.md`](../docs/03-portal-django.md) (aprobada v1.2, 22-09-2026)
+> **Spec:** [`docs/03-portal-django.md`](../docs/03-portal-django.md) (aprobada v1.3, 22-09-2026)
 > **Tareas con criterios y verificación:** [`tasks/todo.md`](todo.md)
-> **Estado:** revisión 3 (22-09-2026), ampliación v1.2 **APROBADA por el usuario (22-09-2026)**. El orden de ejecución está al inicio de `tasks/todo.md`. Ver la sección "Ampliación v1.2" justo abajo; el resto del documento es el plan v1.1, que sigue vigente.
+> **Estado:** revisión 4 (22-09-2026), ampliación v1.3 **APROBADA por el usuario (22-09-2026)**. El orden de ejecución está al inicio de `tasks/todo.md`. Ver las secciones "Ampliación v1.2" y "Ampliación v1.3" justo abajo; el resto del documento es el plan base, que sigue vigente.
 > **Revisión 2 (21-09-2026):** contrastado con el código y git. Se agregó: fusionar la landing antes de la tarea 0, CSP con nonce (tareas 2, 8 y 12), cookies `__Host-` (tarea 2), estáticos de WhiteNoise (tarea 15), `docs/04` en la tarea 17 y la plantilla para darle cada tarea a un agente (inicio de `todo.md`).
 > **Cambios de la v1.1:** el cliente solo ve y descarga (no sube) y el personal puede borrar lo que subió. Se eliminó "Compartir con el cliente" y se agregó "Borrar lo propio": **17 tareas**.
 
 ## Resumen
 
-Se construye `apps/portal` (Django 5.2 LTS) en **17 tareas pequeñas** (más una de preparación) agrupadas en 4 fases. El orden pone primero lo más riesgoso: las reglas de permiso (que un cliente vea proyectos ajenos es el peor fallo posible) y la conexión real con el Space (CORS y URLs prefirmadas, que fallan por configuración y no por código). La interfaz viene después, sobre reglas ya probadas. El despliegue va al final, cuando todo funciona en tu PC.
+Se construye `apps/portal` (Django 5.2 LTS) en fases secuenciales. El orden pone primero lo más riesgoso: las reglas de permiso y bloqueo, y la conexión real con el Space. La interfaz viene después, sobre reglas ya probadas. El despliegue va al final, cuando todo funciona en tu PC.
 
-## Ampliación v1.2 (22-09-2026)
+## Ampliaciones v1.2 y v1.3 (22-09-2026)
 
-La spec v1.2 agrega **hitos con aviso y recepción obligatoria** (sección 12) y el **perfil jefe con pantalla de Gestión** (sección 13). Esto suma **11 tareas (18 a 28)**, que se hacen **antes** de la Fase 4 (producción). Las tareas 15 a 17 se mantienen, con criterios ampliados.
+- **v1.2:** Hitos con aviso y recepción obligatoria (sección 12) y perfil jefe con Gestión (sección 13).
+- **v1.3:** Jerarquía de 3 niveles (**Empresa activa** → **Proyectos históricos** → **Carpetas y Archivos**) y botones de acción rápida (`+ Nueva Empresa` en `/`, `+ Nuevo Proyecto` en `/empresas/<uuid>/` y `+ Nueva Carpeta` en `/proyectos/<uuid>/`).
 
-### Estado real del código (revisado el 22-09-2026)
-
-| Hallazgo | Consecuencia en el plan |
-|---|---|
-| La tarea 11 está implementada (`subidas.py`, `test_subida.py`, commit `8cc48af`) pero sin marcar | La tarea 18 la verifica y la marca |
-| La tarea 12 tiene `subir.js`, pero la CSP bloquea el botón (hallazgo F4 de `docs/09`) | Se cierra después de la tarea 19 (DS-0) |
-| `descargar_archivo` y `eliminar_archivo` deciden con ifs propios, **sin pasar por `permisos.py`** | **Bloqueante:** el bloqueo por recepción vive en `archivos_visibles`; si la descarga no lo usa, el cliente descarga igual por enlace directo. Se corrige en la tarea 18, antes de todo lo demás |
-| La CSP no aplica el nonce (`docs/09`, F1 a F5): el aviso emergente, la confirmación de borrado y el botón de subida no funcionan | La tarea 19 es DS-0 de `docs/09` y es requisito de toda interfaz nueva |
-
-### Decisiones de arquitectura (v1.2)
+### Decisiones de arquitectura (v1.2 y v1.3)
 
 | Decisión | Razón |
 |---|---|
+| **Jerarquía de 3 niveles** (Empresa → Proyectos → Carpetas) | Evita listas planas desordenadas cuando crecen los proyectos de múltiples clientes |
+| **Carpetas 100% virtuales en base de datos** | La clave en el Space sigue `{SPACES_PREFIX}{proyecto_uuid}/{archivo_uuid}`; mover o renombrar carpetas no toca S3 |
+| **Un solo nivel de carpetas por proyecto** | Sin árboles infinitos; mantiene la interfaz simple, rápida y operable en móviles (375 px) |
+| **Acciones rápidas en cada nivel** (`+ Empresa`, `+ Proyecto`, `+ Carpeta`) | El jefe y el personal operan de forma ágil sin tener que pasar por menús administrativos separados |
 | **Estado del proyecto calculado** (`permisos.estado_proyecto`) a partir de `Hito` y `RespuestaRecepcion`, sin campo guardado | Una sola fuente de verdad: no puede quedar "recibido" con hitos sin marcar |
-| **El bloqueo se aplica en `archivos_visibles`**, y todas las vistas de archivo lo usan | Listado, descarga y enlace directo quedan cubiertos con un solo cambio, y la matriz de permisos lo prueba |
+| **El bloqueo se aplica en `archivos_visibles`**, y todas las vistas de archivo lo usan | Cubre raíz y carpetas de forma idéntica; el cliente bloqueado no ve ningún archivo |
 | **El aviso es un `<dialog>` nativo con JS externo** y el mismo contenido se imprime en la página | Funciona sin JS; la seguridad no depende del aviso |
-| **`jefe` es un valor más de `rol`**, y `_es_personal` lo incluye | Todas las reglas del personal se heredan sin copiar código; "un solo jefe activo" se valida en el modelo |
-| **Gestión con vistas y formularios de Django** (`ModelForm`), sin librerías | Son 2 listados y 2 formularios; no justifican dependencias |
-| **Contraseñas por enlace** con `default_token_generator` y `PasswordResetConfirmView` | Viene con Django, está probado y el jefe nunca conoce contraseñas |
-| **Correo por consola** mientras no haya SMTP (`EMAIL_HOST` vacío) | Se prueba el flujo completo sin credenciales; en las pruebas, `mail.outbox` |
-| **Un fallo de correo no deshace la acción** (`fail_silently=False` dentro de `try` y registro en el log) | La recepción del cliente o la cuenta nueva no se pierden por un problema de SMTP |
-| **Hitos editables con un campo de texto, uno por línea** | Sin JS de "agregar fila" ni formsets; cabe en un solo formulario |
+| **`jefe` es un valor más de `rol`**, y `_es_personal` lo incluye | Todas las reglas del personal se heredan sin duplicar código |
+| **Gestión con vistas y formularios de Django** (`ModelForm`), sin dependencias pesadas | Suficiente para el volumen y mantiene el código mantenible |
+| **Contraseñas por enlace** con `default_token_generator` y `PasswordResetConfirmView` | Estándar de Django, seguro y el jefe nunca conoce contraseñas |
+| **Correo por consola en local** mientras no haya SMTP configurado | Permite probar el flujo completo offline sin credenciales |
 
-### Grafo de dependencias (v1.2)
+### Grafo de dependencias actualizado (v1.3)
 
 ```
-18 Permisos en todas las vistas ─┬─ 20 Rol jefe ─┬─ 21 Hitos y bloqueo (núcleo) ─┬─ 22 Crear/editar proyecto ─ 23 Marcar hitos ─┐
-19 DS-0 CSP ─ (cierra 12) ───────┤               │                               └─ 24 Aviso al cliente ──────────────┤
-                                 │               │                                                                    25 Recepción + correo
-                                 │               └─ 26 Gestión empresas ─ 27 Gestión usuarios + invitación ─ 28 Olvidé mi contraseña
-                                 └─ (19 es requisito de 22 a 28, que tienen interfaz)
-                       Checkpoints G (tras 25) y H (tras 28) → Fase 4: 15 → 16 → 17
+18 Permisos vistas ─ 19 CSP ─ (cierre 12) ─ 20 Rol jefe ─┬─ 21 Hitos (núcleo) ──────────────────────────┐
+                                                          ├─ 22 Empresas activas + Proyectos históricos ─┤
+                                                          └─ 23 Carpetas por proyecto y organización ────┤
+                                                                                                         ▼
+                                                                                   24 Marcar hitos en proyecto
+                                                                                                 │
+                                                                                   25 Aviso al cliente
+                                                                                                 │
+                                                                                   26 Recepción obligatoria + correo
+                                                                                                 │
+                                                                                           Checkpoint G
+                                                                                                 │
+                                                                                   27 Gestión usuarios e invitación
+                                                                                                 │
+                                                                                   28 "¿Olvidaste tu contraseña?"
+                                                                                                 │
+                                                                                           Checkpoint H
 ```
 
-**Orden de trabajo:** 18 → 19 → 12 (cierre) → 20 → 21 → 22 → 23 → 24 → 25 → **G** → 26 → 27 → 28 → **H** → diseño DS-1 a DS-7 → 15 → 16 → 17. La tabla "Orden de ejecución" de `tasks/todo.md` es la referencia.
+**Secuencia de trabajo:** 18 → 19 → 12 (cierre) → 20 → 21 → 22 → 23 → 24 → 25 → 26 → **G** → 27 → 28 → **H** → diseño DS-1 a DS-7 → 15 → 16 → 17.
 Las tareas 22 a 25 (hitos) y 26 a 28 (gestión) solo comparten la 20 y la 21, así que los bloques podrían ir en otro orden. Se hacen primero los hitos porque son el pedido principal de BKB.
 
 **Diseño (DS-1 a DS-7 de `docs/09`):** no bloquea. Se hace después del checkpoint H y antes de la tarea 16. `docs/09` debe sumar las pantallas nuevas: formulario de proyecto, panel de hitos, aviso, Gestión y creación de contraseña.
