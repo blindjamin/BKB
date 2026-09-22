@@ -437,3 +437,30 @@ main {
 .btn-eliminar:hover {
     text-decoration: underline;
 }
+
+@media (max-width: 480px) {
+    .archivos-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    .archivos-actions {
+        text-align: left;
+    }
+    .btn-subir {
+        width: 100%;
+        text-align: center;
+    }
+    .archivo-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    .archivo-actions-cell {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+    }
+}

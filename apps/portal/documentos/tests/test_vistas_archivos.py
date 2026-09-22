@@ -84,6 +84,11 @@ class VistasArchivosTests(TestCase):
         self.assertNotContains(response, 'pendiente.pdf')
         self.assertNotContains(response, 'eliminado.pdf')
         
+        # Cliente no ve controles de subida
+        self.assertNotContains(response, 'Subir Archivo')
+        self.assertNotContains(response, 'id="archivo-input"')
+        self.assertNotContains(response, 'subir.js')
+        
     def test_cliente_no_ve_proyectos_ajenos(self):
         self.client.force_login(self.cliente_ajeno)
         response = self.client.get(self.url)
@@ -93,6 +98,15 @@ class VistasArchivosTests(TestCase):
         self.client.force_login(self.personal)
         response = self.client.get(self.url_ajena)
         self.assertEqual(response.status_code, 200)
+
+    def test_personal_ve_boton_y_controles_de_subida(self):
+        self.client.force_login(self.personal)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Subir Archivo')
+        self.assertContains(response, 'id="archivo-input"')
+        self.assertContains(response, 'multiple')
+        self.assertContains(response, 'subir.js')
 
     def test_proyecto_inexistente_retorna_404(self):
         self.client.force_login(self.personal)

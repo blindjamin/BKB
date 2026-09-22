@@ -13,8 +13,8 @@
 |---|---|---|
 | 1 | [x] **Tarea 18:** todas las vistas de archivo pasan por `permisos.py` (y se marca la 11) | `benjamin/AAAA-MM-DD-portal-hitos` |
 | 2 | [x] **Tarea 19:** DS-0, la CSP con nonce | la misma |
-| 3 | **Cierre de la tarea 12** (subida en el navegador) ← **empezar aquí** | la misma |
-| 4 | Tarea 20: rol jefe y nombre | la misma |
+| 3 | [x] **Cierre de la tarea 12** (subida en el navegador) | la misma |
+| 4 | **Tarea 20:** rol jefe y nombre ← **empezar aquí** | la misma |
 | 5 | Tarea 21: hitos, recepción y bloqueo (núcleo) | la misma |
 | 6 | Tarea 22: crear y editar un proyecto | la misma |
 | 7 | Tarea 23: marcar hitos | la misma |
@@ -217,18 +217,18 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] `python manage.py test documentos.tests.test_subida`: cliente 403, personal correcto, tipo o tamaño no permitido, confirmar sin haber subido, confirmar ajeno, visibilidad inmediata para un cliente asignado
 **Dependencias:** 5, 6 · **Alcance:** M · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `documentos/subidas.py`, `documentos/tests/test_subida.py`
 
-### [ ] Tarea 12: Subida: interfaz
+### [x] Tarea 12: Subida: interfaz
 **Descripción:** Pantalla para subir fotos y documentos con avance visible, pensada para celular. Solo la ve el personal.
 **Criterios:**
-- [ ] Botón "Subir archivo" en el proyecto, visible solo para el personal; acepta selección múltiple y fotos de la cámara
-- [ ] Barra de avance y mensajes en español (archivo muy grande, tipo no permitido, error de red)
-- [ ] Al terminar, el archivo aparece en la lista
-- [ ] JS de unas 40 líneas, sin librerías
-- [ ] CSP: `connect-src` y `form-action` admiten solo el endpoint del Space (sale de `SPACES_ENDPOINT`), nada más. Ojo (tarea 6): el POST prefirmado va a `https://{SPACES_BUCKET}.nyc3.digitaloceanspaces.com`, no a `SPACES_ENDPOINT` a secas; el origen de la CSP debe ser ese host
+- [x] Botón "Subir archivo" en el proyecto, visible solo para el personal; acepta selección múltiple y fotos de la cámara
+- [x] Barra de avance y mensajes en español (archivo muy grande, tipo no permitido, error de red)
+- [x] Al terminar, el archivo aparece en la lista
+- [x] JS de unas 40 líneas, sin librerías
+- [x] CSP: `connect-src` y `form-action` admiten solo el endpoint del Space (sale de `SPACES_ENDPOINT`), nada más. Ojo (tarea 6): el POST prefirmado va a `https://{SPACES_BUCKET}.nyc3.digitaloceanspaces.com`, no a `SPACES_ENDPOINT` a secas; el origen de la CSP debe ser ese host
 **Verificación:**
-- [ ] Manual como personal: subir una foto y un PDF reales a `portal-dev/`
-- [ ] Manual como cliente de prueba: no hay botón y un POST directo a la ruta da 403
-- [ ] Manual a 375 px: funciona con el navegador del celular
+- [x] Manual como personal: subir una foto y un PDF reales a `portal-dev/`
+- [x] Manual como cliente de prueba: no hay botón y un POST directo a la ruta da 403
+- [x] Manual a 375 px: funciona con el navegador del celular
 **Dependencias:** 10, 11 · **Requiere de ti:** CORS del Space para `localhost` · **Alcance:** M · **Archivos:** `templates/archivos.html`, `static/subir.js`, `static/portal.css`
 
 ### Checkpoint C (tras 12)
