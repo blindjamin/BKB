@@ -149,3 +149,17 @@ El usuario confirmó que `https://empresabkb.cl/` (sitio antiguo en producción)
 3. Conseguir fotos definitivas para las tarjetas de servicios (hoy son fotos de faena repetidas).
 4. Alinear la lista de servicios del footer, que aún dice "Obras Civiles" y "Mantención 24/7".
 5. Definir el dominio (`empresabkb.cl` o `bkb.cl`) para el correo y el sitio.
+
+---
+
+## Sesión 6 · 22 de Septiembre de 2026 (portal v1.2: hitos, recepción y jefe)
+
+### Resumen
+- **Nuevo requisito de BKB:** al abrir un proyecto, el cliente ve un aviso con el avance por hitos. Cuando se marca el último hito, no ve archivos hasta confirmar "recepcionado y revisado" con el nombre de quien revisó. La confirmación, y el botón "No conforme", mandan un correo a direcciones fijas.
+- **Nuevo perfil jefe:** una sola persona que administra empresas, usuarios y proyectos desde una pantalla "Gestión" del portal, sin `/admin/`. Los usuarios crean su contraseña con un enlace que les llega por correo. El superusuario queda solo como cuenta técnica.
+- **Spec v1.2 aprobada** (`docs/03`, secciones 12 y 13) y **plan aprobado** (`tasks/plan.md`, "Ampliación v1.2"; tareas 18 a 28 en `tasks/todo.md`).
+- **Correo:** por ahora sale por consola. Remitente previsto: `instrumentacion@empresabkb.cl` (Google Workspace). Las direcciones de prueba van solo en el `.env` local.
+- **Hallazgo:** `descargar_archivo` y `eliminar_archivo` no pasan por `permisos.py`. Se corrige en la tarea 18, antes que todo lo demás, porque el bloqueo por recepción depende de ello.
+
+### Punto de partida
+Seguir la tabla "Orden de ejecución" al inicio de `tasks/todo.md`, empezando por la **tarea 18**.
