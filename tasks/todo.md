@@ -25,7 +25,7 @@
 | 11 | [x] **Tarea 27:** Gestión de usuarios e invitación | `benjamin/2026-09-24-portal-gestion` (creada desde `benjamin/2026-09-22-avance-portal`, que aún no está fusionada) |
 | 12 | [x] **Tarea 28:** "¿Olvidaste tu contraseña?" | la misma |
 | ⏸ | [x] **Checkpoint H** (parte automática, 24-09-2026): pruebas y `check --deploy` en verde. **Pendiente del usuario:** flujo manual y PR hacia `desarrollo` | — |
-| 13 | Diseño (`docs/09` §12.4): [x] DS-1 hecho · **DS-2 y DS-3** ← **empezar aquí** · DS-4 a DS-7 (login revisado por el auditor a 1280 px claro y 375 px oscuro; pendiente del usuario: inicio y proyecto a 375 y 1280 px en ambos temas, y el foco de 3 px con teclado) | `benjamin/2026-09-24-portal-diseno` |
+| 13 | Diseño (`docs/09` §12.4): [x] DS-1 hecho · **DS-2 y DS-3** ← **empezar aquí** · DS-4 a DS-7 (pasos agrupados: B = DS-2+3 con Gestión y contraseña, más los hallazgos de la T27: "Reenviar invitación" solo con invitación pendiente y filtros combinables · C = DS-4+5 · D = DS-6+7. Ojo: las líneas antiguas de `docs/09` §5 todavía citan +56 9 8249 1403; vale la §12.1 · login revisado por el auditor a 1280 px claro y 375 px oscuro; pendiente del usuario: inicio y proyecto a 375 y 1280 px en ambos temas, y el foco de 3 px con teclado) | `benjamin/2026-09-24-portal-diseno` |
 | 14 | Tarea 15: código listo para producción | `benjamin/AAAA-MM-DD-portal-prod` |
 | 15 | Tarea 16: puesta en marcha en DigitalOcean (requiere al usuario) | la misma |
 | 16 | Tarea 17: piloto y documentación | la misma |
@@ -425,6 +425,9 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Estáticos: `STORAGES` con el almacenamiento comprimido de WhiteNoise y `collectstatic` en el comando de build
 - [ ] `.do/app.yaml` versionado (instancia única, comando de `gunicorn`, `migrate` antes de cada despliegue, verificación en `/health/`, variables sin valores secretos)
 - [ ] Pasos de despliegue y sincronización de tokens documentados
+- [ ] (Auditoría 24-09) Estáticos con versión en el nombre (`CompressedManifestStaticFilesStorage`): sin eso, tras cada despliegue el navegador sigue usando el `portal.css` viejo (visto en local)
+- [ ] (Auditoría 24-09, **preguntar primero**: toca seguridad) axes detrás del proxy de App Platform: hoy usa `REMOTE_ADDR`, que en producción es la IP del proxy, así que 5 logins fallidos de cualquiera bloquean a todos. Configurar la IP real del cliente y alinear `_get_client_ip` (usado por el límite de "¿Olvidaste tu contraseña?") con lo mismo
+- [ ] (Auditoría 24-09, **preguntar primero**) Con `DEBUG=False` y sin `EMAIL_HOST`, el arranque debe fallar: hoy cae al backend de consola y los enlaces de invitación y recuperación quedarían en los logs de App Platform
 **Verificación:**
 - [ ] `python manage.py check --deploy` sin advertencias
 - [ ] `python manage.py test` sigue pasando

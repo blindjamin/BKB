@@ -198,3 +198,37 @@ Seguir la tabla "Orden de ejecución" al inicio de `tasks/todo.md`, empezando po
 
 ### Punto de partida
 Seguir la tabla "Orden de ejecución" de `tasks/todo.md`, comenzando por la **Tarea 23 (Carpetas por proyecto y organización de archivos)**.
+
+---
+
+## Sesión 8 · 23 y 24 de Septiembre de 2026 (tareas 23 a 28, checkpoints G y H, DS-1)
+
+### Resumen
+- **Forma de trabajo:** tres agentes: un director (armaba el plan de cada tarea y resolvía dudas con la spec), un implementador (skill `incremental-implementation`) y un auditor (pruebas repetidas en orden aleatorio, revisión de seguridad, skill `code-simplification` y commit). Solo se le preguntó al usuario lo que la spec no respondía.
+- **Tarea 23 · Carpetas:** modelo `Carpeta` (un nivel) y `Archivo.carpeta` opcional. Crear y eliminar carpetas es solo para personal y jefe; al eliminar una carpeta, sus archivos vuelven a la raíz. La clave en el Space no cambia. Después se arregló la vista de carpeta, que se veía igual que la raíz: ahora el título es la carpeta y aparece "← Volver a".
+- **Tarea 24 · Hitos:** "Marcar siguiente hito" y "Deshacer último", en una transacción con bloqueo de fila. No se puede retroceder tras una recepción conforme. `ProyectoForm` ya no deja renombrar ni mover hitos cumplidos.
+- **Tarea 25 · Aviso al cliente:** un `<dialog>` con el avance. En "esperando recepción" no se puede cerrar y lleva el formulario de recepción. Funciona sin JS.
+- **Tarea 26 · Recepción y correo:** "Conforme" desbloquea los archivos; "No conforme" mantiene el bloqueo. En los dos casos sale un correo (por consola en local). Si el correo falla, la respuesta queda guardada igual.
+- **Test intermitente arreglado:** la regex del contrato CSP a veces calzaba dentro del nonce aleatorio. Ahora se quita el nonce antes de buscar; la regla no se debilitó.
+- **Tarea 27 · Gestión de usuarios:** app `gestion/`. El jefe crea personal y clientes (nunca jefes) y los desactiva o reactiva. Cada uno recibe un enlace de un solo uso, válido por 3 días, para crear su contraseña. Superusuarios, jefes y el propio jefe no se pueden editar (404).
+- **Tarea 28 · "¿Olvidaste tu contraseña?":** la respuesta es la misma exista o no el correo, y se admiten 5 pedidos por IP cada 15 minutos. El jefe también puede recuperar su contraseña.
+- **Checkpoints G y H:** la parte automática está cerrada: pruebas, `check` y `check --deploy` con variables ficticias, sin advertencias.
+- **DS-1 · Fundaciones de diseño:** `docs/09` aprobado por el usuario el 24-09-2026.
+  - Fuentes de marca locales (Google Fonts, OFL) y texto de 18 px.
+  - Sprite de 12 íconos y logo recortado (53 KB).
+  - `base.html` con "Saltar al contenido", zona única de mensajes y pie con los teléfonos +56 9 8975 3095 y +56 9 6191 1593.
+- **Pruebas:** 252, todas en verde.
+
+### Pendiente del usuario
+- Flujo manual de los Checkpoints G y H en el navegador (incluye crear un jefe en `/admin/` para ver "Gestión").
+- Tecla Esc en el aviso bloqueante.
+- Revisiones a 375 y 1280 px de las tareas 22, 23, 25 y DS-1.
+- Revisar y fusionar el PR hacia `desarrollo`.
+
+### Alertas para producción (anotadas en la Tarea 15)
+- axes detrás del proxy: con 5 fallos de cualquiera se bloquearía a todos.
+- Sin `EMAIL_HOST` en producción, los enlaces de contraseña quedarían en los logs.
+- Los estáticos no llevan versión en el nombre, así que el navegador puede seguir usando el CSS viejo tras un despliegue.
+
+### Punto de partida
+Diseño: paso B (DS-2 y DS-3 con Gestión y contraseña), luego C (DS-4 y DS-5) y D (DS-6 y DS-7); después la Tarea 15. La Tarea 16 (DigitalOcean) requiere al usuario.
