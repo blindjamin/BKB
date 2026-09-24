@@ -2,7 +2,7 @@ import uuid
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -28,7 +28,7 @@ from .permisos import (
     puede_responder_recepcion,
 )
 from .avisos import enviar_aviso_recepcion
-from .models import Archivo, Carpeta, DescargaLog, Empresa, EstadoProyecto, Proyecto, RespuestaRecepcion
+from .models import Archivo, Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RespuestaRecepcion
 from .storage import url_descarga
 
 
@@ -47,7 +47,21 @@ def lista_proyectos(request):
         )
         return render(request, 'empresas.html', {'empresas': empresas})
 
-    proyectos = proyectos_visibles(request.user).select_related('empresa')
+    proyectos = (
+        proyectos_visibles(request.user)
+        .select_related('empresa')
+        .annotate(
+            archivos_count=Count(
+                'archivos',
+                filter=Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True),
+            ),
+            ultima_carga=Max(
+                'archivos__subido_en',
+                filter=Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True),
+            ),
+        )
+        .order_by('estado', 'nombre')
+    )
     return render(request, 'proyectos.html', {'proyectos': proyectos})
 
 
@@ -73,7 +87,20 @@ def detalle_empresa(request, pk):
     if not puede_ver_empresa(request.user, empresa):
         raise Http404("No tienes acceso a esta empresa.")
 
-    proyectos = proyectos_de_empresa(request.user, empresa)
+    proyectos = (
+        proyectos_de_empresa(request.user, empresa)
+        .annotate(
+            archivos_count=Count(
+                'archivos',
+                filter=Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True),
+            ),
+            ultima_carga=Max(
+                'archivos__subido_en',
+                filter=Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True),
+            ),
+        )
+        .order_by('estado', 'nombre')
+    )
     context = {
         'empresa': empresa,
         'proyectos': proyectos,

@@ -1,27 +1,87 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Iniciar Sesión - BKB Portal{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <h1>Portal de Archivos</h1>
-    
-    {% if form.errors %}
-        <p class="text-danger text-center">Correo o contraseña incorrectos.</p>
-    {% endif %}
+<div class="login-wrapper">
+    <div class="login-split">
+        <!-- Panel de marca institucional (escritorio >= 900px) -->
+        <aside class="login-brand-panel" aria-label="Identidad institucional">
+            <div class="login-brand-header">
+                <img src="{% static 'img/logo-bkb.png' %}" alt="BKB" width="88" height="88" class="login-brand-logo">
+                <p class="login-brand-slogan">Sus documentos, siempre a mano.</p>
+            </div>
+            <div class="login-brand-support">
+                <p class="login-support-label">
+                    <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
+                    <span>¿Problemas para entrar? Llámanos:</span>
+                </p>
+                <div class="login-support-phones">
+                    <a href="tel:+56989753095" class="login-phone-link">+56 9 8975 3095</a>
+                    <a href="tel:+56961911593" class="login-phone-link">+56 9 6191 1593</a>
+                </div>
+            </div>
+        </aside>
 
-    <form method="post" action="{% url 'login' %}">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="id_username">Correo</label>
-            <input type="email" name="username" id="id_username" required autofocus>
-        </div>
-        <div class="form-group">
-            <label for="id_password">Contraseña</label>
-            <input type="password" name="password" id="id_password" required>
-        </div>
-        <button type="submit" class="btn-primary">Entrar</button>
-    </form>
-    <p><a href="{% url 'contrasena_olvide' %}" class="btn-link">¿Olvidaste tu contraseña?</a></p>
+        <!-- Tarjeta de formulario de ingreso -->
+        <section class="login-card" aria-labelledby="login-title">
+            <!-- Logo centrado visible en móvil (< 900px) -->
+            <div class="login-card-mobile-logo">
+                <img src="{% static 'img/logo-bkb.png' %}" alt="BKB" width="88" height="88" class="login-mobile-logo-img">
+            </div>
+
+            <h1 id="login-title" class="login-title">Ingresar</h1>
+
+            {% if form.errors %}
+                <div class="login-alert" role="alert">
+                    <svg class="icono login-alert-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
+                    <span>Correo o contraseña incorrectos.</span>
+                </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'login' %}" class="login-form">
+                {% csrf_token %}
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="id_username">Correo</label>
+                    <input type="email" name="username" id="id_username" autocomplete="email" required autofocus value="{{ form.username.value|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password">Contraseña</label>
+                    <div class="login-password-wrapper">
+                        <input type="password" name="password" id="id_password" autocomplete="current-password" required class="login-password-input">
+                        <button type="button" id="toggle-password-btn" class="btn-toggle-password" aria-controls="id_password" aria-label="Mostrar contraseña" aria-pressed="false">Mostrar</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary login-submit-btn">Entrar al portal</button>
+            </form>
+
+            <div class="login-forgot-wrapper">
+                <a href="{% url 'contrasena_olvide' %}" class="btn-link login-forgot-link">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <!-- Soporte en móvil para cuando el panel izquierdo esté oculto -->
+            <div class="login-card-mobile-support">
+                <p class="login-support-label">
+                    <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
+                    <span>¿Problemas para entrar? Llámanos:</span>
+                </p>
+                <div class="login-support-phones">
+                    <a href="tel:+56989753095" class="login-phone-link">+56 9 8975 3095</a>
+                    <a href="tel:+56961911593" class="login-phone-link">+56 9 6191 1593</a>
+                </div>
+            </div>
+        </section>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/login.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endblock %}

@@ -18,17 +18,19 @@
         <div class="proyectos-grid">
             {% for empresa in empresas %}
                 <a href="{% url 'documentos:detalle_empresa' empresa.pk %}" class="project-card">
-                    <div class="project-card-header">
+                    <div class="project-card-top">
                         <h2 class="project-card-title">{{ empresa.nombre }}</h2>
-                        <span class="badge badge-activo">
+                        <span class="badge pastilla-estado badge-activo pastilla-activo">
                             {{ empresa.proyectos_activos_count }} proyecto{{ empresa.proyectos_activos_count|pluralize }} activo{{ empresa.proyectos_activos_count|pluralize }}
                         </span>
                     </div>
                     <div class="project-card-meta">
                         {% if empresa.rut %}
-                            <span>RUT: {{ empresa.rut }}</span>
+                            <span class="empresa-rut">RUT: {{ empresa.rut }}</span>
+                        {% else %}
+                            <span></span>
                         {% endif %}
-                        <span class="card-arrow">Ver proyectos &rarr;</span>
+                        <span class="card-arrow" aria-hidden="true">Ver proyectos &rarr;</span>
                     </div>
                 </a>
             {% endfor %}
@@ -36,8 +38,19 @@
     {% else %}
         <div class="proyectos-empty">
             <p class="proyectos-empty-text">No hay empresas con proyectos activos actualmente.</p>
-            <p><a href="{% url 'documentos:crear_empresa' %}" class="btn-action">+ Registrar Nueva Empresa</a></p>
+            <div class="empty-cta-wrapper">
+                <a href="{% url 'documentos:crear_empresa' %}" class="btn-action">+ Registrar Empresa</a>
+            </div>
+            <div class="empty-support-box">
+                <p class="empty-support-text">¿Necesitas asistencia o soporte técnico? Llámanos a BKB:</p>
+                <div class="empty-support-phones">
+                    <a href="tel:+56989753095" class="support-phone-link">+56 9 8975 3095</a>
+                    <span class="support-phone-separator">&middot;</span>
+                    <a href="tel:+56961911593" class="support-phone-link">+56 9 6191 1593</a>
+                </div>
+            </div>
         </div>
     {% endif %}
 </div>
 {% endblock %}
+

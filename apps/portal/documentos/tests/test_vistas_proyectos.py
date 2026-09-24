@@ -1,7 +1,8 @@
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.utils import timezone
 from accounts.models import Usuario, Rol
-from documentos.models import Empresa, Proyecto, Membresia, EstadoProyecto
+from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
 
 class VistasProyectosTests(TestCase):
     def setUp(self):
@@ -54,3 +55,77 @@ class VistasProyectosTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'No tienes proyectos asignados actualmente.')
+
+    def test_cliente_sin_proyectos_vacio_incluye_telefonos_soporte_y_no_obsoleto(self):
+        self.client.force_login(self.cliente_sin_proyectos)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No tienes proyectos asignados actualmente.')
+        self.assertContains(response, 'tel:+56989753095')
+        self.assertContains(response, '+56 9 8975 3095')
+        self.assertContains(response, 'tel:+56961911593')
+        self.assertContains(response, '+56 9 6191 1593')
+        self.assertNotContains(response, '8249 1403')
+        self.assertNotContains(response, '82491403')
+
+    def test_proyecto_card_metadatos_y_sin_emojis(self):
+        # Crear archivo disponible
+        t_subida = timezone.now()
+        Archivo.objects.create(
+            proyecto=self.proyecto_asignado,
+            nombre_original='doc_valido.pdf',
+            clave_space='portal-dev/doc1.pdf',
+            tamano=1024,
+            tipo='application/pdf',
+            estado=EstadoArchivo.DISPONIBLE,
+            subido_por=self.personal,
+            subido_en=t_subida,
+        )
+        # Archivo pendiente (no debe contarse)
+        Archivo.objects.create(
+            proyecto=self.proyecto_asignado,
+            nombre_original='doc_pendiente.pdf',
+            clave_space='portal-dev/doc2.pdf',
+            tamano=1024,
+            tipo='application/pdf',
+            estado=EstadoArchivo.PENDIENTE,
+            subido_por=self.personal,
+        )
+        # Archivo eliminado (no debe contarse)
+        Archivo.objects.create(
+            proyecto=self.proyecto_asignado,
+            nombre_original='doc_borrado.pdf',
+            clave_space='portal-dev/doc3.pdf',
+            tamano=1024,
+            tipo='application/pdf',
+            estado=EstadoArchivo.DISPONIBLE,
+            subido_por=self.personal,
+            eliminado_en=timezone.now(),
+        )
+
+        self.client.force_login(self.cliente)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        # Verificación de anotación
+        proyectos_ctx = list(response.context['proyectos'])
+        self.assertEqual(len(proyectos_ctx), 1)
+        p = proyectos_ctx[0]
+        self.assertEqual(p.archivos_count, 1)
+        self.assertIsNotNone(p.ultima_carga)
+
+        # Verificación en HTML entregado
+        self.assertContains(response, '1 archivo')
+        self.assertContains(response, 'última carga')
+        self.assertContains(response, 'ACTIVO')
+        self.assertContains(response, 'Empresa A')
+        # Cero emojis 🏢
+        self.assertNotContains(response, '🏢')
+
+    def test_proyecto_card_cero_archivos_muestra_sin_cargas_aun(self):
+        self.client.force_login(self.cliente)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '0 archivos · Sin cargas aún')
+        self.assertNotContains(response, '🏢')
+

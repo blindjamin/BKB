@@ -25,3 +25,16 @@ class EstaticosTests(SimpleTestCase):
                        'papelera', 'buscar', 'flecha', 'sol', 'luna', 'ayuda'):
             with self.subTest(icono=nombre):
                 self.assertIn(f'<symbol id="{nombre}"', contenido)
+
+    def test_icono_alerta_y_tokens_radios_formularios(self):
+        # 1. Ícono alerta presente en sprite para errores accesibles (WCAG AA)
+        with open(finders.find('icons.svg'), encoding='utf-8') as sprite:
+            self.assertIn('<symbol id="alerta"', sprite.read())
+
+        # 2. Token de 10px y radio de inputs en portal.css
+        with open(finders.find('portal.css'), encoding='utf-8') as css_file:
+            css = css_file.read()
+        self.assertIn('--bkb-radius-input', css)
+        self.assertIn('border-radius: var(--bkb-radius-card, 16px);', css)
+        self.assertIn('border-radius: var(--bkb-radius-input, 10px);', css)
+

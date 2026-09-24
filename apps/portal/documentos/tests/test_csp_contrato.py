@@ -165,6 +165,24 @@ class ContratoCSPTests(TestCase):
         self.assertTrue(response.context['validlink'])
         self._verificar_contrato_csp_y_html(response)
 
+    def test_formularios_empresa_y_proyecto_cumplen_contrato(self):
+        self.client.force_login(self.personal)
+        urls = (
+            reverse('documentos:crear_empresa'),
+            reverse('documentos:crear_proyecto'),
+            reverse('documentos:editar_proyecto', args=[self.proyecto.pk]),
+        )
+        for url in urls:
+            with self.subTest(url=url):
+                self._verificar_contrato_csp_y_html(self.client.get(url))
+
+        # Verificar re-renderizado con errores de validación (SVG icon alerta)
+        resp_err_empresa = self.client.post(reverse('documentos:crear_empresa'), {'nombre': '', 'rut': ''})
+        self._verificar_contrato_csp_y_html(resp_err_empresa)
+
+        resp_err_proyecto = self.client.post(reverse('documentos:crear_proyecto'), {'nombre': '', 'hitos_texto': ''})
+        self._verificar_contrato_csp_y_html(resp_err_proyecto)
+
 
 class BaseComunTests(TestCase):
     """Esqueleto común de base.html (DS-1)."""

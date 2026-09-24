@@ -83,3 +83,58 @@ class LoginTests(TestCase):
             'password': 'PasswordSegura123!'
         })
         self.assertEqual(response_correcto.status_code, 429)
+
+    def test_login_elementos_institucionales_y_telefonos_soporte(self):
+        """Verifica elementos institucionales DS-2: eslogan, teléfonos oficiales y exclusión del número antiguo."""
+        response = self.client.get(self.login_url)
+        self.assertEqual(response.status_code, 200)
+
+        # Eslogan institucional
+        self.assertContains(response, 'Sus documentos, siempre a mano.')
+
+        # Teléfonos oficiales de soporte (clickable tel: links)
+        self.assertContains(response, 'tel:+56989753095')
+        self.assertContains(response, 'tel:+56961911593')
+        self.assertContains(response, '+56 9 8975 3095')
+        self.assertContains(response, '+56 9 6191 1593')
+
+        # El teléfono antiguo no debe aparecer
+        self.assertNotContains(response, '8249 1403')
+        self.assertNotContains(response, '82491403')
+
+        # Clases de diseño split y logo 88px
+        self.assertContains(response, 'login-brand-panel')
+        self.assertContains(response, 'login-split')
+        self.assertContains(response, 'width="88"')
+        self.assertContains(response, 'height="88"')
+
+    def test_login_alternancia_contrasena_accesible(self):
+        """Verifica botón de texto accesible para mostrar/ocultar contraseña y carga de login.js con nonce."""
+        response = self.client.get(self.login_url)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertContains(response, 'id="toggle-password-btn"')
+        self.assertContains(response, 'aria-controls="id_password"')
+        self.assertContains(response, 'aria-label="Mostrar contraseña"')
+        self.assertContains(response, 'aria-pressed="false"')
+        self.assertContains(response, 'Mostrar')
+        self.assertContains(response, 'js/login.js')
+
+    def test_login_alerta_error_semantica(self):
+        """Verifica que el error use un contenedor semántico role='alert' con el mensaje exacto."""
+        response = self.client.post(self.login_url, {
+            'username': 'error@bkb.cl',
+            'password': 'PasswordErronea!'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'role="alert"')
+        self.assertContains(response, 'login-alert')
+        self.assertContains(response, 'Correo o contraseña incorrectos')
+
+    def test_login_enlace_recuperar_contrasena(self):
+        """Verifica enlace a recuperación de contraseña debajo del formulario."""
+        response = self.client.get(self.login_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('contrasena_olvide'))
+        self.assertContains(response, '¿Olvidaste tu contraseña?')
+

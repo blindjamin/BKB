@@ -231,4 +231,20 @@ Seguir la tabla "Orden de ejecución" de `tasks/todo.md`, comenzando por la **Ta
 - Los estáticos no llevan versión en el nombre, así que el navegador puede seguir usando el CSS viejo tras un despliegue.
 
 ### Punto de partida
-Diseño: paso B (DS-2 y DS-3 con Gestión y contraseña), luego C (DS-4 y DS-5) y D (DS-6 y DS-7); después la Tarea 15. La Tarea 16 (DigitalOcean) requiere al usuario.
+Paso B completado. Siguiente: Paso C (DS-4 y DS-5 con hitos, carpetas y aviso), luego Paso D (DS-6 y DS-7) y la Tarea 15. La Tarea 16 (DigitalOcean) requiere al usuario.
+
+---
+
+## Sesión 9 · 24 de Septiembre de 2026 (Paso B: DS-2, DS-3, Empresas, Formularios, Gestión y Contraseñas)
+
+### Resumen
+- **Forma de trabajo:** Sistema multi-agente con 3 roles designados: director (contexto y arquitectura), implementador (disciplina `incremental-implementation`) y auditor (`code-review`, pruebas y validación adversaria e independiente).
+- **DS-2 · Login Institucional:** Panel de marca para escritorio (≥ 900 px) con logo e identidad, tarjeta centrada en móvil (375 px), alternador accesible "Mostrar / Ocultar" contraseña (`login.js` externo cumpliendo CSP), alertas semánticas con `role="alert"` y teléfonos oficiales de asistencia (+56 9 8975 3095 / +56 9 6191 1593).
+- **DS-3 · Catálogo de Empresas y Proyectos:** Tarjetas con tipografía de 18 px (`--bkb-text-body-lg`), pastillas de estado (`Activo` / `Cerrado`), optimización de consultas para conteo de archivos y última fecha de carga en `views.py`, foco visible de 3 px y estados vacíos asistidos.
+- **Formularios de Empresa y Proyecto:** Estandarización de bordes (radio 10 px), etiquetas permanentes visibles, renderizado accesible de errores (ícono SVG de alerta + texto explicativo) y selector estilizado de clientes mediante casillas ordenadas.
+- **Gestión de Usuarios y Contraseñas:** Tabla responsiva en escritorio y tarjetas apiladas en móvil para `/gestion/usuarios/`, filtros combinables (`?rol=&activo=`) con `aria-current`, visibilidad condicional de "Reenviar invitación" (solo cuando está pendiente) y pantallas de invitación, restablecimiento y confirmación de contraseña integradas visualmente.
+- **Contrato CSP y Pruebas:** Cero estilos ni manejadores en línea. 271 pruebas unitarias (19 pruebas nuevas cubriendo accesibilidad, filtros, conteos y formularios), todas en verde al 100%. Auditoría post-victoria independiente cerrada con `VICTORY CONFIRMED`.
+- **Aislamiento de red:** Cero llamadas o conexiones a DigitalOcean ni CDNs externas; operación 100% local.
+
+### Punto de partida
+Diseño: Paso C (DS-4 y DS-5: Detalle de proyecto y archivos con filtro `?tipo=`, subida con cola, panel de hitos, carpetas y aviso modal).
