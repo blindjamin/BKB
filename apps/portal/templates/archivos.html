@@ -41,8 +41,44 @@
     </div>
     
     {% for message in messages %}
-        <div class="form-error">{{ message }}</div>
+        <div class="{% if message.level_tag == 'error' %}form-error{% else %}form-aviso{% endif %}">{{ message }}</div>
     {% endfor %}
+
+    {% if puede_gestionar_hitos %}
+    <section class="hitos">
+        <h2 class="carpetas-title">Hitos</h2>
+        {% if hitos %}
+            <ol class="hitos-lista">
+                {% for hito in hitos %}
+                    <li class="hito{% if hito.cumplido %} is-cumplido{% endif %}">
+                        <span class="hito-nombre">{% if hito.cumplido %}✓{% else %}○{% endif %} {{ hito.nombre }}</span>
+                        {% if hito.cumplido %}
+                            <span class="badge badge-activo">{{ hito.cumplido_en|date:"d M Y, H:i" }} · {{ hito.cumplido_por.nombre|default:hito.cumplido_por.email }}</span>
+                        {% else %}
+                            <span class="badge badge-cerrado">Pendiente</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="view-subtitle">Este proyecto no tiene hitos.</p>
+        {% endif %}
+        <div class="hitos-acciones">
+            {% if puede_avanzar %}
+            <form action="{% url 'documentos:avanzar_hito' proyecto.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn-action">Marcar siguiente hito</button>
+            </form>
+            {% endif %}
+            {% if puede_retroceder %}
+            <form action="{% url 'documentos:retroceder_hito' proyecto.pk %}" method="post" data-confirmar="¿Deshacer el último hito marcado?">
+                {% csrf_token %}
+                <button type="submit" class="btn-secondary">Deshacer último</button>
+            </form>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
 
     <section class="carpetas">
         <div class="carpetas-header">

@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 from accounts.models import Rol
 from .models import Empresa, EstadoProyecto, Hito, Membresia, Proyecto
+from .permisos import EstadoFlujoProyecto, estado_proyecto
 
 Usuario = get_user_model()
 
@@ -86,11 +87,12 @@ class ProyectoForm(forms.ModelForm):
             raise forms.ValidationError('Todo proyecto debe contar con al menos un hito.')
 
         if self.instance and self.instance.pk:
-            marcados = self.instance.hitos.filter(cumplido_en__isnull=False).order_by('orden')
-            if len(lines) < marcados.count():
-                raise forms.ValidationError(
-                    f'No es posible eliminar hitos ya cumplidos ({marcados.count()} hito(s) cumplido(s)).'
-                )
+            hitos = self.instance.hitos.order_by('orden')
+            cumplidos = [h.nombre for h in hitos.filter(cumplido_en__isnull=False)]
+            if lines[:len(cumplidos)] != cumplidos:
+                raise forms.ValidationError('Los hitos ya cumplidos no se pueden editar, quitar ni reordenar.')
+            if estado_proyecto(self.instance) == EstadoFlujoProyecto.RECIBIDO and lines != [h.nombre for h in hitos]:
+                raise forms.ValidationError('El proyecto ya fue recibido por el cliente; sus hitos no se pueden cambiar.')
         return lines
 
     def save(self, commit=True):

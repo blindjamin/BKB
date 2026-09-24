@@ -1,6 +1,7 @@
 import uuid
 
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Count, Q
 from django.http import HttpResponseForbidden, Http404
 from django.shortcuts import render, get_object_or_404, redirect
@@ -21,6 +22,9 @@ from .permisos import (
     archivos_visibles_para,
     puede_subir,
     puede_borrar,
+    puede_gestionar_hitos,
+    estado_proyecto,
+    EstadoFlujoProyecto,
 )
 from .models import Archivo, Carpeta, DescargaLog, Empresa, EstadoProyecto, Proyecto
 from .storage import url_descarga
@@ -145,8 +149,16 @@ def detalle_proyecto(request, pk):
     fotos = [a for a in archivos if a.tipo.startswith('image/')]
     documentos = [a for a in archivos if not a.tipo.startswith('image/')]
 
+    gestiona_hitos = puede_gestionar_hitos(request.user)
+    hitos = list(proyecto.hitos.select_related('cumplido_por'))
+    recibido = estado_proyecto(proyecto) == EstadoFlujoProyecto.RECIBIDO
+
     context = {
         'proyecto': proyecto,
+        'hitos': hitos,
+        'puede_gestionar_hitos': gestiona_hitos,
+        'puede_avanzar': gestiona_hitos and not all(h.cumplido for h in hitos),
+        'puede_retroceder': gestiona_hitos and any(h.cumplido for h in hitos) and not recibido,
         'carpetas': proyecto.carpetas.all(),
         'carpeta_activa': carpeta_activa,
         'fotos': fotos,
@@ -188,6 +200,43 @@ def eliminar_carpeta(request, pk):
     proyecto_pk = carpeta.proyecto_id
     carpeta.delete()  # sus archivos vuelven a la raíz (SET_NULL); el Space no se toca
     return redirect('documentos:detalle_proyecto', pk=proyecto_pk)
+
+
+@login_required
+@require_POST
+def avanzar_hito(request, pk):
+    if not puede_gestionar_hitos(request.user):
+        return HttpResponseForbidden("No tienes permisos para marcar hitos.")
+
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    with transaction.atomic():
+        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
+        hito = proyecto.hitos.filter(cumplido_en__isnull=True).order_by('orden').first()
+        if hito:
+            hito.cumplido_en = timezone.now()
+            hito.cumplido_por = request.user
+            hito.save(update_fields=['cumplido_en', 'cumplido_por'])
+    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+
+
+@login_required
+@require_POST
+def retroceder_hito(request, pk):
+    if not puede_gestionar_hitos(request.user):
+        return HttpResponseForbidden("No tienes permisos para deshacer hitos.")
+
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    with transaction.atomic():
+        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
+        if estado_proyecto(proyecto) == EstadoFlujoProyecto.RECIBIDO:
+            messages.error(request, 'El cliente ya confirmó la recepción; los hitos no se pueden deshacer.')
+            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+        hito = proyecto.hitos.filter(cumplido_en__isnull=False).order_by('-orden').first()
+        if hito:
+            hito.cumplido_en = None
+            hito.cumplido_por = None
+            hito.save(update_fields=['cumplido_en', 'cumplido_por'])
+    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
 
 
 @login_required

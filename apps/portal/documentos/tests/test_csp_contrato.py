@@ -2,7 +2,7 @@ import re
 from django.test import Client, TestCase
 from django.urls import reverse
 from accounts.models import Rol, Usuario
-from documentos.models import Archivo, Carpeta, Empresa, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
+from documentos.models import Archivo, Carpeta, Empresa, Hito, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
 
 
 class ContratoCSPTests(TestCase):
@@ -28,6 +28,7 @@ class ContratoCSPTests(TestCase):
         )
         Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
         Carpeta.objects.create(proyecto=self.proyecto, nombre='Informes', creado_por=self.personal)
+        Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Levantamiento')
 
         self.archivo_doc = Archivo.objects.create(
             proyecto=self.proyecto,
@@ -61,6 +62,7 @@ class ContratoCSPTests(TestCase):
         )
 
         html = response.content.decode('utf-8')
+        html = re.sub(r'nonce="[^"]*"', 'nonce=""', html)  # el nonce base64 aleatorio puede contener "on...="
 
         # 2. Cero estilos en línea (style="...")
         match_style = re.search(r'\bstyle\s*=', html, re.IGNORECASE)

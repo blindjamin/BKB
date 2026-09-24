@@ -18,8 +18,8 @@
 | 5 | [x] **Tarea 21:** hitos, recepción y bloqueo (núcleo) | la misma |
 | 6 | [x] **Tarea 22:** estructura: Empresas activas y proyectos por empresa | la misma |
 | 7 | [x] **Tarea 23:** carpetas por proyecto y organización de archivos | la misma |
-| 8 | **Tarea 24:** marcar hitos en proyecto ← **empezar aquí** | la misma |
-| 9 | Tarea 25: aviso al cliente | la misma |
+| 8 | [x] **Tarea 24:** marcar hitos en proyecto | la misma |
+| 9 | **Tarea 25:** aviso al cliente ← **empezar aquí** | la misma |
 | 10 | Tarea 26: recepción obligatoria y correo | la misma |
 | ⏸ | **Checkpoint G**: revisión del flujo con el usuario y PR hacia `desarrollo` | — |
 | 11 | Tarea 27: Gestión de usuarios e invitación | `benjamin/AAAA-MM-DD-portal-gestion` |
@@ -346,14 +346,14 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Manual en el navegador a 375 y 1280 px: crear carpeta "Informes", subir un archivo dentro de ella, navegar entre carpetas y verificar que el cliente solo lee
 **Dependencias:** 22 · **Alcance:** M · **Archivos:** `documentos/models.py`, `documentos/migrations/`, `documentos/views.py`, `documentos/urls.py`, `documentos/subidas.py`, `static/subir.js`, `templates/archivos.html`, `documentos/tests/test_carpetas.py` (nuevo)
 
-### [ ] Tarea 24: Marcar hitos en proyecto (personal y jefe)
+### [x] Tarea 24: Marcar hitos en proyecto (personal y jefe)
 **Descripción:** Panel de hitos con casillas en la pantalla del proyecto.
 **Criterios:**
-- [ ] `POST /proyectos/<uuid>/hitos/avanzar/` marca el siguiente hito sin cumplir y registra quién y cuándo; `.../retroceder/` desmarca el último cumplido
-- [ ] Retroceder se rechaza si ya hay una recepción conforme; avanzar sin hitos pendientes no hace nada
-- [ ] En la pantalla del proyecto, el personal y el jefe ven la lista con el estado de cada hito y solo los botones que aplican
+- [x] `POST /proyectos/<uuid>/hitos/avanzar/` marca el siguiente hito sin cumplir y registra quién y cuándo; `.../retroceder/` desmarca el último cumplido
+- [x] Retroceder se rechaza si ya hay una recepción conforme; avanzar sin hitos pendientes no hace nada
+- [x] En la pantalla del proyecto, el personal y el jefe ven la lista con el estado de cada hito y solo los botones que aplican
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_hitos`: avanza en orden, retrocede solo el último, cliente 403, no retrocede tras una conforme, dos avances seguidos dejan dos hitos marcados (sin saltos)
+- [x] `python manage.py test documentos.tests.test_hitos`: avanza en orden, retrocede solo el último, cliente 403, no retrocede tras una conforme, dos avances seguidos dejan dos hitos marcados (sin saltos)
 **Dependencias:** 23 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/archivos.html`, `documentos/tests/test_hitos.py` (nuevo)
 
 ### [ ] Tarea 25: Aviso al cliente

@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from accounts.models import Rol
 from documentos.forms import EmpresaForm, ProyectoForm
-from documentos.models import Empresa, EstadoProyecto, Hito, Membresia, Proyecto
+from documentos.models import Empresa, EstadoProyecto, Hito, Membresia, Proyecto, RespuestaRecepcion
 
 Usuario = get_user_model()
 
@@ -270,3 +270,47 @@ class VistasEmpresasYProyectosTests(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn('hitos_texto', form.errors)
+
+    def _form_hitos(self, hitos_texto):
+        return ProyectoForm(
+            instance=self.proy_a1,
+            data={
+                'empresa': str(self.empresa_a.pk),
+                'nombre': self.proy_a1.nombre,
+                'estado': self.proy_a1.estado,
+                'hitos_texto': hitos_texto,
+            }
+        )
+
+    def _hitos_uno_cumplido(self):
+        Hito.objects.create(
+            proyecto=self.proy_a1, orden=1, nombre='Hito Cumplido',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        Hito.objects.create(proyecto=self.proy_a1, orden=2, nombre='Hito Pendiente')
+
+    def test_editar_proyecto_no_permite_renombrar_ni_desplazar_hitos_cumplidos(self):
+        self._hitos_uno_cumplido()
+        for texto in ('Hito Renombrado\nHito Pendiente', 'Hito Nuevo\nHito Cumplido\nHito Pendiente'):
+            with self.subTest(texto=texto):
+                form = self._form_hitos(texto)
+                self.assertFalse(form.is_valid())
+                self.assertIn('hitos_texto', form.errors)
+
+    def test_editar_proyecto_permite_cambiar_hitos_pendientes(self):
+        self._hitos_uno_cumplido()
+        form = self._form_hitos('Hito Cumplido\nPendiente Renombrado\nHito Extra')
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_editar_proyecto_recibido_no_permite_agregar_hitos(self):
+        Hito.objects.create(
+            proyecto=self.proy_a1, orden=1, nombre='Hito Cumplido',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        RespuestaRecepcion.objects.create(
+            proyecto=self.proy_a1, usuario=self.cliente, nombre_revisor='Revisor', conforme=True
+        )
+        form = self._form_hitos('Hito Cumplido\nHito Nuevo')
+        self.assertFalse(form.is_valid())
+        self.assertIn('hitos_texto', form.errors)
+        self.assertTrue(self._form_hitos('Hito Cumplido').is_valid())
