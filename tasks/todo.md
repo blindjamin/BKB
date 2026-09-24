@@ -21,8 +21,8 @@
 | 8 | [x] **Tarea 24:** marcar hitos en proyecto | la misma |
 | 9 | [x] **Tarea 25:** aviso al cliente | la misma |
 | 10 | [x] **Tarea 26:** recepción obligatoria y correo | la misma |
-| ⏸ | **Checkpoint G**: revisión del flujo con el usuario y PR hacia `desarrollo` ← **empezar aquí** | — |
-| 11 | Tarea 27: Gestión de usuarios e invitación | `benjamin/AAAA-MM-DD-portal-gestion` |
+| ⏸ | [x] **Checkpoint G** (parte automática, 24-09-2026): pruebas y `check` en verde. **Pendiente del usuario:** flujo manual y PR hacia `desarrollo` | — |
+| 11 | **Tarea 27:** Gestión de usuarios e invitación ← **empezar aquí** | `benjamin/2026-09-24-portal-gestion` (creada desde `benjamin/2026-09-22-avance-portal`, que aún no está fusionada) |
 | 12 | Tarea 28: "¿Olvidaste tu contraseña?" | la misma |
 | ⏸ | **Checkpoint H**: revisión con el usuario y PR hacia `desarrollo` | — |
 | 13 | Diseño DS-1 a DS-7 (`docs/09`, ampliado con las pantallas nuevas) | `benjamin/AAAA-MM-DD-portal-diseno` |
@@ -381,9 +381,10 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 **Dependencias:** 25 · **Alcance:** M · **Archivos:** `config/settings.py`, `documentos/views.py`, `documentos/urls.py`, `documentos/avisos.py` (nuevo), `documentos/tests/test_recepcion.py` (nuevo)
 
 ### Checkpoint G (tras 26): flujo completo en local
-- [ ] Todas las pruebas pasan y `check` sin errores
-- [ ] Flujo manual: el personal entra a `/` → crea empresa → entra a la empresa → crea proyecto con 3 hitos → crea carpetas y sube archivos en ellas → el cliente ve sus proyectos, carpetas y archivos → el personal marca los 3 hitos → el cliente queda bloqueado → "No conforme" (correo en consola, sigue bloqueado) → confirma (correo, desbloqueado)
-- [ ] **Revisión contigo** y PR hacia `desarrollo`
+- [x] Todas las pruebas pasan y `check` sin errores (24-09-2026: 212 pruebas OK, `check` y `makemigrations --check` sin cambios, en `ce426a3`)
+- [ ] **Pendiente del usuario.** Flujo manual: el personal entra a `/` → crea empresa → entra a la empresa → crea proyecto con 3 hitos → crea carpetas y sube archivos en ellas → el cliente ve sus proyectos, carpetas y archivos → el personal marca los 3 hitos → el cliente queda bloqueado → "No conforme" (correo en consola, sigue bloqueado) → confirma (correo, desbloqueado)
+- [ ] **Pendiente del usuario.** En el mismo recorrido, las verificaciones manuales que quedaron abiertas: tarea 22 (crear empresa y proyecto, y que el cliente asignado lo vea), tarea 23 (carpeta "Informes" a 375 y 1280 px), tarea 25 (el aviso se abre y se cierra cuando corresponde, **Esc no lo cierra** en `esperando_recepcion`, sin errores de CSP) y tarea 26 (los correos aparecen en la consola de `runserver`; requiere `AVISO_RECEPCION_CORREOS` en el `.env` local)
+- [ ] **Pendiente del usuario.** **Revisión contigo** y PR hacia `desarrollo` (los agentes no hacen push ni abren el PR)
 
 ### [ ] Tarea 27: Gestión de usuarios con invitación por correo (jefe)
 **Descripción:** El jefe da de alta al personal y a los clientes; cada uno crea su contraseña con un enlace.
