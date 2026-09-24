@@ -138,6 +138,19 @@ if not SPACES_PREFIX.endswith('/') or SPACES_PREFIX.startswith('/') or '..' in S
     )
 MAX_UPLOAD_MB = int(os.environ.get('MAX_UPLOAD_MB', '50'))
 
+# Correo (§12.3.8). Sin EMAIL_HOST, Django imprime los correos en la consola.
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+if EMAIL_HOST:
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    EMAIL_USE_TLS = True
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or 'portal@empresabkb.cl'
+# Destinatarios fijos del aviso de recepción, separados por comas.
+AVISO_RECEPCION_CORREOS = [c.strip() for c in os.environ.get('AVISO_RECEPCION_CORREOS', '').split(',') if c.strip()]
+
 # Seguridad de Sesiones y Cookies (Plan Sección 5)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'

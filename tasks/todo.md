@@ -20,8 +20,8 @@
 | 7 | [x] **Tarea 23:** carpetas por proyecto y organización de archivos | la misma |
 | 8 | [x] **Tarea 24:** marcar hitos en proyecto | la misma |
 | 9 | [x] **Tarea 25:** aviso al cliente | la misma |
-| 10 | **Tarea 26:** recepción obligatoria y correo ← **empezar aquí** | la misma |
-| ⏸ | **Checkpoint G**: revisión del flujo con el usuario y PR hacia `desarrollo` | — |
+| 10 | [x] **Tarea 26:** recepción obligatoria y correo | la misma |
+| ⏸ | **Checkpoint G**: revisión del flujo con el usuario y PR hacia `desarrollo` ← **empezar aquí** | — |
 | 11 | Tarea 27: Gestión de usuarios e invitación | `benjamin/AAAA-MM-DD-portal-gestion` |
 | 12 | Tarea 28: "¿Olvidaste tu contraseña?" | la misma |
 | ⏸ | **Checkpoint H**: revisión con el usuario y PR hacia `desarrollo` | — |
@@ -360,7 +360,7 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 **Descripción:** El cliente ve el avance cada vez que abre un proyecto.
 **Criterios:**
 - [x] `templates/includes/aviso_hitos.html` con la lista de hitos (cumplidos, actual y pendientes) y un mensaje por estado
-- [x] Un `<dialog>` que se abre al cargar con `static/aviso.js` (externo, sin nada en línea). En `en_curso` y `recibido` se cierra con "Cerrar"; en `esperando_recepcion` no se cierra (tampoco con Esc) y muestra el formulario de recepción
+- [x] Un `<dialog>` que se abre al cargar con `static/aviso.js` (externo, sin nada en línea). En `en_curso` y `recibido` se cierra con "Cerrar"; en `esperando_recepcion` no se cierra (tampoco con Esc) y muestra el formulario de recepción (probado en el HTML; falta verificar Esc en el navegador en el Checkpoint G)
 - [x] Sin JS, el mismo contenido se ve arriba de la página
 - [x] El bloqueo en `esperando_recepcion` oculta los archivos de todas las carpetas y de la raíz para el cliente
 **Verificación:**
@@ -368,15 +368,15 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Manual en el navegador a 375 y 1280 px: se abre, se cierra cuando corresponde y la consola no muestra errores de CSP
 **Dependencias:** 19, 21, 24 · **Alcance:** M · **Archivos:** `templates/includes/aviso_hitos.html` (nuevo), `static/aviso.js` (nuevo), `static/portal.css`, `templates/archivos.html`
 
-### [ ] Tarea 26: Recepción obligatoria y correo
+### [x] Tarea 26: Recepción obligatoria y correo
 **Descripción:** Confirmar o marcar "No conforme", con aviso por correo a direcciones fijas.
 **Criterios:**
-- [ ] `settings.py`: si `EMAIL_HOST` está vacío se usa `console.EmailBackend`; `AVISO_RECEPCION_CORREOS` sale del entorno como lista
-- [ ] `POST /proyectos/<uuid>/recepcion/` exige `puede_responder_recepcion` (si no, 403; un proyecto no visible da 404), `nombre_revisor` no vacío y, para "conforme", la casilla marcada
-- [ ] "Conforme" crea `RespuestaRecepcion(conforme=True)` con IP y desbloquea. "No conforme" crea `conforme=False` y mantiene el bloqueo
-- [ ] Ambos mandan un correo a `AVISO_RECEPCION_CORREOS` con el proyecto, la empresa, el resultado, el revisor, el correo del cliente y la fecha. Si el envío falla, la respuesta se guarda igual y el error queda en el log
+- [x] `settings.py`: si `EMAIL_HOST` está vacío se usa `console.EmailBackend`; `AVISO_RECEPCION_CORREOS` sale del entorno como lista
+- [x] `POST /proyectos/<uuid>/recepcion/` exige `puede_responder_recepcion` (si no, 403; un proyecto no visible da 404), `nombre_revisor` no vacío y, para "conforme", la casilla marcada
+- [x] "Conforme" crea `RespuestaRecepcion(conforme=True)` con IP y desbloquea. "No conforme" crea `conforme=False` y mantiene el bloqueo
+- [x] Ambos mandan un correo a `AVISO_RECEPCION_CORREOS` con el proyecto, la empresa, el resultado, el revisor, el correo del cliente y la fecha. Si el envío falla, la respuesta se guarda igual y el error queda en el log
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_recepcion`: conforme desbloquea y deja 1 correo en `mail.outbox`; no conforme no desbloquea y deja 1 correo; sin nombre se rechaza; personal 403; cliente de otro proyecto 404; proyecto en curso 403; un fallo de correo simulado no pierde la respuesta
+- [x] `python manage.py test documentos.tests.test_recepcion`: conforme desbloquea y deja 1 correo en `mail.outbox`; no conforme no desbloquea y deja 1 correo; sin nombre se rechaza; personal 403; cliente de otro proyecto 404; proyecto en curso 403; un fallo de correo simulado no pierde la respuesta
 - [ ] Manual: el correo aparece en la consola de `runserver`
 **Dependencias:** 25 · **Alcance:** M · **Archivos:** `config/settings.py`, `documentos/views.py`, `documentos/urls.py`, `documentos/avisos.py` (nuevo), `documentos/tests/test_recepcion.py` (nuevo)
 

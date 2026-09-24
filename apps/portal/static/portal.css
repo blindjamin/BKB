@@ -791,6 +791,8 @@ main {
     margin-top: 0.75rem;
 }
 
+/* Anula el padding de .form-group input: la casilla conserva el 1.1rem de .checkbox-item */
 .form-recepcion .checkbox-item input {
-    width: auto;
+    padding: 0;
+    flex: none;
 }

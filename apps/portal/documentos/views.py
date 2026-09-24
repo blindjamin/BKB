@@ -3,7 +3,7 @@ import uuid
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Q
-from django.http import HttpResponseForbidden, Http404
+from django.http import HttpResponseBadRequest, HttpResponseForbidden, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -25,8 +25,10 @@ from .permisos import (
     puede_gestionar_hitos,
     estado_proyecto,
     EstadoFlujoProyecto,
+    puede_responder_recepcion,
 )
-from .models import Archivo, Carpeta, DescargaLog, Empresa, EstadoProyecto, Proyecto
+from .avisos import enviar_aviso_recepcion
+from .models import Archivo, Carpeta, DescargaLog, Empresa, EstadoProyecto, Proyecto, RespuestaRecepcion
 from .storage import url_descarga
 
 
@@ -243,6 +245,51 @@ def retroceder_hito(request, pk):
             hito.cumplido_en = None
             hito.cumplido_por = None
             hito.save(update_fields=['cumplido_en', 'cumplido_por'])
+    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+
+
+@login_required
+@require_POST
+def responder_recepcion(request, pk):
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not puede_responder_recepcion(request.user, proyecto):
+        return HttpResponseForbidden("No puedes responder la recepción de este proyecto.")
+
+    resultado = request.POST.get('resultado')
+    if resultado not in ('conforme', 'no_conforme'):
+        return HttpResponseBadRequest("Resultado no válido.")
+    conforme = resultado == 'conforme'
+    nombre = request.POST.get('nombre_revisor', '').strip()
+    if not nombre:
+        error = 'Escribe el nombre de quien revisó.'
+    elif len(nombre) > 200:
+        error = 'El nombre no puede superar 200 caracteres.'
+    elif conforme and not request.POST.get('revisado'):
+        error = 'Marca "Recepcionado y revisado" para confirmar.'
+    else:
+        error = None
+    if error:
+        messages.error(request, error)
+        return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+
+    with transaction.atomic():
+        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # mismo bloqueo que avanzar/retroceder
+        if not puede_responder_recepcion(request.user, proyecto):  # el estado pudo cambiar mientras tanto
+            messages.error(request, 'El proyecto ya no está esperando tu recepción.')
+            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+        respuesta = RespuestaRecepcion.objects.create(
+            proyecto=proyecto,
+            usuario=request.user,
+            nombre_revisor=nombre,
+            conforme=conforme,
+            ip=_get_client_ip(request),
+        )
+
+    enviar_aviso_recepcion(respuesta)  # fuera del atomic: un fallo del correo no deshace la respuesta
+    if conforme:
+        messages.success(request, 'Recepción confirmada.')
+    else:
+        messages.success(request, 'Registramos tu respuesta "No conforme". BKB te contactará.')
     return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
 
 
