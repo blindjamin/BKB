@@ -1,0 +1,46 @@
+<dialog id="aviso-hitos" class="aviso-hitos" open aria-labelledby="aviso-hitos-titulo"{% if estado == 'esperando_recepcion' %} data-bloqueante{% endif %}>
+    <h2 id="aviso-hitos-titulo" class="seccion-title">Avance del proyecto</h2>
+    <p class="aviso-mensaje">
+        {% if estado == 'recibido' %}
+            Recepción confirmada por {{ recepcion_conforme.nombre_revisor }} el {{ recepcion_conforme.fecha|date:"d M Y" }}.
+        {% elif estado == 'esperando_recepcion' %}
+            BKB completó todos los hitos. Para volver a ver los archivos, confirma la recepción.
+        {% elif hito_actual %}
+            Avance de tu proyecto: hito {{ hito_actual.orden }} de {{ hitos|length }} — {{ hito_actual.nombre }}
+        {% else %}
+            Aún no hay hitos registrados para este proyecto.
+        {% endif %}
+    </p>
+    {% if hitos %}
+        <ol class="hitos-lista">
+            {% for hito in hitos %}
+                {% if hito.cumplido %}
+                    <li class="hito is-cumplido"><span class="hito-nombre">✓ {{ hito.nombre }}</span></li>
+                {% elif hito == hito_actual %}
+                    <li class="hito is-actual"><span class="hito-nombre">➜ {{ hito.nombre }}</span><span class="badge badge-activo">En curso</span></li>
+                {% else %}
+                    <li class="hito"><span class="hito-nombre">○ {{ hito.nombre }}</span><span class="badge badge-cerrado">Pendiente</span></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    {% endif %}
+    {% if estado == 'esperando_recepcion' %}
+        {# Sin action hasta la T26: por ahora vuelve a esta misma página sin guardar nada. #}
+        <form method="post" class="form-recepcion form-group">
+            {% csrf_token %}
+            <label for="nombre-revisor">Nombre de quien revisa</label>
+            <input type="text" id="nombre-revisor" name="nombre_revisor" maxlength="200" required autocomplete="name">
+            <label class="checkbox-item">
+                <input type="checkbox" name="revisado" value="1"> Recepcionado y revisado
+            </label>
+            <div class="aviso-acciones">
+                <button type="submit" name="resultado" value="conforme" class="btn-action">Confirmar</button>
+                <button type="submit" name="resultado" value="no_conforme" class="btn-secondary">No conforme</button>
+            </div>
+        </form>
+    {% else %}
+        <form method="dialog" class="aviso-acciones">
+            <button type="submit" class="btn-secondary">Cerrar</button>
+        </form>
+    {% endif %}
+</dialog>

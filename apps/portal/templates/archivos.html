@@ -5,6 +5,9 @@
 
 {% block content %}
 <div class="archivos-container">
+    {% if mostrar_aviso %}
+        {% include "includes/aviso_hitos.html" %}
+    {% endif %}
     <div class="archivos-header">
         <div>
             <nav class="breadcrumbs">
@@ -46,7 +49,7 @@
 
     {% if puede_gestionar_hitos %}
     <section class="hitos">
-        <h2 class="carpetas-title">Hitos</h2>
+        <h2 class="seccion-title">Hitos</h2>
         {% if hitos %}
             <ol class="hitos-lista">
                 {% for hito in hitos %}
@@ -82,7 +85,7 @@
 
     <section class="carpetas">
         <div class="carpetas-header">
-            <h2 class="carpetas-title">Carpetas</h2>
+            <h2 class="seccion-title">Carpetas</h2>
             {% if puede_gestionar %}
             <form action="{% url 'documentos:crear_carpeta' proyecto.pk %}" method="post" class="form-carpeta form-group">
                 {% csrf_token %}
@@ -151,6 +154,9 @@
 
 {% block extra_js %}
 <script src="{% static 'archivos.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% if mostrar_aviso %}
+<script src="{% static 'aviso.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endif %}
 {% if puede_subir %}
 <script src="{% static 'subir.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endif %}

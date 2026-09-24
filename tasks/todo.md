@@ -19,8 +19,8 @@
 | 6 | [x] **Tarea 22:** estructura: Empresas activas y proyectos por empresa | la misma |
 | 7 | [x] **Tarea 23:** carpetas por proyecto y organización de archivos | la misma |
 | 8 | [x] **Tarea 24:** marcar hitos en proyecto | la misma |
-| 9 | **Tarea 25:** aviso al cliente ← **empezar aquí** | la misma |
-| 10 | Tarea 26: recepción obligatoria y correo | la misma |
+| 9 | [x] **Tarea 25:** aviso al cliente | la misma |
+| 10 | **Tarea 26:** recepción obligatoria y correo ← **empezar aquí** | la misma |
 | ⏸ | **Checkpoint G**: revisión del flujo con el usuario y PR hacia `desarrollo` | — |
 | 11 | Tarea 27: Gestión de usuarios e invitación | `benjamin/AAAA-MM-DD-portal-gestion` |
 | 12 | Tarea 28: "¿Olvidaste tu contraseña?" | la misma |
@@ -356,15 +356,15 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [x] `python manage.py test documentos.tests.test_hitos`: avanza en orden, retrocede solo el último, cliente 403, no retrocede tras una conforme, dos avances seguidos dejan dos hitos marcados (sin saltos)
 **Dependencias:** 23 · **Alcance:** S · **Archivos:** `documentos/views.py`, `documentos/urls.py`, `templates/archivos.html`, `documentos/tests/test_hitos.py` (nuevo)
 
-### [ ] Tarea 25: Aviso al cliente
+### [x] Tarea 25: Aviso al cliente
 **Descripción:** El cliente ve el avance cada vez que abre un proyecto.
 **Criterios:**
-- [ ] `templates/includes/aviso_hitos.html` con la lista de hitos (cumplidos, actual y pendientes) y un mensaje por estado
-- [ ] Un `<dialog>` que se abre al cargar con `static/aviso.js` (externo, sin nada en línea). En `en_curso` y `recibido` se cierra con "Cerrar"; en `esperando_recepcion` no se cierra (tampoco con Esc) y muestra el formulario de recepción
-- [ ] Sin JS, el mismo contenido se ve arriba de la página
-- [ ] El bloqueo en `esperando_recepcion` oculta los archivos de todas las carpetas y de la raíz para el cliente
+- [x] `templates/includes/aviso_hitos.html` con la lista de hitos (cumplidos, actual y pendientes) y un mensaje por estado
+- [x] Un `<dialog>` que se abre al cargar con `static/aviso.js` (externo, sin nada en línea). En `en_curso` y `recibido` se cierra con "Cerrar"; en `esperando_recepcion` no se cierra (tampoco con Esc) y muestra el formulario de recepción
+- [x] Sin JS, el mismo contenido se ve arriba de la página
+- [x] El bloqueo en `esperando_recepcion` oculta los archivos de todas las carpetas y de la raíz para el cliente
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_vistas_archivos`: el cliente recibe el aviso en los tres estados; en `esperando_recepcion` la respuesta no contiene archivos (ni en raíz ni en carpetas); el personal no recibe el aviso
+- [x] `python manage.py test documentos.tests.test_vistas_archivos`: el cliente recibe el aviso en los tres estados; en `esperando_recepcion` la respuesta no contiene archivos (ni en raíz ni en carpetas); el personal no recibe el aviso
 - [ ] Manual en el navegador a 375 y 1280 px: se abre, se cierra cuando corresponde y la consola no muestra errores de CSP
 **Dependencias:** 19, 21, 24 · **Alcance:** M · **Archivos:** `templates/includes/aviso_hitos.html` (nuevo), `static/aviso.js` (nuevo), `static/portal.css`, `templates/archivos.html`
 

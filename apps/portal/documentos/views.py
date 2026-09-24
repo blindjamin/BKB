@@ -151,7 +151,8 @@ def detalle_proyecto(request, pk):
 
     gestiona_hitos = puede_gestionar_hitos(request.user)
     hitos = list(proyecto.hitos.select_related('cumplido_por'))
-    recibido = estado_proyecto(proyecto) == EstadoFlujoProyecto.RECIBIDO
+    estado = estado_proyecto(proyecto)
+    recibido = estado == EstadoFlujoProyecto.RECIBIDO
 
     context = {
         'proyecto': proyecto,
@@ -159,6 +160,12 @@ def detalle_proyecto(request, pk):
         'puede_gestionar_hitos': gestiona_hitos,
         'puede_avanzar': gestiona_hitos and not all(h.cumplido for h in hitos),
         'puede_retroceder': gestiona_hitos and any(h.cumplido for h in hitos) and not recibido,
+        'estado': estado,
+        'mostrar_aviso': not gestiona_hitos,  # el aviso es para el cliente (§12.1)
+        'hito_actual': next((h for h in hitos if not h.cumplido), None),
+        'recepcion_conforme': (
+            proyecto.respuestas_recepcion.filter(conforme=True).order_by('fecha').first() if recibido else None
+        ),
         'carpetas': proyecto.carpetas.all(),
         'carpeta_activa': carpeta_activa,
         'fotos': fotos,

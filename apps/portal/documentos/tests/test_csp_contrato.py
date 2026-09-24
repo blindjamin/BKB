@@ -1,8 +1,9 @@
 import re
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils import timezone
 from accounts.models import Rol, Usuario
-from documentos.models import Archivo, Carpeta, Empresa, Hito, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
+from documentos.models import Archivo, Carpeta, Empresa, Hito, RespuestaRecepcion, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
 
 
 class ContratoCSPTests(TestCase):
@@ -106,8 +107,30 @@ class ContratoCSPTests(TestCase):
         html = response.content.decode('utf-8')
         # Verificar que el formulario de eliminación incluye data-confirmar
         self.assertIn('data-confirmar=', html)
+        self.assertNotIn('aviso.js', html)
 
     def test_detalle_archivos_cliente_cumple_contrato(self):
         self.client.force_login(self.cliente)
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
         self._verificar_contrato_csp_y_html(response)
+        self.assertIn('aviso.js', response.content.decode('utf-8'))
+
+    def _marcar_hitos(self):
+        self.proyecto.hitos.update(cumplido_en=timezone.now(), cumplido_por=self.personal)
+
+    def test_detalle_archivos_cliente_esperando_recepcion_cumple_contrato(self):
+        self._marcar_hitos()
+        self.client.force_login(self.cliente)
+        response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+        self._verificar_contrato_csp_y_html(response)
+        self.assertIn('data-bloqueante', response.content.decode('utf-8'))
+
+    def test_detalle_archivos_cliente_recibido_cumple_contrato(self):
+        self._marcar_hitos()
+        RespuestaRecepcion.objects.create(
+            proyecto=self.proyecto, usuario=self.cliente, nombre_revisor='Revisor', conforme=True
+        )
+        self.client.force_login(self.cliente)
+        response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+        self._verificar_contrato_csp_y_html(response)
+        self.assertIn('Recepción confirmada', response.content.decode('utf-8'))
