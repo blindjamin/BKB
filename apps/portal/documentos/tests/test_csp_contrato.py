@@ -2,7 +2,7 @@ import re
 from django.test import Client, TestCase
 from django.urls import reverse
 from accounts.models import Rol, Usuario
-from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
+from documentos.models import Archivo, Carpeta, Empresa, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
 
 
 class ContratoCSPTests(TestCase):
@@ -27,6 +27,7 @@ class ContratoCSPTests(TestCase):
             estado=EstadoProyecto.ACTIVO,
         )
         Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        Carpeta.objects.create(proyecto=self.proyecto, nombre='Informes', creado_por=self.personal)
 
         self.archivo_doc = Archivo.objects.create(
             proyecto=self.proyecto,

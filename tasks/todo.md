@@ -17,8 +17,8 @@
 | 4 | [x] **Tarea 20:** rol jefe y nombre | la misma |
 | 5 | [x] **Tarea 21:** hitos, recepción y bloqueo (núcleo) | la misma |
 | 6 | [x] **Tarea 22:** estructura: Empresas activas y proyectos por empresa | la misma |
-| 7 | **Tarea 23:** carpetas por proyecto y organización de archivos ← **empezar aquí** | la misma |
-| 8 | Tarea 24: marcar hitos en proyecto | la misma |
+| 7 | [x] **Tarea 23:** carpetas por proyecto y organización de archivos | la misma |
+| 8 | **Tarea 24:** marcar hitos en proyecto ← **empezar aquí** | la misma |
 | 9 | Tarea 25: aviso al cliente | la misma |
 | 10 | Tarea 26: recepción obligatoria y correo | la misma |
 | ⏸ | **Checkpoint G**: revisión del flujo con el usuario y PR hacia `desarrollo` | — |
@@ -332,17 +332,17 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Manual: entrar como personal → crear empresa rápida → crear proyecto en ella → verificar que un cliente asignado ve el proyecto
 **Dependencias:** 19, 20, 21 · **Alcance:** M · **Archivos:** `documentos/forms.py` (nuevo), `documentos/views.py`, `documentos/urls.py`, `documentos/permisos.py`, `templates/empresas.html` (nuevo), `templates/empresa_detalle.html` (nuevo), `templates/empresa_form.html` (nuevo), `templates/proyecto_form.html` (nuevo), `documentos/tests/test_vistas_empresas.py` (nuevo)
 
-### [ ] Tarea 23: Carpetas por proyecto y organización de archivos
+### [x] Tarea 23: Carpetas por proyecto y organización de archivos
 **Descripción:** Permitir al personal y al jefe crear carpetas dentro de un proyecto para organizar fotos y documentos de forma ordenada, con acceso rápido y sin alterar las claves del Space.
 **Criterios:**
-- [ ] Modelo `Carpeta` (`id`, `proyecto`, `nombre`, `creado_en`, `creado_por`; único por `proyecto` y `nombre`) y relación `Archivo.carpeta` (`ForeignKey`, opcional `null=True, blank=True, on_delete=models.SET_NULL`). Migración nueva
-- [ ] En la pantalla del proyecto (`templates/archivos.html`): listado de carpetas (tarjetas/pastillas), botón destacado "Nueva carpeta", migas de pan (*Empresa > Proyecto > Carpeta*) y visualización de archivos (raíz o dentro de la carpeta activa `?carpeta=<uuid>`)
-- [ ] `POST /proyectos/<uuid>/carpetas/nueva/`: solo personal y jefe; valida nombre no vacío y que no exista en el proyecto
-- [ ] `POST /carpetas/<uuid>/eliminar/`: solo personal y jefe; elimina carpeta vacía o devuelve sus archivos a la raíz (`SET_NULL`)
-- [ ] Subida (`subir.js` / `iniciar_subida`): acepta opcionalmente `carpeta_id` para subir directamente a la carpeta activa
-- [ ] El cliente ve carpetas y archivos en modo solo lectura (sin botones de crear carpeta, subir ni eliminar)
+- [x] Modelo `Carpeta` (`id`, `proyecto`, `nombre`, `creado_en`, `creado_por`; único por `proyecto` y `nombre`) y relación `Archivo.carpeta` (`ForeignKey`, opcional `null=True, blank=True, on_delete=models.SET_NULL`). Migración nueva
+- [x] En la pantalla del proyecto (`templates/archivos.html`): listado de carpetas (tarjetas/pastillas), botón destacado "Nueva carpeta", migas de pan (*Empresa > Proyecto > Carpeta*) y visualización de archivos (raíz o dentro de la carpeta activa `?carpeta=<uuid>`)
+- [x] `POST /proyectos/<uuid>/carpetas/nueva/`: solo personal y jefe; valida nombre no vacío y que no exista en el proyecto
+- [x] `POST /carpetas/<uuid>/eliminar/`: solo personal y jefe; elimina carpeta vacía o devuelve sus archivos a la raíz (`SET_NULL`)
+- [x] Subida (`subir.js` / `iniciar_subida`): acepta opcionalmente `carpeta_id` para subir directamente a la carpeta activa
+- [x] El cliente ve carpetas y archivos en modo solo lectura (sin botones de crear carpeta, subir ni eliminar)
 **Verificación:**
-- [ ] `python manage.py test documentos.tests.test_carpetas`: personal y jefe crean y eliminan carpetas; cliente recibe 403; subida asocia `carpeta_id`; borrar carpeta no borra objetos en el Space; clave en el Space sigue inmutable (`{prefix}{proyecto_id}/{archivo_id}`)
+- [x] `python manage.py test documentos.tests.test_carpetas`: personal y jefe crean y eliminan carpetas; cliente recibe 403; subida asocia `carpeta_id`; borrar carpeta no borra objetos en el Space; clave en el Space sigue inmutable (`{prefix}{proyecto_id}/{archivo_id}`)
 - [ ] Manual en el navegador a 375 y 1280 px: crear carpeta "Informes", subir un archivo dentro de ella, navegar entre carpetas y verificar que el cliente solo lee
 **Dependencias:** 22 · **Alcance:** M · **Archivos:** `documentos/models.py`, `documentos/migrations/`, `documentos/views.py`, `documentos/urls.py`, `documentos/subidas.py`, `static/subir.js`, `templates/archivos.html`, `documentos/tests/test_carpetas.py` (nuevo)
 

@@ -8,7 +8,7 @@ import os
 import uuid
 
 from .permisos import puede_subir, proyectos_visibles
-from .models import Archivo, EstadoArchivo
+from .models import Archivo, Carpeta, EstadoArchivo
 from .storage import post_subida, clave_para, tamano_en_space
 
 @login_required
@@ -24,6 +24,7 @@ def iniciar_subida(request, pk):
         nombre = data.get('nombre')
         tipo = data.get('tipo')
         tamano = data.get('tamano')
+        carpeta_id = data.get('carpeta_id')
     except json.JSONDecodeError:
         return JsonResponse({'error': 'JSON inválido.'}, status=400)
         
@@ -44,8 +45,16 @@ def iniciar_subida(request, pk):
     if tamano > max_bytes:
         return JsonResponse({'error': f'El archivo supera el límite de {settings.MAX_UPLOAD_MB} MB.'}, status=400)
         
+    carpeta = None
+    if carpeta_id:
+        try:
+            carpeta = proyecto.carpetas.get(pk=uuid.UUID(str(carpeta_id)))
+        except (ValueError, Carpeta.DoesNotExist):
+            return JsonResponse({'error': 'Carpeta no válida.'}, status=400)
+
     archivo = Archivo(
         proyecto=proyecto,
+        carpeta=carpeta,
         nombre_original=nombre,
         tamano=tamano,
         tipo=tipo,

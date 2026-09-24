@@ -86,7 +86,7 @@ def proyectos_de_empresa(usuario, empresa):
 
 
 def puede_gestionar_estructura(usuario):
-    """Solo el personal y el jefe pueden crear empresas o crear/editar proyectos."""
+    """Solo el personal y el jefe pueden crear empresas, crear/editar proyectos y crear/eliminar carpetas."""
     return _es_personal(usuario)
 
 

@@ -76,11 +76,31 @@ class EstadoArchivo(models.TextChoices):
     DISPONIBLE = 'disponible', 'Disponible'
 
 
+class Carpeta(models.Model):
+    """Carpeta virtual de un proyecto: vive solo en la base de datos, nunca en el Space."""
+
+    id = _uuid_pk()
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='carpetas')
+    nombre = models.CharField(max_length=100)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='carpetas_creadas')
+
+    class Meta:
+        verbose_name = 'carpeta'
+        verbose_name_plural = 'carpetas'
+        ordering = ['nombre']
+        unique_together = [('proyecto', 'nombre')]
+
+    def __str__(self):
+        return f'{self.proyecto.nombre} - {self.nombre}'
+
+
 class Archivo(models.Model):
     """Un archivo del Space. Nunca se borra de verdad: se marca con `eliminado_en`."""
 
     id = _uuid_pk()
     proyecto = models.ForeignKey(Proyecto, on_delete=models.PROTECT, related_name='archivos')
+    carpeta = models.ForeignKey(Carpeta, on_delete=models.SET_NULL, null=True, blank=True, related_name='archivos')
     nombre_original = models.CharField(max_length=255)
     clave_space = models.CharField(max_length=512, unique=True)
     tamano = models.PositiveBigIntegerField('tamaño (bytes)')

@@ -1,6 +1,10 @@
+import uuid
+
+from django.contrib import messages
 from django.db.models import Count, Q
 from django.http import HttpResponseForbidden, Http404
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils import timezone
@@ -18,7 +22,7 @@ from .permisos import (
     puede_subir,
     puede_borrar,
 )
-from .models import Archivo, DescargaLog, Empresa, EstadoProyecto, Proyecto
+from .models import Archivo, Carpeta, DescargaLog, Empresa, EstadoProyecto, Proyecto
 from .storage import url_descarga
 
 
@@ -123,7 +127,18 @@ def editar_proyecto(request, pk):
 @login_required
 def detalle_proyecto(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
-    archivos = list(archivos_visibles(request.user, proyecto).select_related('subido_por'))
+
+    carpeta_activa = None
+    carpeta_id = request.GET.get('carpeta')
+    if carpeta_id:
+        try:
+            carpeta_id = uuid.UUID(carpeta_id)
+        except ValueError:
+            raise Http404("Carpeta no encontrada.")
+        carpeta_activa = get_object_or_404(proyecto.carpetas, pk=carpeta_id)
+
+    # carpeta_activa=None filtra carpeta IS NULL: los archivos de la raíz
+    archivos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
     for archivo in archivos:
         archivo.puede_borrar = puede_borrar(request.user, archivo)
 
@@ -132,12 +147,47 @@ def detalle_proyecto(request, pk):
 
     context = {
         'proyecto': proyecto,
+        'carpetas': proyecto.carpetas.all(),
+        'carpeta_activa': carpeta_activa,
         'fotos': fotos,
         'documentos': documentos,
         'puede_subir': puede_subir(request.user),
         'puede_gestionar': puede_gestionar_estructura(request.user),
     }
     return render(request, 'archivos.html', context)
+
+
+@login_required
+@require_POST
+def crear_carpeta(request, pk):
+    if not puede_gestionar_estructura(request.user):
+        return HttpResponseForbidden("No tienes permisos para crear carpetas.")
+
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    nombre = request.POST.get('nombre', '').strip()
+    url_proyecto = reverse('documentos:detalle_proyecto', args=[proyecto.pk])
+
+    if not nombre:
+        messages.error(request, 'La carpeta necesita un nombre.')
+        return redirect(url_proyecto)
+    if proyecto.carpetas.filter(nombre__iexact=nombre).exists():
+        messages.error(request, f'Ya existe una carpeta llamada "{nombre}" en este proyecto.')
+        return redirect(url_proyecto)
+
+    carpeta = Carpeta.objects.create(proyecto=proyecto, nombre=nombre, creado_por=request.user)
+    return redirect(f'{url_proyecto}?carpeta={carpeta.pk}')
+
+
+@login_required
+@require_POST
+def eliminar_carpeta(request, pk):
+    if not puede_gestionar_estructura(request.user):
+        return HttpResponseForbidden("No tienes permisos para eliminar carpetas.")
+
+    carpeta = get_object_or_404(Carpeta.objects.filter(proyecto__in=proyectos_visibles(request.user)), pk=pk)
+    proyecto_pk = carpeta.proyecto_id
+    carpeta.delete()  # sus archivos vuelven a la raíz (SET_NULL); el Space no se toca
+    return redirect('documentos:detalle_proyecto', pk=proyecto_pk)
 
 
 @login_required

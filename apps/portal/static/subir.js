@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res1 = await fetch(input.getAttribute('data-url-subir'), {
                     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-                    body: JSON.stringify({ nombre: f.name, tipo: f.type || 'application/octet-stream', tamano: f.size })
+                    body: JSON.stringify({ nombre: f.name, tipo: f.type || 'application/octet-stream', tamano: f.size, carpeta_id: input.dataset.carpetaId || null })
                 });
                 if (!res1.ok) throw new Error((await res1.json()).error || 'Error al iniciar');
                 const { id, firma } = await res1.json();

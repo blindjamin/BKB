@@ -7,11 +7,16 @@
 <div class="archivos-container">
     <div class="archivos-header">
         <div>
-            {% if puede_gestionar %}
-                <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}" class="link-volver">&larr; Volver a {{ proyecto.empresa.nombre }}</a>
-            {% else %}
-                <a href="{% url 'documentos:lista_proyectos' %}" class="link-volver">&larr; Volver a Proyectos</a>
-            {% endif %}
+            <nav class="breadcrumbs">
+                <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}">{{ proyecto.empresa.nombre }}</a>
+                &rsaquo;
+                {% if carpeta_activa %}
+                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}">{{ proyecto.nombre }}</a>
+                    &rsaquo; <span>{{ carpeta_activa.nombre }}</span>
+                {% else %}
+                    <span>{{ proyecto.nombre }}</span>
+                {% endif %}
+            </nav>
             <h1 class="archivos-title">{{ proyecto.nombre }}</h1>
             <div class="archivos-meta">
                 <span>🏢 {{ proyecto.empresa.nombre }}</span>
@@ -23,7 +28,7 @@
         
         {% if puede_subir %}
         <div class="archivos-actions">
-            <input type="file" id="archivo-input" class="archivo-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf" capture="environment" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}">
+            <input type="file" id="archivo-input" class="archivo-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf" capture="environment" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}"{% if carpeta_activa %} data-carpeta-id="{{ carpeta_activa.pk }}"{% endif %}>
             <button type="button" id="btn-subir" class="btn-subir">
                 Subir Archivo
             </button>
@@ -35,6 +40,40 @@
         {% endif %}
     </div>
     
+    {% for message in messages %}
+        <div class="form-error">{{ message }}</div>
+    {% endfor %}
+
+    <section class="carpetas">
+        <div class="carpetas-header">
+            <h2 class="carpetas-title">Carpetas</h2>
+            {% if puede_gestionar %}
+            <form action="{% url 'documentos:crear_carpeta' proyecto.pk %}" method="post" class="form-carpeta form-group">
+                {% csrf_token %}
+                <input type="text" name="nombre" maxlength="100" required placeholder="Nombre de la carpeta" aria-label="Nombre de la carpeta">
+                <button type="submit" class="btn-action">+ Nueva carpeta</button>
+            </form>
+            {% endif %}
+        </div>
+        {% if carpetas %}
+            <div class="carpetas-grid">
+                {% for carpeta in carpetas %}
+                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}?carpeta={{ carpeta.pk }}" class="project-card{% if carpeta == carpeta_activa %} is-active{% endif %}">
+                        <span class="project-card-title">📁 {{ carpeta.nombre }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="view-subtitle">Este proyecto aún no tiene carpetas.</p>
+        {% endif %}
+        {% if carpeta_activa and puede_gestionar %}
+            <form action="{% url 'documentos:eliminar_carpeta' carpeta_activa.pk %}" method="post" class="form-eliminar" data-confirmar="Los archivos de la carpeta volverán a la raíz del proyecto.">
+                {% csrf_token %}
+                <button type="submit" class="btn-eliminar">🗑 Eliminar carpeta "{{ carpeta_activa.nombre }}"</button>
+            </form>
+        {% endif %}
+    </section>
+
     <div class="tabs">
         <button type="button" class="tab-btn active" data-target="docs">
             Documentos ({{ documentos|length }})
