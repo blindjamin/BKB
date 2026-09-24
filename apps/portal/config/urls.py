@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView, LogoutView, PasswordResetDoneView
 
+from accounts.views import OlvideContrasenaView
 from gestion.views import CrearContrasenaView
 
 def health_check(request):
@@ -19,6 +20,12 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('gestion/', include('gestion.urls')),
     path('contrasena/crear/<uidb64>/<token>/', CrearContrasenaView.as_view(), name='crear_contrasena'),
+    path('contrasena/olvide/', OlvideContrasenaView.as_view(), name='contrasena_olvide'),
+    path(
+        'contrasena/olvide/enviado/',
+        PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'),
+        name='contrasena_olvide_enviado',
+    ),
     path('admin/', admin.site.urls),
     path('health/', health_check, name='health_check'),
 ]

@@ -93,6 +93,11 @@ class ContratoCSPTests(TestCase):
         response = self.client.get(reverse('login'))
         self._verificar_contrato_csp_y_html(response)
 
+    def test_olvide_contrasena_cumple_contrato(self):
+        for nombre in ('contrasena_olvide', 'contrasena_olvide_enviado'):
+            with self.subTest(pagina=nombre):
+                self._verificar_contrato_csp_y_html(self.client.get(reverse(nombre)))
+
     def test_lista_proyectos_personal_cumple_contrato(self):
         self.client.force_login(self.personal)
         response = self.client.get(reverse('documentos:lista_proyectos'))

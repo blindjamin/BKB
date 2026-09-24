@@ -142,14 +142,18 @@ def reenviar_invitacion(request, pk):
 
 
 class CrearContrasenaView(PasswordResetConfirmView):
-    """Destino del enlace de invitación. Usa los validadores de AUTH_PASSWORD_VALIDATORS."""
+    """Destino del enlace de invitación y de "¿Olvidaste tu contraseña?" (T28).
+
+    Usa los validadores de AUTH_PASSWORD_VALIDATORS.
+    """
 
     template_name = 'registration/crear_contrasena.html'
     success_url = reverse_lazy('login')
 
     def get_user(self, uidb64):
         usuario = super().get_user(uidb64)
-        # Un desactivado, el jefe o un superusuario no usan este enlace: se ve como inválido.
-        if usuario is None or not usuario.is_active or usuario.is_superuser or usuario.rol == Rol.JEFE:
+        # Un desactivado o el superusuario (técnico, usa la consola) no usan este enlace: se ve como inválido.
+        # El jefe sí: debe poder recuperar su acceso sin el informático.
+        if usuario is None or not usuario.is_active or usuario.is_superuser:
             return None
         return usuario

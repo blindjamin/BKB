@@ -23,8 +23,8 @@
 | 10 | [x] **Tarea 26:** recepción obligatoria y correo | la misma |
 | ⏸ | [x] **Checkpoint G** (parte automática, 24-09-2026): pruebas y `check` en verde. **Pendiente del usuario:** flujo manual y PR hacia `desarrollo` | — |
 | 11 | [x] **Tarea 27:** Gestión de usuarios e invitación | `benjamin/2026-09-24-portal-gestion` (creada desde `benjamin/2026-09-22-avance-portal`, que aún no está fusionada) |
-| 12 | **Tarea 28:** "¿Olvidaste tu contraseña?" ← **empezar aquí** | la misma |
-| ⏸ | **Checkpoint H**: revisión con el usuario y PR hacia `desarrollo` | — |
+| 12 | [x] **Tarea 28:** "¿Olvidaste tu contraseña?" | la misma |
+| ⏸ | **Checkpoint H**: revisión con el usuario y PR hacia `desarrollo` ← **empezar aquí** | — |
 | 13 | Diseño DS-1 a DS-7 (`docs/09`, ampliado con las pantallas nuevas) | `benjamin/AAAA-MM-DD-portal-diseno` |
 | 14 | Tarea 15: código listo para producción | `benjamin/AAAA-MM-DD-portal-prod` |
 | 15 | Tarea 16: puesta en marcha en DigitalOcean (requiere al usuario) | la misma |
@@ -398,14 +398,14 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] Manual: crear un cliente, abrir el enlace desde la consola, crear la contraseña y entrar
 **Dependencias:** 20, 26 · **Alcance:** M · **Archivos:** `gestion/` (app nueva: `views.py`, `forms.py`, `urls.py`, `tests.py`), `config/urls.py`, `templates/gestion/usuarios*.html`, `templates/registration/`
 
-### [ ] Tarea 28: "¿Olvidaste tu contraseña?"
+### [x] Tarea 28: "¿Olvidaste tu contraseña?"
 **Descripción:** Reutiliza la pieza de la tarea 27 para recuperar la contraseña desde el login.
 **Criterios:**
-- [ ] `/contrasena/olvide/` (`PasswordResetView`) enlazado desde el login; la respuesta es idéntica exista o no el correo, y no envía nada a usuarios desactivados
-- [ ] Límite simple: como máximo 5 pedidos por IP cada 15 minutos (contador en la caché de Django)
-- [ ] Correo por consola en local
+- [x] `/contrasena/olvide/` (`PasswordResetView`) enlazado desde el login; la respuesta es idéntica exista o no el correo, y no envía nada a usuarios desactivados
+- [x] Límite simple: como máximo 5 pedidos por IP cada 15 minutos (contador en la caché de Django)
+- [x] Correo por consola en local
 **Verificación:**
-- [ ] `python manage.py test accounts.tests.test_contrasena`: la misma respuesta para un correo existente y uno inexistente, 1 correo solo en el caso existente, el 6.º pedido se rechaza
+- [x] `python manage.py test accounts.tests.test_contrasena`: la misma respuesta para un correo existente y uno inexistente, 1 correo solo en el caso existente, el 6.º pedido se rechaza
 **Dependencias:** 27 · **Alcance:** S · **Archivos:** `config/urls.py`, `accounts/views.py`, `templates/login.html`, `templates/registration/password_reset_*.html`, `accounts/tests/test_contrasena.py` (nuevo)
 
 ### Checkpoint H (tras 28): Gestión completa en local
