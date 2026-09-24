@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if usuario %}Editar usuario{% else %}Nuevo usuario{% endif %} - BKB Portal{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <nav class="breadcrumbs">
+        <a href="{% url 'gestion:usuarios' %}">&larr; Volver a Usuarios</a>
+    </nav>
+
+    <div class="form-container">
+        {% if usuario %}
+            <h1 class="proyectos-title">{{ usuario.nombre|default:usuario.email }}</h1>
+            <p class="view-subtitle">
+                Correo: {{ usuario.email }}
+                {% if not usuario.is_active %}&middot; Desactivado{% elif not usuario.has_usable_password %}&middot; Invitación pendiente{% endif %}
+            </p>
+        {% else %}
+            <h1 class="proyectos-title">Nuevo usuario</h1>
+            <p class="view-subtitle">Le enviaremos un correo con un enlace para crear su contraseña.</p>
+        {% endif %}
+
+        {% for message in messages %}
+            <div class="{% if message.level_tag == 'error' %}form-error{% else %}form-aviso{% endif %}">{{ message }}</div>
+        {% endfor %}
+
+        <form method="post" class="form-card">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-error">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="field-error">{{ field.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">{% if usuario %}Guardar cambios{% else %}Crear e invitar{% endif %}</button>
+                <a href="{% url 'gestion:usuarios' %}" class="btn-secondary">Cancelar</a>
+            </div>
+        </form>
+
+        {% if usuario %}
+        <div class="form-actions">
+            {% if usuario.is_active %}
+                <form action="{% url 'gestion:reenviar_invitacion' usuario.pk %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-secondary">Reenviar invitación</button>
+                </form>
+                <form action="{% url 'gestion:desactivar_usuario' usuario.pk %}" method="post" data-confirmar="{{ usuario.email }} ya no podrá entrar al portal. ¿Desactivar?">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-eliminar">Desactivar</button>
+                </form>
+            {% else %}
+                <form action="{% url 'gestion:reactivar_usuario' usuario.pk %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-action">Reactivar</button>
+                </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'archivos.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endblock %}

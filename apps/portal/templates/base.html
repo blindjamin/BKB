@@ -30,6 +30,9 @@
             {% if user.is_authenticated %}
             <span class="header-email">{{ user.email }}</span>
             {% endif %}
+            {% if es_jefe %}
+            <a href="{% url 'gestion:usuarios' %}" class="btn-link">Gestión</a>
+            {% endif %}
             
             <button class="theme-toggle" id="theme-toggle-btn" aria-label="Cambiar tema">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

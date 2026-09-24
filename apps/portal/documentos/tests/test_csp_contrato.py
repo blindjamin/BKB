@@ -1,7 +1,10 @@
 import re
+from django.contrib.auth.tokens import default_token_generator
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from accounts.models import Rol, Usuario
 from documentos.models import Archivo, Carpeta, Empresa, Hito, RespuestaRecepcion, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
 
@@ -134,3 +137,25 @@ class ContratoCSPTests(TestCase):
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
         self._verificar_contrato_csp_y_html(response)
         self.assertIn('Recepción confirmada', response.content.decode('utf-8'))
+
+    def test_gestion_de_usuarios_cumple_contrato(self):
+        jefe = Usuario.objects.create_user('jefe@bkb.cl', 'Clave123!', rol=Rol.JEFE)
+        self.client.force_login(jefe)
+        for url in (
+            reverse('gestion:usuarios'),
+            reverse('gestion:crear_usuario'),
+            reverse('gestion:editar_usuario', args=[self.cliente.pk]),
+        ):
+            with self.subTest(url=url):
+                self._verificar_contrato_csp_y_html(self.client.get(url))
+
+    def test_crear_contrasena_cumple_contrato(self):
+        self.cliente.set_unusable_password()
+        self.cliente.save()
+        enlace = reverse('crear_contrasena', args=[
+            urlsafe_base64_encode(force_bytes(self.cliente.pk)),
+            default_token_generator.make_token(self.cliente),
+        ])
+        response = self.client.get(enlace, follow=True)
+        self.assertTrue(response.context['validlink'])
+        self._verificar_contrato_csp_y_html(response)

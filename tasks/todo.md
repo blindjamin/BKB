@@ -22,8 +22,8 @@
 | 9 | [x] **Tarea 25:** aviso al cliente | la misma |
 | 10 | [x] **Tarea 26:** recepción obligatoria y correo | la misma |
 | ⏸ | [x] **Checkpoint G** (parte automática, 24-09-2026): pruebas y `check` en verde. **Pendiente del usuario:** flujo manual y PR hacia `desarrollo` | — |
-| 11 | **Tarea 27:** Gestión de usuarios e invitación ← **empezar aquí** | `benjamin/2026-09-24-portal-gestion` (creada desde `benjamin/2026-09-22-avance-portal`, que aún no está fusionada) |
-| 12 | Tarea 28: "¿Olvidaste tu contraseña?" | la misma |
+| 11 | [x] **Tarea 27:** Gestión de usuarios e invitación | `benjamin/2026-09-24-portal-gestion` (creada desde `benjamin/2026-09-22-avance-portal`, que aún no está fusionada) |
+| 12 | **Tarea 28:** "¿Olvidaste tu contraseña?" ← **empezar aquí** | la misma |
 | ⏸ | **Checkpoint H**: revisión con el usuario y PR hacia `desarrollo` | — |
 | 13 | Diseño DS-1 a DS-7 (`docs/09`, ampliado con las pantallas nuevas) | `benjamin/AAAA-MM-DD-portal-diseno` |
 | 14 | Tarea 15: código listo para producción | `benjamin/AAAA-MM-DD-portal-prod` |
@@ -386,15 +386,15 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] **Pendiente del usuario.** En el mismo recorrido, las verificaciones manuales que quedaron abiertas: tarea 22 (crear empresa y proyecto, y que el cliente asignado lo vea), tarea 23 (carpeta "Informes" a 375 y 1280 px), tarea 25 (el aviso se abre y se cierra cuando corresponde, **Esc no lo cierra** en `esperando_recepcion`, sin errores de CSP) y tarea 26 (los correos aparecen en la consola de `runserver`; requiere `AVISO_RECEPCION_CORREOS` en el `.env` local)
 - [ ] **Pendiente del usuario.** **Revisión contigo** y PR hacia `desarrollo` (los agentes no hacen push ni abren el PR)
 
-### [ ] Tarea 27: Gestión de usuarios con invitación por correo (jefe)
+### [x] Tarea 27: Gestión de usuarios con invitación por correo (jefe)
 **Descripción:** El jefe da de alta al personal y a los clientes; cada uno crea su contraseña con un enlace.
 **Criterios:**
-- [ ] `/gestion/usuarios/` (listado con filtro por tipo y activo), `/gestion/usuarios/nuevo/` y `/gestion/usuarios/<uuid>/`: nombre, correo y tipo (**solo** `personal` o `cliente`). Se crea con `set_unusable_password()`
-- [ ] Al crear se envía la invitación con el enlace `/contrasena/crear/<uidb64>/<token>/` (`default_token_generator` y `PasswordResetConfirmView`, `PASSWORD_RESET_TIMEOUT` de 3 días). Botón "Reenviar invitación"
-- [ ] Desactivar y reactivar (sin borrar). El jefe no puede editar jefes ni superusuarios, cambiarse el tipo ni desactivarse (se valida en el servidor, no solo se ocultan opciones)
-- [ ] La pantalla de crear contraseña usa los validadores de Django y, al terminar, lleva al login
+- [x] `/gestion/usuarios/` (listado con filtro por tipo y activo), `/gestion/usuarios/nuevo/` y `/gestion/usuarios/<uuid>/`: nombre, correo y tipo (**solo** `personal` o `cliente`). Se crea con `set_unusable_password()`
+- [x] Al crear se envía la invitación con el enlace `/contrasena/crear/<uidb64>/<token>/` (`default_token_generator` y `PasswordResetConfirmView`, `PASSWORD_RESET_TIMEOUT` de 3 días). Botón "Reenviar invitación"
+- [x] Desactivar y reactivar (sin borrar). El jefe no puede editar jefes ni superusuarios, cambiarse el tipo ni desactivarse (se valida en el servidor, no solo se ocultan opciones)
+- [x] La pantalla de crear contraseña usa los validadores de Django y, al terminar, lleva al login
 **Verificación:**
-- [ ] `python manage.py test gestion`: crear un cliente deja 1 correo con un enlace válido; el enlace fija la contraseña y no sirve una segunda vez; un POST con `rol=jefe` se rechaza; editar un superusuario da 404; desactivarse se rechaza; un usuario desactivado no entra
+- [x] `python manage.py test gestion`: crear un cliente deja 1 correo con un enlace válido; el enlace fija la contraseña y no sirve una segunda vez; un POST con `rol=jefe` se rechaza; editar un superusuario da 404; desactivarse se rechaza; un usuario desactivado no entra
 - [ ] Manual: crear un cliente, abrir el enlace desde la consola, crear la contraseña y entrar
 **Dependencias:** 20, 26 · **Alcance:** M · **Archivos:** `gestion/` (app nueva: `views.py`, `forms.py`, `urls.py`, `tests.py`), `config/urls.py`, `templates/gestion/usuarios*.html`, `templates/registration/`
 
@@ -458,7 +458,7 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 - [ ] `docs/03-portal-django.md`: marcar la spec como implementada y anotar las desviaciones que hayan surgido
 - [ ] `docs/00-contexto-proyecto.md` con el nuevo estado y `docs/06-bitacora-avances.md` con la entrada de la sesión
 - [ ] `docs/04-seguridad-y-cumplimiento.md`: marcar como hechos los controles implementados (criterio 10 de la spec)
-- [ ] Lista de seguimiento posterior escrita
+- [ ] Lista de seguimiento posterior escrita (incluir: editar nombre y RUT de una empresa desde `/gestion/`, §13.2, que quedó fuera de la T27)
 **Verificación:**
 - [ ] Los 15 criterios de éxito de la spec (sección 9) marcados uno a uno
 **Dependencias:** 16 · **Alcance:** M · **Archivos:** `docs/03-portal-django.md`, `docs/00-contexto-proyecto.md`, `docs/04-seguridad-y-cumplimiento.md`, `docs/06-bitacora-avances.md`

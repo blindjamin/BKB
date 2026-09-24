@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # Aplicaciones del portal
     'accounts',
     'documentos',
+    'gestion',
 ]
 
 # Usuario propio (entra con correo). No se cambia después del primer migrate.
@@ -78,6 +79,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'gestion.context_processors.jefe',
             ],
         },
     },
@@ -205,3 +207,5 @@ AXES_LOCKOUT_TEMPLATE = None
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
+# Vigencia del enlace de invitación para crear la contraseña (§13.3.2): 3 días.
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24 * 3

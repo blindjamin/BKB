@@ -792,3 +792,26 @@ main {
     padding: 0;
     flex: none;
 }
+
+/* Gestión de usuarios (Tarea 27) */
+.filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.filtro {
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--card-border);
+    border-radius: 99px;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.filtro.is-active {
+    border-color: var(--bkb-salmon-700);
+    color: var(--bkb-salmon-700);
+    font-weight: 600;
+}
