@@ -14,9 +14,6 @@
         </div>
     </div>
 
-    {% for message in messages %}
-        <div class="{% if message.level_tag == 'error' %}form-error{% else %}form-aviso{% endif %}">{{ message }}</div>
-    {% endfor %}
 
     <nav class="filtros" aria-label="Filtrar usuarios">
         <a href="?" class="filtro{% if not rol and not activo %} is-active{% endif %}">Todos</a>

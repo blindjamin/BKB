@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}BKB Portal{% endblock %}</title>
-    
+
     <link rel="stylesheet" href="{% static 'portal.css' %}">
-    
+
     <script nonce="{{ request.csp_nonce }}">
         try {
             var savedTheme = localStorage.getItem('bkb-theme');
@@ -20,27 +20,29 @@
     </script>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <svg width="60" height="24" viewBox="0 0 100 40" fill="var(--bkb-salmon-500)" aria-hidden="true">
-                <text x="0" y="30" font-family="sans-serif" font-weight="bold" font-size="30">BKB</text>
-            </svg>
-        </div>
+    <a href="#contenido" class="skip-link">Saltar al contenido</a>
+
+    <header class="encabezado">
+        <a href="{% url 'documentos:lista_proyectos' %}" class="marca">
+            <img src="{% static 'img/logo-bkb.png' %}" alt="BKB" class="marca-logo" height="44">
+            <span class="marca-nombre">Portal de Archivos</span>
+        </a>
         <div class="header-actions">
-            {% if user.is_authenticated %}
-            <span class="header-email">{{ user.email }}</span>
-            {% endif %}
             {% if es_jefe %}
             <a href="{% url 'gestion:usuarios' %}" class="btn-link">Gestión</a>
             {% endif %}
-            
-            <button class="theme-toggle" id="theme-toggle-btn" aria-label="Cambiar tema">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
-                </svg>
+
+            {% if user.is_authenticated %}
+            <span class="header-usuario">
+                <span class="header-email">{{ user.nombre|default:user.email }}</span>
+                <span class="pastilla">{{ user.get_rol_display }}</span>
+            </span>
+            {% endif %}
+
+            <button type="button" class="theme-toggle" id="theme-toggle-btn" aria-label="Tema oscuro" aria-pressed="false">
+                <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#luna"></use></svg>
             </button>
-            
+
             {% if user.is_authenticated %}
             <form method="post" action="{% url 'logout' %}" class="logout-form">
                 {% csrf_token %}
@@ -50,9 +52,22 @@
         </div>
     </header>
 
-    <main>
+    <div class="mensajes" role="status">
+        {% for message in messages %}
+            <div class="{% if message.level_tag == 'error' %}form-error{% else %}form-aviso{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+
+    <main id="contenido">
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="pie">
+        <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
+        <span>¿Necesitas ayuda? Llama a BKB:</span>
+        <a href="tel:+56989753095">+56 9 8975 3095</a>
+        <a href="tel:+56961911593">+56 9 6191 1593</a>
+    </footer>
 
     <script src="{% static 'tema.js' %}" nonce="{{ request.csp_nonce }}"></script>
     {% block extra_js %}{% endblock %}

@@ -164,3 +164,42 @@ class ContratoCSPTests(TestCase):
         response = self.client.get(enlace, follow=True)
         self.assertTrue(response.context['validlink'])
         self._verificar_contrato_csp_y_html(response)
+
+
+class BaseComunTests(TestCase):
+    """Esqueleto común de base.html (DS-1)."""
+
+    def setUp(self):
+        self.personal = Usuario.objects.create_user('personal@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
+        self.jefe = Usuario.objects.create_user('jefe@bkb.cl', 'Clave123!', rol=Rol.JEFE)
+        self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
+        self.inicio = reverse('documentos:lista_proyectos')
+
+    def test_salto_al_contenido_y_telefonos_de_ayuda(self):
+        self.client.force_login(self.personal)
+        response = self.client.get(self.inicio)
+        for texto in ('href="#contenido"', 'id="contenido"', 'tel:+56989753095', 'tel:+56961911593', 'role="status"'):
+            self.assertContains(response, texto)
+        self.assertNotContains(response, '8249 1403')
+        self.assertNotContains(response, '82491403')
+
+    def test_enlace_gestion_solo_para_el_jefe(self):
+        gestion = reverse('gestion:usuarios')
+        self.client.force_login(self.jefe)
+        self.assertContains(self.client.get(self.inicio), gestion)
+        self.client.force_login(self.personal)
+        self.assertNotContains(self.client.get(self.inicio), gestion)
+
+    def test_un_mensaje_aparece_una_sola_vez_en_el_proyecto(self):
+        empresa = Empresa.objects.create(nombre='Empresa Test')
+        proyecto = Proyecto.objects.create(empresa=empresa, nombre='Proyecto Beta')
+        Membresia.objects.create(usuario=self.cliente, proyecto=proyecto)
+        Hito.objects.create(proyecto=proyecto, orden=1, nombre='Hito', cumplido_en=timezone.now(), cumplido_por=self.personal)
+
+        self.client.force_login(self.cliente)
+        self.client.post(
+            reverse('documentos:responder_recepcion', args=[proyecto.pk]),
+            {'resultado': 'conforme', 'nombre_revisor': 'Ana', 'revisado': '1'},
+        )
+        response = self.client.get(reverse('documentos:detalle_proyecto', args=[proyecto.pk]))
+        self.assertContains(response, 'Recepción confirmada.', count=1)
