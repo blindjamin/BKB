@@ -20,7 +20,7 @@
                     <span>{{ proyecto.nombre }}</span>
                 {% endif %}
             </nav>
-            <h1 class="archivos-title">{{ proyecto.nombre }}</h1>
+            <h1 class="archivos-title">{% if carpeta_activa %}📁 {{ carpeta_activa.nombre }}{% else %}{{ proyecto.nombre }}{% endif %}</h1>
             <div class="archivos-meta">
                 <span>🏢 {{ proyecto.empresa.nombre }}</span>
                 {% if puede_gestionar %}
@@ -84,6 +84,9 @@
     {% endif %}
 
     <section class="carpetas">
+        {% if carpeta_activa %}
+        <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-link">&larr; Volver a {{ proyecto.nombre }}</a>
+        {% else %}
         <div class="carpetas-header">
             <h2 class="seccion-title">Carpetas</h2>
             {% if puede_gestionar %}
@@ -97,13 +100,14 @@
         {% if carpetas %}
             <div class="carpetas-grid">
                 {% for carpeta in carpetas %}
-                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}?carpeta={{ carpeta.pk }}" class="project-card{% if carpeta == carpeta_activa %} is-active{% endif %}">
+                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}?carpeta={{ carpeta.pk }}" class="project-card">
                         <span class="project-card-title">📁 {{ carpeta.nombre }}</span>
                     </a>
                 {% endfor %}
             </div>
         {% else %}
             <p class="view-subtitle">Este proyecto aún no tiene carpetas.</p>
+        {% endif %}
         {% endif %}
         {% if carpeta_activa and puede_gestionar %}
             <form action="{% url 'documentos:eliminar_carpeta' carpeta_activa.pk %}" method="post" class="form-eliminar" data-confirmar="Los archivos de la carpeta volverán a la raíz del proyecto.">
@@ -131,7 +135,7 @@
             </div>
         {% else %}
             <div class="archivos-empty">
-                No hay documentos en este proyecto.
+                No hay documentos {% if carpeta_activa %}en esta carpeta{% else %}en este proyecto{% endif %}.
             </div>
         {% endif %}
     </div>
@@ -145,7 +149,7 @@
             </div>
         {% else %}
             <div class="archivos-empty">
-                No hay fotos en este proyecto.
+                No hay fotos {% if carpeta_activa %}en esta carpeta{% else %}en este proyecto{% endif %}.
             </div>
         {% endif %}
     </div>

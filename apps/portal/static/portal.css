@@ -695,10 +695,6 @@ main {
     overflow-wrap: anywhere;
 }
 
-.project-card.is-active {
-    border-color: var(--bkb-salmon-700);
-}
-
 /* Panel de hitos del proyecto (Tarea 24) */
 .hitos {
     margin-bottom: 2rem;
