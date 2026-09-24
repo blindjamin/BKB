@@ -58,7 +58,8 @@ class ModelosTests(DatosBase):
 
     def test_asignar_personal_se_rechaza_con_mensaje_claro(self):
         admin = Usuario.objects.create_superuser('root@bkb.cl', CLAVE)
-        for usuario in (self.personal, admin):
+        jefe = Usuario.objects.create_user('jefe@bkb.cl', CLAVE, rol=Rol.JEFE)
+        for usuario in (self.personal, admin, jefe):
             asignacion = Membresia(usuario=usuario, proyecto=self.proyecto)
             with self.assertRaises(ValidationError) as ctx:
                 asignacion.full_clean()

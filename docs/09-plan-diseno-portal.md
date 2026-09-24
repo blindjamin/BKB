@@ -1,6 +1,6 @@
 # 09 · Plan de diseño del portal (borrador para tu revisión)
 
-> **Estado:** BORRADOR · 21-09-2026. **No está implementado ni forma parte de `tasks/plan.md` ni de `tasks/todo.md`**: es un documento aparte para que lo revises. Nada de esto se ejecuta hasta que lo apruebes.
+> **Estado:** APROBADO por el usuario el 24-09-2026 (decisiones de la sección 9 con la propuesta por defecto, más los teléfonos de ayuda; ver sección 12). DS-0 quedó hecho como tarea 19 (22-09-2026). DS-1 a DS-7 se ejecutan agrupados en 4 pasos (sección 12.4), después del Checkpoint H.
 > **Alcance:** solo la interfaz del portal (`apps/portal`: login, proyectos, archivos, subida, borrado y páginas de error). No cambia permisos, modelos ni URLs.
 > **Cómo se hizo:** se revisó el código de las tareas 7 a 14, se levantó el portal en un navegador real con una base de datos de demostración aparte (con personal y cliente), y se contrastó con `docs/01`, el handoff de la landing y la maqueta `Mockup-Preliminar/BKB_Portal_-_Propuesta_de_interfaz.pptx`.
 
@@ -321,3 +321,67 @@ Vistas al leer el código para este plan. **No están corregidas ni verificadas 
 - **`iniciar_subida` acepta el `tipo` que declara el navegador** sin cruzarlo con la extensión. El riesgo es bajo (siempre se descarga como adjunto y la extensión sí se valida), pero el objeto queda guardado con el tipo declarado.
 - **La comprobación de `MAX_UPLOAD_MB` y del tipo permitido está duplicada** entre `subidas.py` y la política del POST; lo importante es que el Space también la aplica (se verificó en la tarea 6).
 - **Las 89 pruebas no abren un navegador**, por eso F1 a F5 pasaron desapercibidos. La prueba de contrato de DS-0 cubre lo más importante; una revisión visual por hito sigue siendo necesaria.
+
+---
+
+## 12. Aprobación y ampliación v1.3 (24-09-2026)
+
+### 12.1 Decisiones aprobadas por el usuario
+
+| # (sección 9) | Decisión |
+|---|---|
+| 1 | Texto de lista de 18 px (`--bkb-text-body-lg`) |
+| 2 | Botones principales de 56 px en celular y 48 px en escritorio |
+| 3 | `--text-muted` claro = `#72645A`, **solo en el portal** (se sobreescribe en `portal.css`; `static/tokens/` no se edita) |
+| 4 | Logo recortado del PNG final de `apps/web` (`bkb-logo-final.png`). La versión vectorial queda pendiente |
+| 5 | Teléfonos de ayuda: **+56 9 8975 3095** y **+56 9 6191 1593** (los dos). No se usa +56 9 8249 1403 |
+| 6 | Conteo de archivos y fecha de la última carga en las tarjetas de proyecto |
+| 7 | Sin buscador en la v1 |
+| 8 | Resuelta por la tarea 20: el usuario tiene `nombre`; "Subido por" muestra el nombre (o el correo si está vacío) |
+| 9 | Resuelta: DS-0 se hizo como tarea 19 |
+| — | Fuentes: `.woff2` descargados de Google Fonts (subconjunto latino) con su licencia OFL en `static/fonts/` |
+
+### 12.2 Cambios respecto del borrador del 21-09
+
+- **Login (5.1):** ahora sí existe "¿Olvidaste tu contraseña?" (tarea 28). Se muestra como enlace bajo el botón.
+- **Inicio (5.2):** el personal y el jefe ven **empresas** con proyectos vigentes (tarea 22), con "+ Nueva empresa" como acción principal. El cliente ve sus proyectos. El estado vacío del personal ya no remite al panel de administración.
+- **Proyecto (5.3):** suma el estado del flujo (En curso, Esperando recepción, Recibido), el panel de hitos (personal y jefe), las carpetas y las migas *Empresa › Proyecto › Carpeta*.
+- **Fuera de alcance (sección 10):** "recuperación de contraseña" y "carpetas" ya no están fuera: se implementaron (tareas 28 y 23). Las carpetas son de un solo nivel y solo existen en la base de datos.
+- **Pestañas Documentos/Fotos:** DS-0 las dejó funcionando con JS externo. En el paso C pasan al filtro por enlaces `?tipo=` que propone 5.3.
+
+### 12.3 Pantallas nuevas
+
+**Empresas y formularios (paso B).** La lista de empresas usa tarjetas iguales a las de proyecto: nombre, RUT en mono y cantidad de proyectos activos. En la empresa, el historial de proyectos va con la pastilla Activo/Cerrado y "+ Nuevo proyecto" como acción principal. Los formularios de empresa y de proyecto llevan una etiqueta siempre visible, error con texto (no solo color) y los hitos en un área de texto, uno por línea, con su ayuda. Los clientes asignados van como lista de casillas con nombre y correo.
+
+**Gestión de usuarios (paso B, solo el jefe).**
+- Tabla en escritorio y tarjetas en celular: nombre, correo, pastilla de tipo, pastilla Activo/Inactivo y si ya creó su contraseña.
+- Filtros por tipo y por estado como enlaces que **se combinan** (`?rol=cliente&activo=1`), con `aria-current`.
+- "+ Nuevo usuario" como acción principal.
+- En la ficha: Guardar (principal), "Reenviar invitación" **solo si el usuario aún no creó su contraseña**, y Desactivar (peligro, con confirmación) o Reactivar.
+
+**Contraseña (paso B).** Crear la contraseña (invitación o recuperación), pedir el enlace, "enlace enviado" y "enlace inválido o vencido" usan el mismo esquema de tarjeta centrada del login, con el logo, una frase y los dos teléfonos. El rechazo por exceso de pedidos (429) usa el mismo esquema.
+
+**Proyecto: hitos (paso C, personal y jefe).**
+- Lista vertical tipo "pasos": ícono de cumplido o pendiente, nombre, y fecha y nombre de quien lo marcó.
+- "Marcar siguiente hito" es un botón secundario, porque la acción principal de la pantalla sigue siendo subir.
+- "Deshacer último" es un botón de enlace con confirmación.
+- La pastilla del estado del flujo va en la cabecera del proyecto.
+
+**Proyecto: carpetas (paso C).**
+- Fila de pastillas o tarjetas compactas con el ícono de carpeta y la cantidad de archivos; en celular se desplazan en horizontal o pasan a dos columnas.
+- "Nueva carpeta" es un formulario en línea (campo y botón secundario).
+- Dentro de una carpeta: el título de la carpeta, "← Volver a <proyecto>" y "Eliminar carpeta" (peligro, con confirmación).
+
+**Aviso al cliente (paso C).**
+- `<dialog>` con la misma lista de pasos (cumplido, actual y pendiente) y un mensaje por estado.
+- En "Esperando recepción": el formulario con nombre del revisor, la casilla "Recepcionado y revisado", "Confirmar" (principal) y "No conforme" (secundario), más los dos teléfonos.
+- Sin JS se ve arriba de la página. El diálogo debe verse bien a 320 px, sin scroll horizontal.
+
+### 12.4 Ejecución agrupada
+
+| Paso | Incluye | Rama |
+|---|---|---|
+| A | DS-1 (fundaciones) | `benjamin/2026-09-24-portal-diseno` |
+| B | DS-2 y DS-3, más empresas, formularios, Gestión y contraseña | la misma |
+| C | DS-4 y DS-5, más hitos, carpetas y aviso | la misma |
+| D | DS-6 y DS-7, más la página 429 | la misma |

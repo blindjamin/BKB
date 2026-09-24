@@ -5,6 +5,7 @@
 > **Origen:** entrevista de intención con el usuario (20-09-2026).
 > **Cambios de la v1.1 (21-09-2026):** BKB indicó que el cliente **no puede subir archivos**, solo verlos. Por eso: (1) los roles pasan de tres a dos, (2) se elimina la marca interno/compartido, (3) todo el personal ve todos los proyectos, y (4) el personal puede borrar lo que él subió (el administrador, cualquier archivo).
 > **Cambios de la v1.2 (22-09-2026):** BKB pidió **hitos por proyecto con aviso al cliente y recepción obligatoria**. (1) El personal crea proyectos y su lista de hitos **desde el portal**, y los marca en orden. (2) Al abrir un proyecto, el cliente ve un aviso con el avance. (3) Cuando se marca el último hito, el cliente **no ve archivos** hasta confirmar "recepcionado y revisado" con el nombre de quien revisó. (4) La confirmación, y el botón "No conforme", **envían un correo** a direcciones fijas de BKB. (5) Se agrega el perfil **jefe**: una sola persona que administra empresas, usuarios y proyectos desde una pantalla del portal, sin usar `/admin/`. Los usuarios nuevos crean su contraseña con un enlace que les llega por correo. Detalle en las secciones 12 y 13.
+> **Cambios de la v1.3 (22-09-2026):** BKB pidió reorganizar la navegación en una jerarquía de 3 niveles: (1) Tras el login, el personal y el jefe ven las **empresas con proyectos vigentes** (con botón de acceso rápido `+ Nueva Empresa`); (2) Al seleccionar una empresa, se despliega el **historial de proyectos** de ese cliente (activos y cerrados, con botón `+ Nuevo Proyecto`); (3) Dentro de cada proyecto, el personal y el jefe pueden **crear carpetas** para organizar fotos y documentos de forma ordenada (con botón `+ Nueva Carpeta`). El cliente solo tiene vista de solo lectura. Las carpetas son 100% virtuales en base de datos (las claves del Space no cambian). Detalle en la sección 14.
 
 ---
 
@@ -36,7 +37,7 @@ El **superusuario de Django** queda solo como cuenta técnica del informático (
 
 **Restricciones:** lo desarrolla una persona con apoyo de IA; sin fecha (terminar lo antes posible); el costo de infraestructura importa (objetivo ≈ US$ 27/mes: 1 instancia, PostgreSQL gestionado y el Space actual; sin staging ni worker al inicio).
 
-**Fuera de alcance de la v1:** subida de archivos por clientes, marca interno/compartido, asignación de proyectos al personal, migrar los archivos antiguos del Space (se dejan donde están; solo el personal los abre directo en DigitalOcean), facturas o ERP, firma electrónica, app móvil, visor DWG, miniaturas y previsualización, avisos por correo **al subir archivos** (sí hay correo al confirmar o rechazar la recepción, sección 12), Google SSO, 2FA, subcarpetas dentro de un proyecto y un panel de administración propio más allá de la pantalla Gestión del jefe (sección 13).
+**Fuera de alcance de la v1:** subida de archivos por clientes, marca interno/compartido, asignación de proyectos al personal, migrar los archivos antiguos del Space (se dejan donde están; solo el personal los abre directo en DigitalOcean), facturas o ERP, firma electrónica, app móvil, visor DWG, miniaturas y previsualización, avisos por correo **al subir archivos** (sí hay correo al confirmar o rechazar la recepción, sección 12), Google SSO, 2FA, subcarpetas anidadas de profundidad infinita (la v1.3 contempla carpetas de un solo nivel por proyecto) y un panel de administración propio más allá de la pantalla Gestión del jefe (sección 13).
 
 **Si más adelante piden que el cliente suba o solicite documentos:** el acceso está centralizado en `permisos.py`, así que el cambio se concentra ahí y reutiliza el flujo de subida.
 
@@ -146,7 +147,8 @@ apps/portal/
 | `Usuario` | correo (login), `nombre` (v1.2), `rol` (`personal`/`cliente`/`jefe`, v1.2). Sin empresa propia. El superusuario es `personal`. **Como máximo un jefe activo** |
 | `Proyecto` | `id`, `empresa`, `nombre`, `estado` (`activo`/`cerrado`) |
 | `Membresia` | `usuario` (solo clientes), `proyecto` (único por par). Asignar personal se rechaza |
-| `Archivo` | `id`, `proyecto`, `nombre_original`, `clave_space`, `tamano`, `tipo`, `subido_por`, `estado` (`pendiente`/`disponible`), `subido_en`, `eliminado_en`, `eliminado_por` |
+| `Carpeta` (v1.3) | `id`, `proyecto`, `nombre`, `creado_en`, `creado_por`. Único por (`proyecto`, `nombre`) |
+| `Archivo` | `id`, `proyecto`, `carpeta` (opcional, v1.3), `nombre_original`, `clave_space`, `tamano`, `tipo`, `subido_por`, `estado` (`pendiente`/`disponible`), `subido_en`, `eliminado_en`, `eliminado_por` |
 | `DescargaLog` | `usuario`, `archivo`, `fecha`, `ip` |
 | `Hito` (v1.2) | `id`, `proyecto`, `orden`, `nombre`, `cumplido_en`, `cumplido_por`. Único por (`proyecto`, `orden`) |
 | `RespuestaRecepcion` (v1.2) | `id`, `proyecto`, `usuario` (el cliente que responde), `nombre_revisor`, `conforme` (sí/no), `fecha`, `ip`. Nunca se edita ni se borra desde el portal |
@@ -156,17 +158,20 @@ apps/portal/
 | Ruta | Quién | Función |
 |---|---|---|
 | `/login/`, `/logout/` | Todos | Acceso |
-| `/` | Todos | Proyectos visibles para el usuario |
-| `/proyectos/<uuid>/` | Todos | Archivos del proyecto (filtro foto/documento) |
-| `POST /proyectos/<uuid>/subir/` | Personal | Inicia la subida: valida y devuelve un POST prefirmado |
-| `POST /archivos/<uuid>/confirmar/` | Personal (quien subió) | Confirma la subida: verifica que el objeto existe en el Space |
+| `/` | Personal/Jefe: empresas vigentes · Cliente: proyectos asignados | Entrada principal según perfil |
+| `/empresas/nueva/` (v1.3) | Personal y Jefe | Botón rápido para crear empresa |
+| `/empresas/<uuid>/` (v1.3) | Todos (según asignación) | Historial de proyectos de la empresa (con botón "+ Nuevo Proyecto") |
+| `/proyectos/<uuid>/` | Todos | Detalle del proyecto (hitos, carpetas, archivos) |
+| `POST /proyectos/<uuid>/carpetas/nueva/` (v1.3) | Personal y Jefe | Crear carpeta en el proyecto |
+| `POST /carpetas/<uuid>/eliminar/` (v1.3) | Personal y Jefe | Eliminar carpeta vacía |
+| `POST /proyectos/<uuid>/subir/` | Personal y Jefe | Inicia la subida (acepta `carpeta_id` opcional): valida y devuelve POST prefirmado |
+| `POST /archivos/<uuid>/confirmar/` | Personal y Jefe (quien subió) | Confirma la subida: verifica existencia y tamaño en el Space |
 | `GET /archivos/<uuid>/descargar/` | Todos | Responde 302 a una URL prefirmada de 60 s |
-| `POST /archivos/<uuid>/eliminar/` | Personal (lo que subió) y administrador | Borrado lógico: oculta el archivo al instante |
-| `/proyectos/nuevo/` (v1.2) | Personal | Crear proyecto: empresa, nombre, hitos y clientes asignados |
-| `/proyectos/<uuid>/editar/` (v1.2) | Personal | Cambiar nombre, clientes e hitos aún no cumplidos |
-| `POST /proyectos/<uuid>/hitos/avanzar/` y `/retroceder/` (v1.2) | Personal | Marca el siguiente hito o desmarca el último marcado |
+| `POST /archivos/<uuid>/eliminar/` | Personal (lo propio), Jefe y superusuario (cualquiera) | Borrado lógico: oculta el archivo al instante |
+| `/proyectos/nuevo/` (v1.2) | Personal y Jefe | Crear proyecto: empresa, nombre, hitos y clientes asignados |
+| `/proyectos/<uuid>/editar/` (v1.2) | Personal y Jefe | Cambiar nombre, clientes e hitos aún no cumplidos |
+| `POST /proyectos/<uuid>/hitos/avanzar/` y `/retroceder/` (v1.2) | Personal y Jefe | Marca el siguiente hito o desmarca el último marcado |
 | `POST /proyectos/<uuid>/recepcion/` (v1.2) | Cliente asignado | Confirma ("conforme") o rechaza ("no conforme") y envía el correo |
-| `/gestion/empresas/`, `/gestion/empresas/nueva/`, `/gestion/empresas/<uuid>/` (v1.2) | Jefe | Listar, crear y editar empresas |
 | `/gestion/usuarios/`, `/gestion/usuarios/nuevo/`, `/gestion/usuarios/<uuid>/` (v1.2) | Jefe | Listar, crear, editar, desactivar o reactivar usuarios y reenviar la invitación |
 | `/contrasena/crear/<uidb64>/<token>/` (v1.2) | Quien recibe el enlace | Crear o restablecer la contraseña (vista estándar de Django) |
 | `/contrasena/olvide/` (v1.2) | Todos | Pedir el enlace por correo. La respuesta es la misma exista o no el correo |
@@ -419,3 +424,69 @@ def puede_borrar(usuario, archivo):
 ### 13.5 Fuera de alcance
 
 Varios jefes o permisos a medida por persona, historial de cambios de Gestión (quién editó qué), carga masiva de usuarios, borrado de empresas o usuarios y cambio del correo de un usuario por él mismo.
+
+---
+
+## 14. Jerarquía de navegación y Carpetas por proyecto (v1.3)
+
+**Por qué:** Para evitar una lista plana de proyectos desordenada cuando crecen los clientes y los trabajos, BKB organiza la estructura en 3 niveles: **Empresa (Cliente)** → **Proyectos históricos** → **Carpetas y Archivos**. Además, el personal y el jefe disponen de botones de fácil acceso para crear empresas, proyectos y carpetas sobre la marcha sin rodeos administrativos.
+
+### 14.1 Jerarquía y flujo de navegación
+
+```
+Login → [ / ]
+          │
+          ├─ Personal / Jefe:
+          │     │
+          │     ▼
+          │   Lista de Empresas con proyectos vigentes (con [+ Nueva Empresa])
+          │     │
+          │     ▼ (Clic en empresa)
+          │   [ /empresas/<uuid>/ ]
+          │   Historial completo de proyectos de la empresa (con [+ Nuevo Proyecto])
+          │     │
+          │     ▼ (Clic en proyecto)
+          │   [ /proyectos/<uuid>/ ]
+          │   Detalle del proyecto: panel de hitos, carpetas ([+ Nueva Carpeta]) y archivos ([+ Subir])
+          │
+          └─ Cliente:
+                │
+                ▼
+              Lista directa de sus proyectos asignados (o selector de empresas si tiene varias asignadas).
+              Al abrir un proyecto ve las carpetas y archivos en modo solo lectura.
+```
+
+### 14.2 Carpetas virtuales por proyecto
+
+1. **Modelo `Carpeta`:**
+   - `id`: UUID.
+   - `proyecto`: ForeignKey a `Proyecto` (`on_delete=models.CASCADE`, `related_name='carpetas'`).
+   - `nombre`: `CharField(max_length=100)`.
+   - `creado_en`: `DateTimeField(auto_now_add=True)`.
+   - `creado_por`: ForeignKey al usuario (`on_delete=models.PROTECT`).
+   - `unique_together`: `[('proyecto', 'nombre')]` (no puede haber dos carpetas con el mismo nombre en un proyecto).
+2. **Relación con `Archivo`:**
+   - `Archivo.carpeta`: ForeignKey opcional (`null=True, blank=True, on_delete=models.SET_NULL`, `related_name='archivos'`).
+   - Los archivos sin carpeta se listan en la raíz del proyecto.
+   - Si se elimina una carpeta, sus archivos no se borran: vuelven a la raíz (`SET_NULL`).
+3. **Almacenamiento en DigitalOcean Spaces (invariable):**
+   - La clave en el Space sigue siendo `{SPACES_PREFIX}{proyecto_uuid}/{archivo_uuid}`.
+   - Las carpetas viven **exclusivamente en la base de datos**. Renombrar, mover o borrar carpetas no toca el Space.
+
+### 14.3 Permisos y reglas de acceso
+
+1. **Empresas activas:**
+   - `permisos.empresas_visibles(usuario)`: para personal y jefe devuelve las empresas que tienen proyectos vigentes; para clientes devuelve las empresas de sus proyectos asignados.
+2. **Proyectos de la empresa:**
+   - `permisos.proyectos_de_empresa(usuario, empresa)`: personal y jefe ven todos los proyectos de esa empresa (activos y cerrados); el cliente ve solo los que se le asignaron en esa empresa.
+3. **Carpetas:**
+   - Solo el personal y el jefe pueden crear (`POST /proyectos/<uuid>/carpetas/nueva/`) o eliminar carpetas vacías (`POST /carpetas/<uuid>/eliminar/`).
+   - El cliente solo consulta las carpetas existentes y descarga sus archivos autorizados.
+4. **Bloqueo por recepción (v1.2):**
+   - Si el proyecto está en `esperando_recepcion`, el cliente queda bloqueado de ver archivos **en todas las carpetas y en la raíz**.
+
+### 14.4 Botones de acción rápida
+
+- En `/`: botón `+ Nueva Empresa` (formulario simple con nombre y RUT).
+- En `/empresas/<uuid>/`: botón `+ Nuevo Proyecto` (con la empresa preseleccionada).
+- En `/proyectos/<uuid>/`: botón `+ Nueva Carpeta` y botón `+ Subir Archivo` (con selector de carpeta destino).

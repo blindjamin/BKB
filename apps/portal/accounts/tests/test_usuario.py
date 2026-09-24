@@ -30,6 +30,56 @@ class CrearUsuarioTests(TestCase):
             self.assertFalse(u.is_superuser)
             self.assertFalse(u.is_staff)
 
+    def test_crea_jefe(self):
+        jefe = Usuario.objects.create_user('jefe@bkb.cl', CLAVE, rol=Rol.JEFE)
+        self.assertEqual(jefe.rol, Rol.JEFE)
+        self.assertTrue(jefe.check_password(CLAVE))
+        self.assertFalse(jefe.is_superuser)
+        self.assertFalse(jefe.is_staff)
+
+    def test_usuario_con_nombre(self):
+        u1 = Usuario.objects.create_user('carlos@bkb.cl', CLAVE, nombre='Carlos Pérez')
+        self.assertEqual(u1.nombre, 'Carlos Pérez')
+        self.assertEqual(str(u1), 'Carlos Pérez')
+
+        u2 = Usuario.objects.create_user('sin_nombre@bkb.cl', CLAVE)
+        self.assertEqual(u2.nombre, '')
+        self.assertEqual(str(u2), 'sin_nombre@bkb.cl')
+
+    def test_solo_puede_existir_un_jefe_activo(self):
+        Usuario.objects.create_user('jefe1@bkb.cl', CLAVE, rol=Rol.JEFE)
+        with self.assertRaises(ValidationError) as ctx:
+            Usuario.objects.create_user('jefe2@bkb.cl', CLAVE, rol=Rol.JEFE)
+        self.assertIn('jefe activo', str(ctx.exception).lower())
+
+        # Un usuario existente no puede cambiarse a jefe si ya hay uno activo
+        otro = Usuario.objects.create_user('otro@bkb.cl', CLAVE, rol=Rol.PERSONAL)
+        otro.rol = Rol.JEFE
+        with self.assertRaises(ValidationError) as ctx:
+            otro.save()
+        self.assertIn('jefe activo', str(ctx.exception).lower())
+
+    def test_se_permite_crear_segundo_jefe_si_el_primero_esta_inactivo(self):
+        Usuario.objects.create_user('jefe_inactivo@bkb.cl', CLAVE, rol=Rol.JEFE, is_active=False)
+        jefe_activo = Usuario.objects.create_user('jefe_nuevo@bkb.cl', CLAVE, rol=Rol.JEFE)
+        self.assertEqual(jefe_activo.rol, Rol.JEFE)
+        self.assertTrue(jefe_activo.is_active)
+
+    def test_activar_segundo_jefe_se_rechaza(self):
+        jefe_inactivo = Usuario.objects.create_user('jefe_antiguo@bkb.cl', CLAVE, rol=Rol.JEFE, is_active=False)
+        Usuario.objects.create_user('jefe_actual@bkb.cl', CLAVE, rol=Rol.JEFE)
+        jefe_inactivo.is_active = True
+        with self.assertRaises(ValidationError) as ctx:
+            jefe_inactivo.save()
+        self.assertIn('jefe activo', str(ctx.exception).lower())
+
+    def test_modificar_el_mismo_jefe_no_falla(self):
+        jefe = Usuario.objects.create_user('jefe@bkb.cl', CLAVE, rol=Rol.JEFE, nombre='Original')
+        jefe.nombre = 'Modificado'
+        jefe.save()
+        jefe.refresh_from_db()
+        self.assertEqual(jefe.nombre, 'Modificado')
+
     def test_sin_tipo_es_cliente(self):
         self.assertEqual(Usuario.objects.create_user('x@y.cl', CLAVE).rol, Rol.CLIENTE)
 
@@ -140,3 +190,34 @@ class PanelAdminTests(TestCase):
     def test_admin_edita_un_usuario(self):
         pagina = self.get(self.admin, f'/admin/accounts/usuario/{self.cliente.pk}/change/')
         self.assertEqual(pagina.status_code, 200)
+
+    def test_admin_crea_un_jefe(self):
+        self.client.force_login(self.admin)
+        respuesta = self.client.post(
+            '/admin/accounts/usuario/add/',
+            {'email': 'Jefe@Empresa.cl', 'nombre': 'Jefe Supremo', 'rol': Rol.JEFE, 'password1': CLAVE, 'password2': CLAVE},
+            secure=True,
+        )
+        self.assertEqual(respuesta.status_code, 302)
+        jefe = Usuario.objects.get(email='jefe@empresa.cl')
+        self.assertEqual(jefe.rol, Rol.JEFE)
+        self.assertEqual(jefe.nombre, 'Jefe Supremo')
+
+    def test_admin_rechaza_segundo_jefe_activo_con_mensaje_claro(self):
+        Usuario.objects.create_user('jefe_existente@bkb.cl', CLAVE, rol=Rol.JEFE)
+        self.client.force_login(self.admin)
+        respuesta = self.client.post(
+            '/admin/accounts/usuario/add/',
+            {'email': 'Segundo@Empresa.cl', 'nombre': 'Segundo Jefe', 'rol': Rol.JEFE, 'password1': CLAVE, 'password2': CLAVE},
+            secure=True,
+        )
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'Ya existe un usuario con el rol de jefe activo')
+        self.assertFalse(Usuario.objects.filter(email='segundo@empresa.cl').exists())
+
+    def test_lista_muestra_nombre_y_jefe(self):
+        Usuario.objects.create_user('jefe_list@bkb.cl', CLAVE, rol=Rol.JEFE, nombre='Mario Rossi')
+        respuesta = self.get(self.admin, '/admin/accounts/usuario/')
+        self.assertContains(respuesta, 'Mario Rossi')
+        self.assertContains(respuesta, 'Jefe')
+

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import Archivo, DescargaLog, Empresa, Membresia, Proyecto
+from .models import Archivo, DescargaLog, Empresa, Hito, Membresia, Proyecto, RespuestaRecepcion
 
 
 @admin.register(Empresa)
@@ -21,13 +21,32 @@ class MembresiaInline(admin.TabularInline):
         return obj.proyecto.empresa if obj and obj.proyecto_id else '-'
 
 
+class HitoInline(admin.TabularInline):
+    model = Hito
+    extra = 0
+    fields = ('orden', 'nombre', 'cumplido_en', 'cumplido_por')
+    readonly_fields = ('orden', 'nombre', 'cumplido_en', 'cumplido_por')
+
+    def has_view_permission(self, request, obj=None):
+        return obj is not None
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Proyecto)
 class ProyectoAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'empresa', 'estado')
     list_filter = ('estado', 'empresa')
     list_select_related = ('empresa',)
     search_fields = ('nombre', 'empresa__nombre')
-    inlines = [MembresiaInline]
+    inlines = [MembresiaInline, HitoInline]
 
 
 @admin.register(Archivo)
@@ -57,6 +76,25 @@ class DescargaLogAdmin(admin.ModelAdmin):
 
     list_display = ('fecha', 'usuario', 'archivo', 'ip')
     list_select_related = ('usuario', 'archivo')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(RespuestaRecepcion)
+class RespuestaRecepcionAdmin(admin.ModelAdmin):
+    """Registro de solo lectura para el superusuario."""
+
+    list_display = ('fecha', 'proyecto', 'usuario', 'nombre_revisor', 'conforme', 'ip')
+    list_filter = ('conforme', 'proyecto')
+    list_select_related = ('proyecto', 'usuario')
+    search_fields = ('nombre_revisor', 'usuario__email', 'proyecto__nombre')
 
     def has_add_permission(self, request):
         return False

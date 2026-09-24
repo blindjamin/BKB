@@ -1,12 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('archivo-input');
     if (!input) return;
+    const btnSubir = document.getElementById('btn-subir');
+    if (btnSubir) {
+        btnSubir.addEventListener('click', () => input.click());
+    }
     const s = document.getElementById('upload-status'), p = document.getElementById('progreso-subida'), t = document.getElementById('upload-text'), csrf = input.getAttribute('data-csrf');
 
     input.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
-        s.style.display = 'block';
+        s.classList.add('is-visible');
 
         for (let i = 0; i < files.length; i++) {
             const f = files[i];
@@ -15,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res1 = await fetch(input.getAttribute('data-url-subir'), {
                     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-                    body: JSON.stringify({ nombre: f.name, tipo: f.type || 'application/octet-stream', tamano: f.size })
+                    body: JSON.stringify({ nombre: f.name, tipo: f.type || 'application/octet-stream', tamano: f.size, carpeta_id: input.dataset.carpetaId || null })
                 });
                 if (!res1.ok) throw new Error((await res1.json()).error || 'Error al iniciar');
                 const { id, firma } = await res1.json();
@@ -41,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!res2.ok) throw new Error((await res2.json()).error || 'Error al confirmar');
             } catch (err) {
                 alert(`Error en ${f.name}: ${err.message}`);
-                s.style.display = 'none';
+                s.classList.remove('is-visible');
                 input.value = '';
                 return;
             }

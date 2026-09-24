@@ -42,3 +42,4 @@ Thumbs.db
 .mcp.json
 graphify-out/
 .graphifyignore
+.claude/

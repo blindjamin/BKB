@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} - BKB Portal{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <nav class="breadcrumbs">
+        {% if proyecto %}
+            <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}">&larr; Volver al Proyecto</a>
+        {% else %}
+            <a href="{% url 'documentos:lista_proyectos' %}">&larr; Volver a Empresas</a>
+        {% endif %}
+    </nav>
+
+    <div class="form-container">
+        <h1 class="proyectos-title">{{ titulo }}</h1>
+
+        <form method="post" class="form-card">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-error">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="{{ form.empresa.id_for_label }}">{{ form.empresa.label }}</label>
+                {{ form.empresa }}
+                {% if form.empresa.errors %}
+                    <div class="field-error">{{ form.empresa.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}
+                    <div class="field-error">{{ form.nombre.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.estado.id_for_label }}">{{ form.estado.label }}</label>
+                {{ form.estado }}
+                {% if form.estado.errors %}
+                    <div class="field-error">{{ form.estado.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.hitos_texto.id_for_label }}">{{ form.hitos_texto.label }}</label>
+                {{ form.hitos_texto }}
+                <small class="form-help">{{ form.hitos_texto.help_text }}</small>
+                {% if form.hitos_texto.errors %}
+                    <div class="field-error">{{ form.hitos_texto.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>{{ form.clientes.label }}</label>
+                <small class="form-help">{{ form.clientes.help_text }}</small>
+                <div class="checkbox-list">
+                    {% for choice in form.clientes %}
+                        <div class="checkbox-item">
+                            {{ choice.tag }}
+                            <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">No hay cuentas de cliente registradas aún.</p>
+                    {% endfor %}
+                </div>
+                {% if form.clientes.errors %}
+                    <div class="field-error">{{ form.clientes.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">{{ accion }}</button>
+                {% if proyecto %}
+                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-secondary">Cancelar</a>
+                {% else %}
+                    <a href="{% url 'documentos:lista_proyectos' %}" class="btn-secondary">Cancelar</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

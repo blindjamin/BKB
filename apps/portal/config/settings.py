@@ -6,7 +6,7 @@ Conforme al Plan de Implementación de BKB (Seguridad ASVS Nivel 2).
 import os
 from pathlib import Path
 
-from csp.constants import NONE, SELF
+from csp.constants import NONE, NONCE, SELF
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # Aplicaciones del portal
     'accounts',
     'documentos',
+    'gestion',
 ]
 
 # Usuario propio (entra con correo). No se cambia después del primer migrate.
@@ -78,6 +79,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'gestion.context_processors.jefe',
             ],
         },
     },
@@ -138,6 +140,19 @@ if not SPACES_PREFIX.endswith('/') or SPACES_PREFIX.startswith('/') or '..' in S
     )
 MAX_UPLOAD_MB = int(os.environ.get('MAX_UPLOAD_MB', '50'))
 
+# Correo (§12.3.8). Sin EMAIL_HOST, Django imprime los correos en la consola.
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+if EMAIL_HOST:
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    EMAIL_USE_TLS = True
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or 'portal@empresabkb.cl'
+# Destinatarios fijos del aviso de recepción, separados por comas.
+AVISO_RECEPCION_CORREOS = [c.strip() for c in os.environ.get('AVISO_RECEPCION_CORREOS', '').split(',') if c.strip()]
+
 # Seguridad de Sesiones y Cookies (Plan Sección 5)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
@@ -156,7 +171,7 @@ space_host_url = f"https://{space_host}"
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': [SELF],
-        'script-src': [SELF],
+        'script-src': [SELF, NONCE],
         'style-src': [SELF],
         'frame-ancestors': [NONE],
         'base-uri': [SELF],
@@ -165,7 +180,6 @@ CONTENT_SECURITY_POLICY = {
         'connect-src': [SELF, space_host_url],
     },
 }
-CSP_INCLUDE_NONCE_IN = ['script-src', 'style-src']
 
 # Parámetros estrictos de producción activables vía SSL
 if not DEBUG:
@@ -193,3 +207,5 @@ AXES_LOCKOUT_TEMPLATE = None
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
+# Vigencia del enlace de invitación para crear la contraseña (§13.3.2): 3 días.
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24 * 3

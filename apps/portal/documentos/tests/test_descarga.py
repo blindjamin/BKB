@@ -1,8 +1,9 @@
+from unittest.mock import patch
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.utils import timezone
 from accounts.models import Usuario, Rol
-from documentos.models import Empresa, Proyecto, Membresia, EstadoProyecto, Archivo, EstadoArchivo, DescargaLog
-from unittest.mock import patch
+from documentos.models import Empresa, Proyecto, Membresia, EstadoProyecto, Archivo, EstadoArchivo, DescargaLog, Hito
 
 class DescargaTests(TestCase):
     def setUp(self):
@@ -54,3 +55,55 @@ class DescargaTests(TestCase):
         response = self.client.get(url_descarga)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(DescargaLog.objects.count(), 0)
+
+    @patch('documentos.views.url_descarga')
+    def test_descarga_registra_ultima_ip_de_x_forwarded_for(self, mock_url_descarga):
+        mock_url_descarga.return_value = 'http://test-space.com/descarga.pdf'
+
+        self.client.force_login(self.cliente)
+        url_descarga = reverse('documentos:descargar_archivo', args=[self.doc_valido.pk])
+
+        self.client.get(
+            url_descarga,
+            HTTP_X_FORWARDED_FOR='198.51.100.1, 203.0.113.195, 10.0.0.1',
+        )
+
+        log = DescargaLog.objects.latest('fecha')
+        self.assertEqual(log.ip, '10.0.0.1')
+
+    def test_descarga_archivo_pendiente_da_404(self):
+        pendiente = Archivo.objects.create(
+            proyecto=self.proyecto,
+            nombre_original='pendiente.pdf',
+            clave_space='portal/pendiente.pdf',
+            tamano=500,
+            tipo='application/pdf',
+            estado=EstadoArchivo.PENDIENTE,
+            subido_por=self.personal,
+        )
+        self.client.force_login(self.cliente)
+        url_descarga = reverse('documentos:descargar_archivo', args=[pendiente.pk])
+        response = self.client.get(url_descarga)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(DescargaLog.objects.count(), 0)
+
+    @patch('documentos.views.url_descarga')
+    def test_descarga_en_esperando_recepcion_bloquea_cliente_y_permite_personal(self, mock_url_descarga):
+        mock_url_descarga.return_value = 'http://test-space.com/descarga.pdf'
+        Hito.objects.create(
+            proyecto=self.proyecto, orden=1, nombre='Hito Completo',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        url_descarga = reverse('documentos:descargar_archivo', args=[self.doc_valido.pk])
+
+        # Cliente recibe 404 y no se registra log
+        self.client.force_login(self.cliente)
+        response = self.client.get(url_descarga)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(DescargaLog.objects.count(), 0)
+
+        # Personal puede descargar normalmente (302)
+        self.client.force_login(self.personal)
+        response_personal = self.client.get(url_descarga)
+        self.assertEqual(response_personal.status_code, 302)
+        self.assertEqual(DescargaLog.objects.count(), 1)

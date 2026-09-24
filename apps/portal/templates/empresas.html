@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Empresas - BKB Portal{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <div class="view-header">
+        <div>
+            <h1 class="proyectos-title">Empresas</h1>
+            <p class="view-subtitle">Clientes con proyectos vigentes en BKB</p>
+        </div>
+        <div>
+            <a href="{% url 'documentos:crear_empresa' %}" class="btn-action">+ Nueva Empresa</a>
+        </div>
+    </div>
+
+    {% if empresas %}
+        <div class="proyectos-grid">
+            {% for empresa in empresas %}
+                <a href="{% url 'documentos:detalle_empresa' empresa.pk %}" class="project-card">
+                    <div class="project-card-header">
+                        <h2 class="project-card-title">{{ empresa.nombre }}</h2>
+                        <span class="badge badge-activo">
+                            {{ empresa.proyectos_activos_count }} proyecto{{ empresa.proyectos_activos_count|pluralize }} activo{{ empresa.proyectos_activos_count|pluralize }}
+                        </span>
+                    </div>
+                    <div class="project-card-meta">
+                        {% if empresa.rut %}
+                            <span>RUT: {{ empresa.rut }}</span>
+                        {% endif %}
+                        <span class="card-arrow">Ver proyectos &rarr;</span>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="proyectos-empty">
+            <p class="proyectos-empty-text">No hay empresas con proyectos activos actualmente.</p>
+            <p><a href="{% url 'documentos:crear_empresa' %}" class="btn-action">+ Registrar Nueva Empresa</a></p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

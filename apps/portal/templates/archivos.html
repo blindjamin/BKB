@@ -4,93 +4,160 @@
 {% block title %}{{ proyecto.nombre }} - Archivos{% endblock %}
 
 {% block content %}
-<div style="max-width: 900px; margin: 0 auto; width: 100%;">
-    <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-start;">
+<div class="archivos-container">
+    {% if mostrar_aviso %}
+        {% include "includes/aviso_hitos.html" %}
+    {% endif %}
+    <div class="archivos-header">
         <div>
-            <a href="{% url 'documentos:lista_proyectos' %}" style="color: var(--bkb-salmon-700); text-decoration: none; font-weight: bold; margin-bottom: 1rem; display: inline-block;">← Volver a Proyectos</a>
-            <h1 style="margin: 0 0 0.5rem 0; color: var(--text-main);">{{ proyecto.nombre }}</h1>
-            <div style="color: var(--text-muted); font-size: 0.875rem;">
-                🏢 {{ proyecto.empresa.nombre }}
+            <nav class="breadcrumbs">
+                <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}">{{ proyecto.empresa.nombre }}</a>
+                &rsaquo;
+                {% if carpeta_activa %}
+                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}">{{ proyecto.nombre }}</a>
+                    &rsaquo; <span>{{ carpeta_activa.nombre }}</span>
+                {% else %}
+                    <span>{{ proyecto.nombre }}</span>
+                {% endif %}
+            </nav>
+            <h1 class="archivos-title">{% if carpeta_activa %}📁 {{ carpeta_activa.nombre }}{% else %}{{ proyecto.nombre }}{% endif %}</h1>
+            <div class="archivos-meta">
+                <span>🏢 {{ proyecto.empresa.nombre }}</span>
+                {% if puede_gestionar %}
+                    <span>&middot; <a href="{% url 'documentos:editar_proyecto' proyecto.pk %}" class="btn-link">Editar proyecto</a></span>
+                {% endif %}
             </div>
         </div>
         
         {% if puede_subir %}
-        <div style="text-align: right;">
-            <input type="file" id="archivo-input" style="display: none;" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf" capture="environment" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}">
-            <button onclick="document.getElementById('archivo-input').click()" style="background-color: var(--bkb-salmon-600); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold; cursor: pointer;">
+        <div class="archivos-actions">
+            <input type="file" id="archivo-input" class="archivo-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf" capture="environment" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}"{% if carpeta_activa %} data-carpeta-id="{{ carpeta_activa.pk }}"{% endif %}>
+            <button type="button" id="btn-subir" class="btn-subir">
                 Subir Archivo
             </button>
-            <div id="upload-status" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted); display: none;">
-                <progress id="progreso-subida" value="0" max="100" style="width: 100%; margin-bottom: 0.25rem;"></progress>
+            <div id="upload-status" class="upload-status">
+                <progress id="progreso-subida" class="progreso-subida" value="0" max="100"></progress>
                 <span id="upload-text">Subiendo...</span>
             </div>
         </div>
         {% endif %}
     </div>
     
-    <div class="tabs" style="display: flex; gap: 1rem; border-bottom: 1px solid var(--card-border); margin-bottom: 1.5rem;">
-        <button class="tab-btn active" data-target="docs" style="background: none; border: none; padding: 0.75rem 1rem; font-weight: bold; cursor: pointer; color: var(--bkb-salmon-700); border-bottom: 2px solid var(--bkb-salmon-700);">
+
+    {% if puede_gestionar_hitos %}
+    <section class="hitos">
+        <h2 class="seccion-title">Hitos</h2>
+        {% if hitos %}
+            <ol class="hitos-lista">
+                {% for hito in hitos %}
+                    <li class="hito{% if hito.cumplido %} is-cumplido{% endif %}">
+                        <span class="hito-nombre">{% if hito.cumplido %}✓{% else %}○{% endif %} {{ hito.nombre }}</span>
+                        {% if hito.cumplido %}
+                            <span class="badge badge-activo">{{ hito.cumplido_en|date:"d M Y, H:i" }} · {{ hito.cumplido_por.nombre|default:hito.cumplido_por.email }}</span>
+                        {% else %}
+                            <span class="badge badge-cerrado">Pendiente</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="view-subtitle">Este proyecto no tiene hitos.</p>
+        {% endif %}
+        <div class="hitos-acciones">
+            {% if puede_avanzar %}
+            <form action="{% url 'documentos:avanzar_hito' proyecto.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn-action">Marcar siguiente hito</button>
+            </form>
+            {% endif %}
+            {% if puede_retroceder %}
+            <form action="{% url 'documentos:retroceder_hito' proyecto.pk %}" method="post" data-confirmar="¿Deshacer el último hito marcado?">
+                {% csrf_token %}
+                <button type="submit" class="btn-secondary">Deshacer último</button>
+            </form>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="carpetas">
+        {% if carpeta_activa %}
+        <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-link">&larr; Volver a {{ proyecto.nombre }}</a>
+        {% else %}
+        <div class="carpetas-header">
+            <h2 class="seccion-title">Carpetas</h2>
+            {% if puede_gestionar %}
+            <form action="{% url 'documentos:crear_carpeta' proyecto.pk %}" method="post" class="form-carpeta form-group">
+                {% csrf_token %}
+                <input type="text" name="nombre" maxlength="100" required placeholder="Nombre de la carpeta" aria-label="Nombre de la carpeta">
+                <button type="submit" class="btn-action">+ Nueva carpeta</button>
+            </form>
+            {% endif %}
+        </div>
+        {% if carpetas %}
+            <div class="carpetas-grid">
+                {% for carpeta in carpetas %}
+                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}?carpeta={{ carpeta.pk }}" class="project-card">
+                        <span class="project-card-title">📁 {{ carpeta.nombre }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="view-subtitle">Este proyecto aún no tiene carpetas.</p>
+        {% endif %}
+        {% endif %}
+        {% if carpeta_activa and puede_gestionar %}
+            <form action="{% url 'documentos:eliminar_carpeta' carpeta_activa.pk %}" method="post" class="form-eliminar" data-confirmar="Los archivos de la carpeta volverán a la raíz del proyecto.">
+                {% csrf_token %}
+                <button type="submit" class="btn-eliminar">🗑 Eliminar carpeta "{{ carpeta_activa.nombre }}"</button>
+            </form>
+        {% endif %}
+    </section>
+
+    <div class="tabs">
+        <button type="button" class="tab-btn active" data-target="docs">
             Documentos ({{ documentos|length }})
         </button>
-        <button class="tab-btn" data-target="fotos" style="background: none; border: none; padding: 0.75rem 1rem; font-weight: bold; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent;">
+        <button type="button" class="tab-btn" data-target="fotos">
             Fotos ({{ fotos|length }})
         </button>
     </div>
     
-    <div id="docs-content" class="tab-content" style="display: block;">
+    <div id="docs-content" class="tab-content">
         {% if documentos %}
-            <div style="display: grid; gap: 1rem;">
+            <div class="archivos-grid">
                 {% for archivo in documentos %}
-                    {% include "includes/archivo_item.html" with archivo=archivo %}
+                    {% include "includes/archivo_item.html" with archivo=archivo puede_borrar=archivo.puede_borrar %}
                 {% endfor %}
             </div>
         {% else %}
-            <div style="text-align: center; padding: 3rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: var(--text-muted);">
-                No hay documentos en este proyecto.
+            <div class="archivos-empty">
+                No hay documentos {% if carpeta_activa %}en esta carpeta{% else %}en este proyecto{% endif %}.
             </div>
         {% endif %}
     </div>
 
-    <div id="fotos-content" class="tab-content" style="display: none;">
+    <div id="fotos-content" class="tab-content is-hidden">
         {% if fotos %}
-            <div style="display: grid; gap: 1rem;">
+            <div class="archivos-grid">
                 {% for archivo in fotos %}
-                    {% include "includes/archivo_item.html" with archivo=archivo %}
+                    {% include "includes/archivo_item.html" with archivo=archivo puede_borrar=archivo.puede_borrar %}
                 {% endfor %}
             </div>
         {% else %}
-            <div style="text-align: center; padding: 3rem; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; color: var(--text-muted);">
-                No hay fotos en este proyecto.
+            <div class="archivos-empty">
+                No hay fotos {% if carpeta_activa %}en esta carpeta{% else %}en este proyecto{% endif %}.
             </div>
         {% endif %}
     </div>
 </div>
-
-<script nonce="{{ request.csp_nonce }}">
-document.addEventListener('DOMContentLoaded', () => {
-    const btns = document.querySelectorAll('.tab-btn');
-    const contents = document.querySelectorAll('.tab-content');
-    
-    btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            btns.forEach(b => {
-                b.style.color = 'var(--text-muted)';
-                b.style.borderBottomColor = 'transparent';
-            });
-            contents.forEach(c => c.style.display = 'none');
-            
-            btn.style.color = 'var(--bkb-salmon-700)';
-            btn.style.borderBottomColor = 'var(--bkb-salmon-700)';
-            
-            const target = btn.getAttribute('data-target');
-            document.getElementById(target + '-content').style.display = 'block';
-        });
-    });
-});
-</script>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'archivos.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% if mostrar_aviso %}
+<script src="{% static 'aviso.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endif %}
 {% if puede_subir %}
 <script src="{% static 'subir.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endif %}
