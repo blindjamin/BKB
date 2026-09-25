@@ -106,7 +106,8 @@ class RetrocederHitoTests(HitosTests):
         self.assertEqual(self._post('retroceder').status_code, 302)
         self.assertEqual(self._cumplidos(), [1, 2, 3])
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
-        self.assertContains(response, 'class="form-error">El cliente ya confirmó la recepción')
+        self.assertContains(response, 'role="alert"')
+        self.assertContains(response, 'El cliente ya confirmó la recepción')
 
     def test_retrocede_tras_recepcion_no_conforme(self):
         self._marcar(1, 2, 3)

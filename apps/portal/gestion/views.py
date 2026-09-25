@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.mail import send_mail
-from django.http import HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
@@ -28,15 +28,20 @@ def _gestionables():
 @login_required
 def usuarios(request):
     if not es_jefe(request.user):
-        return HttpResponseForbidden("Solo el jefe puede gestionar usuarios.")
+        raise PermissionDenied("Solo el jefe puede gestionar usuarios.")
 
     usuarios = _gestionables().order_by('nombre', 'email')
+    # Solo valores válidos llegan a la plantilla: los enlaces de filtro no arrastran basura.
     rol = request.GET.get('rol')
     if rol in (Rol.PERSONAL, Rol.CLIENTE):
         usuarios = usuarios.filter(rol=rol)
+    else:
+        rol = None
     activo = request.GET.get('activo')
     if activo in ('1', '0'):
         usuarios = usuarios.filter(is_active=activo == '1')
+    else:
+        activo = None
 
     return render(request, 'gestion/usuarios.html', {'usuarios': usuarios, 'rol': rol, 'activo': activo})
 
@@ -71,7 +76,7 @@ def _avisar_invitacion(request, usuario, enviada):
 @login_required
 def crear_usuario(request):
     if not es_jefe(request.user):
-        return HttpResponseForbidden("Solo el jefe puede gestionar usuarios.")
+        raise PermissionDenied("Solo el jefe puede gestionar usuarios.")
 
     if request.method == 'POST':
         form = UsuarioForm(request.POST)
@@ -90,7 +95,7 @@ def crear_usuario(request):
 @login_required
 def editar_usuario(request, pk):
     if not es_jefe(request.user):
-        return HttpResponseForbidden("Solo el jefe puede gestionar usuarios.")
+        raise PermissionDenied("Solo el jefe puede gestionar usuarios.")
     usuario = get_object_or_404(_gestionables(), pk=pk)
 
     if request.method == 'POST':
@@ -107,7 +112,7 @@ def editar_usuario(request, pk):
 
 def _cambiar_activo(request, pk, activo):
     if not es_jefe(request.user):
-        return HttpResponseForbidden("Solo el jefe puede gestionar usuarios.")
+        raise PermissionDenied("Solo el jefe puede gestionar usuarios.")
     usuario = get_object_or_404(_gestionables(), pk=pk)
     usuario.is_active = activo  # nunca se borra (§13.2); desactivado, su sesión deja de valer al instante
     usuario.save(update_fields=['is_active'])
@@ -132,7 +137,7 @@ def reactivar_usuario(request, pk):
 @require_POST
 def reenviar_invitacion(request, pk):
     if not es_jefe(request.user):
-        return HttpResponseForbidden("Solo el jefe puede gestionar usuarios.")
+        raise PermissionDenied("Solo el jefe puede gestionar usuarios.")
     usuario = get_object_or_404(_gestionables(), pk=pk)
     if not usuario.is_active:
         messages.error(request, 'Reactiva al usuario antes de reenviarle la invitación.')

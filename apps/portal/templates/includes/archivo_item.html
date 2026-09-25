@@ -13,13 +13,11 @@
             Descargar
         </a>
         {% if puede_borrar or archivo.puede_borrar %}
-        <form action="{% url 'documentos:eliminar_archivo' archivo.pk %}" method="post" class="form-eliminar" data-confirmar="¿Seguro? El archivo dejará de verse para todos.">
-            {% csrf_token %}
-            <button type="submit" class="btn-eliminar">
-                <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg>
-                Eliminar
-            </button>
-        </form>
+        {# Sin JS abre la página de confirmación (GET, nunca borra); con JS, confirmar.js abre el diálogo y envía POST #}
+        <a href="{% url 'documentos:eliminar_archivo' archivo.pk %}" class="btn-eliminar" data-confirmar-eliminar data-confirmar-titulo="¿Eliminar «{{ archivo.nombre_original }}»?" data-confirmar="El archivo dejará de verse para todos, incluidos los clientes." data-confirmar-accion="Eliminar">
+            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg>
+            Eliminar
+        </a>
         {% endif %}
     </div>
 </article>

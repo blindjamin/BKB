@@ -149,26 +149,6 @@ main {
     }
 }
 
-.auth-container {
-    width: 100%;
-    max-width: 375px;
-    margin: auto;
-    padding: 2rem;
-    background-color: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
-    box-sizing: border-box;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.auth-container h1 {
-    color: var(--text-main);
-    text-align: center;
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-}
-
 .form-group {
     margin-bottom: 1.25rem;
 }
@@ -198,7 +178,7 @@ main {
     color: var(--text-main);
     font-family: inherit;
     font-size: 1rem;
-    transition: border-color 150ms ease, box-shadow 150ms ease;
+    transition: border-color 150ms ease;
 }
 
 .form-group input:focus,
@@ -219,7 +199,7 @@ main {
     font-weight: bold;
     font-size: 1rem;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 150ms ease;
 }
 
 .btn-primary:hover {
@@ -231,13 +211,6 @@ main {
 }
 [data-theme="dark"] .btn-primary:hover {
     background-color: var(--bkb-salmon-500);
-}
-
-.text-danger {
-    color: var(--bkb-danger);
-}
-.text-center {
-    text-align: center;
 }
 
 /* Layout y utilidades */
@@ -300,13 +273,12 @@ main {
     font-size: var(--bkb-text-body-lg, 1.125rem);
     line-height: 1.5;
     box-sizing: border-box;
-    transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+    transition: border-color 150ms ease;
     position: relative;
     min-width: 0;
 }
 
 .project-card:hover {
-    transform: translateY(-2px);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
     border-color: var(--bkb-salmon-300);
 }
@@ -336,15 +308,6 @@ main {
 
 /* Fila superior de la tarjeta (Empresa / Estado) */
 .project-card-top,
-.project-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-3, 12px);
-    margin-bottom: var(--space-3, 12px);
-    flex-wrap: wrap;
-    min-width: 0;
-}
 
 /* Nombre de empresa y RUT en monospace */
 .project-card-empresa {
@@ -438,14 +401,13 @@ main {
     color: var(--bkb-salmon-700);
     font-weight: 600;
     font-size: var(--bkb-text-body-base, 0.9375rem);
-    transition: transform 150ms ease, color 150ms ease;
+    transition: color 150ms ease;
     display: inline-flex;
     align-items: center;
     gap: 4px;
 }
 
 .project-card:hover .card-arrow {
-    transform: translateX(3px);
     color: var(--bkb-salmon-800);
 }
 
@@ -618,14 +580,13 @@ main {
     border-radius: var(--bkb-radius-input, 10px);
     border: none;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
+    transition: background-color 150ms ease;
     white-space: nowrap;
 }
 
 .btn-action:hover {
     background-color: var(--bkb-salmon-800);
     color: white;
-    transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -756,15 +717,6 @@ main {
     margin-bottom: 0;
 }
 
-.form-aviso {
-    padding: 0.75rem 1rem;
-    background-color: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--bkb-radius-input, 10px);
-    color: var(--text-main);
-    margin-bottom: 1.5rem;
-}
-
 .form-group select,
 .form-group textarea {
     width: 100%;
@@ -776,7 +728,7 @@ main {
     color: var(--text-main);
     font-family: inherit;
     font-size: 1rem;
-    transition: border-color 150ms ease, box-shadow 150ms ease;
+    transition: border-color 150ms ease;
 }
 
 .form-group textarea {
@@ -1038,7 +990,7 @@ fieldset.form-group-fieldset legend.form-label {
     font-size: var(--bkb-text-body-sm, 0.875rem);
     font-weight: 500;
     line-height: 1.25;
-    transition: all 150ms ease;
+    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
     cursor: pointer;
 }
 
@@ -1946,7 +1898,7 @@ fieldset.form-group-fieldset legend.form-label {
     color: var(--text-main);
     font-family: inherit;
     font-size: 1rem;
-    transition: border-color 150ms ease, box-shadow 150ms ease;
+    transition: border-color 150ms ease;
 }
 
 .auth-form input:focus {
@@ -2357,4 +2309,180 @@ fieldset.form-group-fieldset legend.form-label {
 
 .cola-estado {
     color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Paso D (DS-6 y DS-7): avisos, diálogo de confirmación, páginas de error y pulido
+   ========================================================================== */
+.aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid;
+    border-radius: var(--bkb-radius-input);
+    font-size: var(--bkb-text-body-base);
+}
+
+.aviso .icono {
+    margin-top: 2px;
+}
+
+.aviso-success {
+    color: var(--bkb-sec-ok-text);
+    background-color: var(--bkb-sec-ok-bg);
+    border-color: var(--bkb-sec-ok-border);
+}
+
+.aviso-error {
+    color: var(--bkb-sec-danger-text);
+    background-color: var(--bkb-sec-danger-bg);
+    border-color: var(--bkb-sec-danger-border);
+}
+
+.aviso-info,
+.aviso-warning,
+.aviso-debug {
+    color: var(--bkb-sec-info-text);
+    background-color: var(--bkb-sec-info-bg);
+    border-color: var(--bkb-sec-info-border);
+}
+
+.form-recepcion .aviso {
+    margin: 0 0 var(--space-3);
+}
+
+/* Diálogo de confirmación único */
+.dialogo {
+    width: calc(100% - 2 * var(--space-4));
+    max-width: 28rem;
+    padding: var(--space-6);
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-card);
+    box-sizing: border-box;
+}
+
+.dialogo::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.dialogo p {
+    overflow-wrap: anywhere;
+}
+
+.dialogo-acciones {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.dialogo-acciones form {
+    margin: 0;
+}
+
+.dialogo-acciones .btn-primary,
+.dialogo-acciones .btn-secondary,
+.btn-peligro {
+    width: auto;
+    min-height: 48px;
+    padding: 0 var(--space-6);
+}
+
+.btn-peligro {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    color: var(--bkb-danger);
+    border: 1px solid var(--bkb-danger);
+    border-radius: var(--bkb-radius-input);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.btn-peligro:hover {
+    background-color: var(--bkb-sec-danger-bg);
+}
+
+/* Páginas de error y confirmación sin JS: tarjeta centrada */
+.pagina-error {
+    width: 100%;
+    max-width: 32rem;
+    margin: var(--space-8) auto;
+    padding: var(--space-6);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-card);
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.pagina-error h1 {
+    margin-top: 0;
+    overflow-wrap: anywhere;
+}
+
+.pagina-error-icono {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--accent-text);
+}
+
+.pagina-error .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-height: 48px;
+    padding: 0 var(--space-6);
+    text-decoration: none;
+}
+
+.pagina-error .dialogo-acciones {
+    justify-content: center;
+}
+
+.pagina-error-ayuda {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--bkb-text-body-sm);
+}
+
+.pagina-error-ayuda a {
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+/* 320 px: ningún nombre largo ni el encabezado empujan a scroll horizontal */
+header {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.header-actions {
+    flex-wrap: wrap;
+}
+
+h1, h2, h3,
+.breadcrumbs {
+    overflow-wrap: anywhere;
+}
+
+/* Movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+    }
 }

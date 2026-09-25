@@ -95,7 +95,7 @@
             </form>
             {% endif %}
             {% if puede_retroceder %}
-            <form action="{% url 'documentos:retroceder_hito' proyecto.pk %}" method="post" data-confirmar="¿Deshacer el último hito marcado?">
+            <form action="{% url 'documentos:retroceder_hito' proyecto.pk %}" method="post" data-confirmar="¿Deshacer el último hito marcado?" data-confirmar-titulo="Deshacer hito" data-confirmar-accion="Deshacer">
                 {% csrf_token %}
                 <button type="submit" class="btn-link">Deshacer último</button>
             </form>
@@ -109,7 +109,7 @@
             <div class="carpeta-activa-acciones">
                 <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-link">&larr; Volver a {{ proyecto.nombre }}</a>
                 {% if puede_gestionar %}
-                <form action="{% url 'documentos:eliminar_carpeta' carpeta_activa.pk %}" method="post" class="form-eliminar" data-confirmar="Los archivos de la carpeta volverán a la raíz del proyecto.">
+                <form action="{% url 'documentos:eliminar_carpeta' carpeta_activa.pk %}" method="post" class="form-eliminar" data-confirmar="Los archivos de la carpeta volverán a la raíz del proyecto." data-confirmar-titulo="¿Eliminar la carpeta «{{ carpeta_activa.nombre }}»?" data-confirmar-accion="Eliminar carpeta">
                     {% csrf_token %}
                     <button type="submit" class="btn-eliminar">
                         <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg>
@@ -177,7 +177,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'archivos.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% if mostrar_aviso %}
 <script src="{% static 'aviso.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endif %}

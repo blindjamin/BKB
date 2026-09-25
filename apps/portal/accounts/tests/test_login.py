@@ -142,3 +142,12 @@ class LoginTests(TestCase):
     def test_error_de_login_usa_el_icono_de_alerta(self):
         response = self.client.post(self.login_url, {'username': 'test@bkb.cl', 'password': 'incorrecta'})
         self.assertContains(response, '#alerta')
+
+    def test_bloqueo_muestra_su_pagina_con_telefonos(self):
+        for _ in range(5):
+            self.client.post(self.login_url, {'username': 'test@bkb.cl', 'password': 'PasswordMala123!'})
+        response = self.client.post(self.login_url, {'username': 'test@bkb.cl', 'password': 'PasswordMala123!'})
+        self.assertEqual(response.status_code, 429)
+        self.assertTemplateUsed(response, 'bloqueo.html')
+        for texto in ('Por seguridad bloqueamos el acceso', 'tel:+56989753095', 'tel:+56961911593'):
+            self.assertContains(response, texto, status_code=429)

@@ -313,3 +313,10 @@ class FiltrosSeparadosTests(GestionTests):
         self.assertNotIn('rol=', todos_tipo)
         self.assertIn('rol=cliente', todos_estado)
         self.assertNotIn('activo=', todos_estado)
+
+    def test_filtros_invalidos_no_llegan_a_los_enlaces(self):
+        self.client.force_login(self.jefe)
+        html = self.client.get(self.url_usuarios, {'rol': 'xyz', 'activo': '9'}).content.decode()
+        for href in re.findall(r'href="([^"]*)"', html):
+            self.assertNotIn('xyz', href)
+            self.assertNotIn('activo=9', href)

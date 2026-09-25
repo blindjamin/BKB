@@ -4,11 +4,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, Q
-from django.http import HttpResponseBadRequest, HttpResponseForbidden, Http404
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponseBadRequest, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
 
 from .forms import EmpresaForm, ProyectoForm
@@ -79,7 +80,7 @@ def lista_proyectos(request):
 @login_required
 def crear_empresa(request):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para crear empresas.")
+        raise PermissionDenied("No tienes permisos para crear empresas.")
 
     if request.method == 'POST':
         form = EmpresaForm(request.POST)
@@ -110,7 +111,7 @@ def detalle_empresa(request, pk):
 @login_required
 def crear_proyecto(request):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para crear proyectos.")
+        raise PermissionDenied("No tienes permisos para crear proyectos.")
 
     initial = {}
     empresa_id = request.GET.get('empresa')
@@ -135,7 +136,7 @@ def crear_proyecto(request):
 @login_required
 def editar_proyecto(request, pk):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para editar proyectos.")
+        raise PermissionDenied("No tienes permisos para editar proyectos.")
 
     proyecto = get_object_or_404(Proyecto, pk=pk)
 
@@ -227,7 +228,7 @@ def detalle_proyecto(request, pk):
 @require_POST
 def crear_carpeta(request, pk):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para crear carpetas.")
+        raise PermissionDenied("No tienes permisos para crear carpetas.")
 
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     nombre = request.POST.get('nombre', '').strip()
@@ -248,7 +249,7 @@ def crear_carpeta(request, pk):
 @require_POST
 def eliminar_carpeta(request, pk):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para eliminar carpetas.")
+        raise PermissionDenied("No tienes permisos para eliminar carpetas.")
 
     carpeta = get_object_or_404(Carpeta.objects.filter(proyecto__in=proyectos_visibles(request.user)), pk=pk)
     proyecto_pk = carpeta.proyecto_id
@@ -260,7 +261,7 @@ def eliminar_carpeta(request, pk):
 @require_POST
 def avanzar_hito(request, pk):
     if not puede_gestionar_hitos(request.user):
-        return HttpResponseForbidden("No tienes permisos para marcar hitos.")
+        raise PermissionDenied("No tienes permisos para marcar hitos.")
 
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     with transaction.atomic():
@@ -277,7 +278,7 @@ def avanzar_hito(request, pk):
 @require_POST
 def retroceder_hito(request, pk):
     if not puede_gestionar_hitos(request.user):
-        return HttpResponseForbidden("No tienes permisos para deshacer hitos.")
+        raise PermissionDenied("No tienes permisos para deshacer hitos.")
 
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     with transaction.atomic():
@@ -298,7 +299,7 @@ def retroceder_hito(request, pk):
 def responder_recepcion(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     if not puede_responder_recepcion(request.user, proyecto):
-        return HttpResponseForbidden("No puedes responder la recepción de este proyecto.")
+        raise PermissionDenied("No puedes responder la recepción de este proyecto.")
 
     resultado = request.POST.get('resultado')
     if resultado not in ('conforme', 'no_conforme'):
@@ -353,16 +354,24 @@ def descargar_archivo(request, pk):
 
 
 @login_required
-@require_POST
+@require_http_methods(['GET', 'POST'])
 def eliminar_archivo(request, pk):
+    if request.method == 'GET':
+        # Confirmación sin JS (docs/09 §5.5): solo muestra la pregunta, nunca borra.
+        archivo = get_object_or_404(archivos_visibles_para(request.user), pk=pk)
+        if not puede_borrar(request.user, archivo):
+            raise PermissionDenied("No tienes permisos para eliminar este archivo.")
+        return render(request, 'confirmar_eliminar.html', {'archivo': archivo})
+
     archivo = get_object_or_404(Archivo, pk=pk)
 
     if not puede_borrar(request.user, archivo):
-        return HttpResponseForbidden("No tienes permisos para eliminar este archivo.")
+        raise PermissionDenied("No tienes permisos para eliminar este archivo.")
 
     if archivo.eliminado_en is None:
         archivo.eliminado_en = timezone.now()
         archivo.eliminado_por = request.user
         archivo.save()
+        messages.success(request, f'Se eliminó «{archivo.nombre_original}».')
 
     return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)

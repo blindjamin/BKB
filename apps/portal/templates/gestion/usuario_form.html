@@ -58,7 +58,7 @@
                 </form>
             {% endif %}
             {% if usuario.is_active %}
-                <form action="{% url 'gestion:desactivar_usuario' usuario.pk %}" method="post" data-confirmar="{{ usuario.email }} ya no podrá entrar al portal. ¿Desactivar?">
+                <form action="{% url 'gestion:desactivar_usuario' usuario.pk %}" method="post" data-confirmar="{{ usuario.email }} ya no podrá entrar al portal. ¿Desactivar?" data-confirmar-titulo="Desactivar usuario" data-confirmar-accion="Desactivar">
                     {% csrf_token %}
                     <button type="submit" class="btn-eliminar">Desactivar</button>
                 </form>
@@ -74,6 +74,3 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'archivos.js' %}" nonce="{{ request.csp_nonce }}"></script>
-{% endblock %}

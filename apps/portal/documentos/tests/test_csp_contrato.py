@@ -1,7 +1,9 @@
 import re
+import uuid
 from django.contrib.auth.tokens import default_token_generator
-from django.test import Client, TestCase
+from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
+from django.views.defaults import server_error
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -53,17 +55,18 @@ class ContratoCSPTests(TestCase):
             subido_por=self.personal,
         )
 
-    def _verificar_contrato_csp_y_html(self, response):
-        self.assertEqual(response.status_code, 200)
+    def _verificar_contrato_csp_y_html(self, response, status=200, con_cabecera=True):
+        self.assertEqual(response.status_code, status)
 
-        # 1. Cabecera CSP con nonce en script-src
-        csp = response.headers.get('Content-Security-Policy', '')
-        self.assertTrue(csp, 'La respuesta no contiene cabecera Content-Security-Policy')
-        match_nonce = re.search(r"script-src[^;]*'nonce-[A-Za-z0-9+/=]+'", csp)
-        self.assertIsNotNone(
-            match_nonce,
-            f"La cabecera CSP no incluye un nonce válido en script-src: {csp}",
-        )
+        # 1. Cabecera CSP con nonce en script-src (la 500 se dibuja sin middleware: solo se revisa su HTML)
+        if con_cabecera:
+            csp = response.headers.get('Content-Security-Policy', '')
+            self.assertTrue(csp, 'La respuesta no contiene cabecera Content-Security-Policy')
+            match_nonce = re.search(r"script-src[^;]*'nonce-[A-Za-z0-9+/=]+'", csp)
+            self.assertIsNotNone(
+                match_nonce,
+                f"La cabecera CSP no incluye un nonce válido en script-src: {csp}",
+            )
 
         html = response.content.decode('utf-8')
         html = re.sub(r'nonce="[^"]*"', 'nonce=""', html)  # el nonce base64 aleatorio puede contener "on...="
@@ -92,6 +95,26 @@ class ContratoCSPTests(TestCase):
     def test_login_cumple_contrato(self):
         response = self.client.get(reverse('login'))
         self._verificar_contrato_csp_y_html(response)
+
+    def test_paginas_de_error_y_confirmacion_cumplen_contrato(self):
+        self.client.force_login(self.cliente)
+        self._verificar_contrato_csp_y_html(
+            self.client.post(reverse('documentos:crear_carpeta', args=[self.proyecto.pk]), {'nombre': 'X'}), status=403
+        )
+        self._verificar_contrato_csp_y_html(
+            self.client.get(reverse('documentos:detalle_proyecto', args=[uuid.uuid4()])), status=404
+        )
+        self.client.force_login(self.personal)
+        self._verificar_contrato_csp_y_html(
+            self.client.get(reverse('documentos:eliminar_archivo', args=[self.archivo_doc.pk]))
+        )
+        self._verificar_contrato_csp_y_html(server_error(RequestFactory().get('/')), status=500, con_cabecera=False)
+
+    def test_bloqueo_cumple_contrato(self):
+        self.client.logout()
+        for _ in range(6):
+            response = self.client.post(reverse('login'), {'username': 'cliente@empresa.cl', 'password': 'mala'})
+        self._verificar_contrato_csp_y_html(response, status=429)
 
     def test_olvide_contrasena_cumple_contrato(self):
         for nombre in ('contrasena_olvide', 'contrasena_olvide_enviado'):

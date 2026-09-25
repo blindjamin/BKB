@@ -386,3 +386,10 @@ Vistas al leer el código para este plan. **No están corregidas ni verificadas 
 | B | DS-2 y DS-3, más empresas, formularios, Gestión y contraseña | la misma |
 | C | DS-4 y DS-5, más hitos, carpetas y aviso | la misma |
 | D | DS-6 y DS-7, más la página 429 | la misma |
+
+### 12.5 Cierre del diseño (25-09-2026)
+- Pasos A a D hechos (DS-0 a DS-7). Diálogo de confirmación único (`static/js/confirmar.js`) para borrar archivos y carpetas, deshacer hitos y desactivar usuarios; sin JS, borrar un archivo pasa por una página de confirmación.
+- Páginas propias 403, 404, 500 y de bloqueo (axes), con los dos teléfonos.
+- Filtro de archivos con "Todos" por defecto, más Documentos y Fotos (decisión del paso C).
+- Verificado: con pruebas automáticas (contrato CSP en todas las pantallas nuevas, un solo `<h1>` en login, inicio, proyecto y Gestión, avisos con `role="alert"`/`role="status"`, `prefers-reduced-motion` y transiciones de 150 ms o menos solo en color y borde). Pendiente del usuario: capturas de login, inicio, proyecto y Gestión a 320, 375 y 1280 px en ambos temas (revisión visual del tema oscuro y del ancho de 320 px), foco de 3 px con teclado y Lighthouse (accesibilidad ≥ 95).
+- Los JS siguen en `static/` salvo `js/login.js` y `js/confirmar.js`: moverlos es cosmético.

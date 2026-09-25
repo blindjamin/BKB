@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+{# Independiente de base.html: Django la dibuja sin request, user ni nonce (sin script de tema: se ve en claro) #}
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - BKB Portal</title>
+    <link rel="stylesheet" href="{% static 'portal.css' %}">
+</head>
+<body>
+    <header class="encabezado">
+        <a href="/" class="marca">
+            <img src="{% static 'img/logo-bkb.png' %}" alt="BKB" class="marca-logo" height="44">
+            <span class="marca-nombre">Portal de Archivos</span>
+        </a>
+    </header>
+    <main id="contenido">
+        {% include "includes/pagina_error.html" with titulo="Algo falló" frase="Algo falló de nuestro lado. Ya quedó registrado." %}
+    </main>
+</body>
+</html>

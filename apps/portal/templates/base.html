@@ -52,10 +52,15 @@
         </div>
     </header>
 
-    <div class="mensajes" role="status">
-        {% for message in messages %}
-            <div class="{% if message.level_tag == 'error' %}form-error{% else %}form-aviso{% endif %}">{{ message }}</div>
-        {% endfor %}
+    <div class="mensajes">
+        {% for message in messages %}{% if message.level_tag == 'error' %}
+            {% include "includes/aviso_mensaje.html" %}
+        {% endif %}{% endfor %}
+        <div role="status">
+            {% for message in messages %}{% if message.level_tag != 'error' %}
+                {% include "includes/aviso_mensaje.html" %}
+            {% endif %}{% endfor %}
+        </div>
     </div>
 
     <main id="contenido">
@@ -69,7 +74,25 @@
         <a href="tel:+56961911593">+56 9 6191 1593</a>
     </footer>
 
+    {# Diálogo único de confirmación (docs/09 §6): lo usa todo form[data-confirmar] y a[data-confirmar-eliminar] #}
+    {% if user.is_authenticated %}
+    <dialog id="dialogo-confirmar" class="dialogo" aria-labelledby="dialogo-confirmar-titulo" aria-describedby="dialogo-confirmar-texto">
+        <h2 id="dialogo-confirmar-titulo" class="seccion-title">¿Confirmar?</h2>
+        <p id="dialogo-confirmar-texto"></p>
+        <div class="dialogo-acciones">
+            <form method="dialog">
+                <button type="submit" id="dialogo-cancelar" class="btn-primary">Cancelar</button>
+            </form>
+            <form method="post" id="dialogo-confirmar-form">
+                {% csrf_token %}
+                <button type="button" id="dialogo-accion" class="btn-peligro">Confirmar</button>
+            </form>
+        </div>
+    </dialog>
+    {% endif %}
+
     <script src="{% static 'tema.js' %}" nonce="{{ request.csp_nonce }}"></script>
+    <script src="{% static 'js/confirmar.js' %}" nonce="{{ request.csp_nonce }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
