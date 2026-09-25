@@ -87,7 +87,9 @@ class ListadoTests(GestionTests):
         # 3. Solo rol=personal
         resp_personal = self.client.get(self.url_usuarios, {'rol': 'personal'})
         self.assertContains(resp_personal, 'class="filtro is-active" aria-current="page">Personal</a>')
-        self.assertNotContains(resp_personal, 'class="filtro is-active" aria-current="page">Todos</a>')
+        # Los filtros se limpian por grupo (brecha B5): solo el "Todos" de estado queda activo, no el de tipo.
+        self.assertContains(resp_personal, 'class="filtro is-active" aria-current="page">Todos</a>', count=1)
+        self.assertContains(resp_personal, 'href="?rol=personal" class="filtro is-active" aria-current="page">Todos</a>')
         self.assertContains(resp_personal, 'href="?rol=personal&activo=1"')
 
     def test_listado_renderiza_tabla_y_tarjetas_responsivas(self):
@@ -297,3 +299,17 @@ class EditarUsuarioTests(GestionTests):
         self.cliente.save()
         resp_desactivado = self.client.get(self._url('editar_usuario', self.cliente))
         self.assertNotContains(resp_desactivado, 'Reenviar invitación')
+
+
+class FiltrosSeparadosTests(GestionTests):
+    def test_todos_de_cada_grupo_conserva_el_otro_filtro(self):
+        self.client.force_login(self.jefe)
+        html = self.client.get(self.url_usuarios, {'rol': 'cliente', 'activo': '0'}).content.decode()
+        tipo = html[html.index('aria-label="Filtrar por tipo"'):html.index('aria-label="Filtrar por estado"')]
+        estado = html[html.index('aria-label="Filtrar por estado"'):]
+        todos_tipo = re.search(r'<a href="([^"]*)"[^>]*>Todos</a>', tipo).group(1)
+        todos_estado = re.search(r'<a href="([^"]*)"[^>]*>Todos</a>', estado).group(1)
+        self.assertIn('activo=0', todos_tipo)
+        self.assertNotIn('rol=', todos_tipo)
+        self.assertIn('rol=cliente', todos_estado)
+        self.assertNotIn('activo=', todos_estado)

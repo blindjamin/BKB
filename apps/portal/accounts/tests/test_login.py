@@ -138,3 +138,7 @@ class LoginTests(TestCase):
         self.assertContains(response, reverse('contrasena_olvide'))
         self.assertContains(response, '¿Olvidaste tu contraseña?')
 
+
+    def test_error_de_login_usa_el_icono_de_alerta(self):
+        response = self.client.post(self.login_url, {'username': 'test@bkb.cl', 'password': 'incorrecta'})
+        self.assertContains(response, '#alerta')

@@ -14,10 +14,16 @@
         </div>
     </div>
 
-    <nav class="filtros" aria-label="Filtrar usuarios">
-        <a href="?" class="filtro{% if not rol and not activo %} is-active{% endif %}"{% if not rol and not activo %} aria-current="page"{% endif %}>Todos</a>
+    {# Cada grupo se limpia por separado: su "Todos" conserva el filtro del otro grupo. #}
+    <nav class="filtros" aria-label="Filtrar por tipo">
+        <span>Tipo:</span>
+        <a href="?{% if activo %}activo={{ activo }}{% endif %}" class="filtro{% if not rol %} is-active{% endif %}"{% if not rol %} aria-current="page"{% endif %}>Todos</a>
         <a href="?rol=personal{% if activo %}&activo={{ activo }}{% endif %}" class="filtro{% if rol == 'personal' %} is-active{% endif %}"{% if rol == 'personal' %} aria-current="page"{% endif %}>Personal</a>
         <a href="?rol=cliente{% if activo %}&activo={{ activo }}{% endif %}" class="filtro{% if rol == 'cliente' %} is-active{% endif %}"{% if rol == 'cliente' %} aria-current="page"{% endif %}>Clientes</a>
+    </nav>
+    <nav class="filtros" aria-label="Filtrar por estado">
+        <span>Estado:</span>
+        <a href="?{% if rol %}rol={{ rol }}{% endif %}" class="filtro{% if not activo %} is-active{% endif %}"{% if not activo %} aria-current="page"{% endif %}>Todos</a>
         <a href="?{% if rol %}rol={{ rol }}&{% endif %}activo=1" class="filtro{% if activo == '1' %} is-active{% endif %}"{% if activo == '1' %} aria-current="page"{% endif %}>Activos</a>
         <a href="?{% if rol %}rol={{ rol }}&{% endif %}activo=0" class="filtro{% if activo == '0' %} is-active{% endif %}"{% if activo == '0' %} aria-current="page"{% endif %}>Desactivados</a>
     </nav>

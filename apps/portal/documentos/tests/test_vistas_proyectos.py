@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 from accounts.models import Usuario, Rol
-from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
+from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Membresia, Proyecto
 
 class VistasProyectosTests(TestCase):
     def setUp(self):
@@ -129,3 +129,41 @@ class VistasProyectosTests(TestCase):
         self.assertContains(response, '0 archivos · Sin cargas aún')
         self.assertNotContains(response, '🏢')
 
+
+
+class ConteoProyectoBloqueadoTests(TestCase):
+    """B1: el conteo de archivos no revela lo que el bloqueo por recepción oculta al cliente."""
+
+    def setUp(self):
+        self.personal = Usuario.objects.create_user('personal@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
+        self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
+        self.empresa = Empresa.objects.create(nombre='Empresa A', rut='11.111.111-1')
+        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Bloqueado', estado=EstadoProyecto.ACTIVO)
+        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        Hito.objects.create(
+            proyecto=self.proyecto, orden=1, nombre='Hito', cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        for n in (1, 2):
+            Archivo.objects.create(
+                proyecto=self.proyecto, nombre_original=f'plano{n}.pdf', clave_space=f'portal-dev/{self.proyecto.pk}/{n}',
+                tamano=1024, tipo='application/pdf', estado=EstadoArchivo.DISPONIBLE, subido_por=self.personal,
+            )
+        self.urls = (
+            reverse('documentos:lista_proyectos'),
+            reverse('documentos:detalle_empresa', args=[self.empresa.pk]),
+        )
+
+    def test_cliente_bloqueado_no_ve_conteo_ni_fecha(self):
+        self.client.force_login(self.cliente)
+        for url in self.urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertNotContains(response, '2 archivos')
+                self.assertNotContains(response, 'última carga')
+                self.assertContains(response, 'Confirma la recepción para ver los archivos')
+
+    def test_personal_si_ve_el_conteo(self):
+        self.client.force_login(self.personal)
+        response = self.client.get(self.urls[1])
+        self.assertContains(response, '2 archivos')
+        self.assertNotContains(response, 'Confirma la recepción para ver los archivos')

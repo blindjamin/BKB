@@ -238,12 +238,12 @@ Paso B completado. Siguiente: Paso C (DS-4 y DS-5 con hitos, carpetas y aviso), 
 ## Sesión 9 · 24 de Septiembre de 2026 (Paso B: DS-2, DS-3, Empresas, Formularios, Gestión y Contraseñas)
 
 ### Resumen
-- **Forma de trabajo:** Sistema multi-agente con 3 roles designados: director (contexto y arquitectura), implementador (disciplina `incremental-implementation`) y auditor (`code-review`, pruebas y validación adversaria e independiente).
+- **Forma de trabajo:** El paso B lo hizo el usuario con otro asistente (commit `8a1ffda`). El equipo de agentes lo revisó el 25-09-2026: 271 pruebas en verde, sin estilos ni scripts en línea; se corrigió que el conteo de archivos mostrara al cliente datos de un proyecto bloqueado (ver el commit siguiente).
 - **DS-2 · Login Institucional:** Panel de marca para escritorio (≥ 900 px) con logo e identidad, tarjeta centrada en móvil (375 px), alternador accesible "Mostrar / Ocultar" contraseña (`login.js` externo cumpliendo CSP), alertas semánticas con `role="alert"` y teléfonos oficiales de asistencia (+56 9 8975 3095 / +56 9 6191 1593).
 - **DS-3 · Catálogo de Empresas y Proyectos:** Tarjetas con tipografía de 18 px (`--bkb-text-body-lg`), pastillas de estado (`Activo` / `Cerrado`), optimización de consultas para conteo de archivos y última fecha de carga en `views.py`, foco visible de 3 px y estados vacíos asistidos.
 - **Formularios de Empresa y Proyecto:** Estandarización de bordes (radio 10 px), etiquetas permanentes visibles, renderizado accesible de errores (ícono SVG de alerta + texto explicativo) y selector estilizado de clientes mediante casillas ordenadas.
 - **Gestión de Usuarios y Contraseñas:** Tabla responsiva en escritorio y tarjetas apiladas en móvil para `/gestion/usuarios/`, filtros combinables (`?rol=&activo=`) con `aria-current`, visibilidad condicional de "Reenviar invitación" (solo cuando está pendiente) y pantallas de invitación, restablecimiento y confirmación de contraseña integradas visualmente.
-- **Contrato CSP y Pruebas:** Cero estilos ni manejadores en línea. 271 pruebas unitarias (19 pruebas nuevas cubriendo accesibilidad, filtros, conteos y formularios), todas en verde al 100%. Auditoría post-victoria independiente cerrada con `VICTORY CONFIRMED`.
+- **Contrato CSP y Pruebas:** Cero estilos ni manejadores en línea. 271 pruebas unitarias (19 pruebas nuevas cubriendo accesibilidad, filtros, conteos y formularios), todas en verde al 100%.
 - **Aislamiento de red:** Cero llamadas o conexiones a DigitalOcean ni CDNs externas; operación 100% local.
 
 ### Punto de partida

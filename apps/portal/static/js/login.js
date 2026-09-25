@@ -28,9 +28,27 @@
         });
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', inicializarAlternanciaContrasena);
-    } else {
+    // Estado de carga (docs/09 §5.1): evita el doble envío. El botón no tiene name: no se pierde ningún valor.
+    function inicializarEstadoEntrando() {
+        const form = document.querySelector('.login-form');
+        if (!form) {
+            return;
+        }
+        form.addEventListener('submit', function () {
+            const boton = form.querySelector('button[type="submit"]');
+            boton.disabled = true;
+            boton.textContent = 'Entrando…';
+        });
+    }
+
+    function inicializar() {
         inicializarAlternanciaContrasena();
+        inicializarEstadoEntrando();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializar);
+    } else {
+        inicializar();
     }
 })();

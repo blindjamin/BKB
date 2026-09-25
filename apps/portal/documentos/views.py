@@ -39,6 +39,29 @@ def _get_client_ip(request):
     return request.META.get('REMOTE_ADDR')
 
 
+def _tarjetas_de_proyecto(usuario, proyectos):
+    """Proyectos con conteo de archivos disponibles y última carga, cerrados al final (docs/09 §12.1)."""
+    disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True)
+    proyectos = proyectos.annotate(
+        archivos_count=Count('archivos', filter=disponibles),
+        ultima_carga=Max('archivos__subido_en', filter=disponibles),
+    ).order_by('estado', 'nombre')
+    return _ocultar_conteo_bloqueados(usuario, proyectos)
+
+
+def _ocultar_conteo_bloqueados(usuario, proyectos):
+    """El cliente no ve el conteo ni la última carga de un proyecto que espera su recepción (§12.3.5)."""
+    if puede_gestionar_hitos(usuario):
+        return proyectos
+    proyectos = list(proyectos)
+    # ponytail: una consulta de estado por proyecto (N+1); un cliente tiene pocos proyectos.
+    for p in proyectos:
+        p.bloqueado = estado_proyecto(p) == EstadoFlujoProyecto.ESPERANDO_RECEPCION
+        if p.bloqueado:
+            p.archivos_count, p.ultima_carga = 0, None
+    return proyectos
+
+
 @login_required
 def lista_proyectos(request):
     if _es_personal(request.user):
@@ -47,21 +70,7 @@ def lista_proyectos(request):
         )
         return render(request, 'empresas.html', {'empresas': empresas})
 
-    proyectos = (
-        proyectos_visibles(request.user)
-        .select_related('empresa')
-        .annotate(
-            archivos_count=Count(
-                'archivos',
-                filter=Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True),
-            ),
-            ultima_carga=Max(
-                'archivos__subido_en',
-                filter=Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True),
-            ),
-        )
-        .order_by('estado', 'nombre')
-    )
+    proyectos = _tarjetas_de_proyecto(request.user, proyectos_visibles(request.user).select_related('empresa'))
     return render(request, 'proyectos.html', {'proyectos': proyectos})
 
 
@@ -87,20 +96,7 @@ def detalle_empresa(request, pk):
     if not puede_ver_empresa(request.user, empresa):
         raise Http404("No tienes acceso a esta empresa.")
 
-    proyectos = (
-        proyectos_de_empresa(request.user, empresa)
-        .annotate(
-            archivos_count=Count(
-                'archivos',
-                filter=Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True),
-            ),
-            ultima_carga=Max(
-                'archivos__subido_en',
-                filter=Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True),
-            ),
-        )
-        .order_by('estado', 'nombre')
-    )
+    proyectos = _tarjetas_de_proyecto(request.user, proyectos_de_empresa(request.user, empresa))
     context = {
         'empresa': empresa,
         'proyectos': proyectos,

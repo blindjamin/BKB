@@ -382,7 +382,7 @@ class VistasEmpresasYProyectosTests(TestCase):
         response = self.client.get(reverse('documentos:lista_proyectos'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'No hay empresas con proyectos activos actualmente.')
-        self.assertContains(response, '+ Registrar Empresa')
+        self.assertContains(response, '+ Nueva empresa')
         self.assertContains(response, reverse('documentos:crear_empresa'))
         self.assertContains(response, 'tel:+56989753095')
         self.assertContains(response, '+56 9 8975 3095')

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ empresa.nombre }} - Proyectos - BKB Portal{% endblock %}
 
@@ -32,16 +33,7 @@
                 <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="project-card{% if proyecto.estado != 'activo' %} is-cerrado{% endif %}">
                     <div class="project-card-top">
                         <span class="project-card-empresa">
-                            <svg class="icono icono-empresa" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
-                                <path d="M9 22v-4h6v4"></path>
-                                <path d="M8 6h.01"></path>
-                                <path d="M16 6h.01"></path>
-                                <path d="M8 10h.01"></path>
-                                <path d="M16 10h.01"></path>
-                                <path d="M8 14h.01"></path>
-                                <path d="M16 14h.01"></path>
-                            </svg>
+                            <svg class="icono icono-empresa" aria-hidden="true"><use href="{% static 'icons.svg' %}#empresa"></use></svg>
                             {{ empresa.nombre }}
                         </span>
                         <span class="badge pastilla-estado {% if proyecto.estado == 'activo' %}badge-activo pastilla-activo{% else %}badge-cerrado pastilla-cerrado{% endif %}">
@@ -53,7 +45,9 @@
 
                     <div class="project-card-meta">
                         <div class="project-card-secondary">
-                            {% if proyecto.archivos_count %}
+                            {% if proyecto.bloqueado %}
+                                <span>Confirma la recepción para ver los archivos</span>
+                            {% elif proyecto.archivos_count %}
                                 <span>{{ proyecto.archivos_count }} archivo{{ proyecto.archivos_count|pluralize }} · última carga {{ proyecto.ultima_carga|date:"d b Y" }}</span>
                             {% else %}
                                 <span>0 archivos · Sin cargas aún</span>
