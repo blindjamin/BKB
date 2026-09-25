@@ -22,7 +22,7 @@ class EstaticosTests(SimpleTestCase):
         with open(finders.find('icons.svg'), encoding='utf-8') as sprite:
             contenido = sprite.read()
         for nombre in ('carpeta', 'archivo', 'imagen', 'descargar', 'subir', 'camara',
-                       'papelera', 'buscar', 'flecha', 'sol', 'luna', 'ayuda', 'empresa'):
+                       'papelera', 'buscar', 'flecha', 'sol', 'luna', 'ayuda', 'empresa', 'cumplido', 'pendiente'):
             with self.subTest(icono=nombre):
                 self.assertIn(f'<symbol id="{nombre}"', contenido)
 

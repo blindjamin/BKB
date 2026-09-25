@@ -123,6 +123,14 @@ class ContratoCSPTests(TestCase):
         self._verificar_contrato_csp_y_html(response)
         self.assertIn('aviso.js', response.content.decode('utf-8'))
 
+    def test_vista_de_carpeta_cumple_contrato(self):
+        carpeta = self.proyecto.carpetas.get()
+        url = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])
+        for usuario in (self.personal, self.cliente):
+            with self.subTest(usuario=usuario.email):
+                self.client.force_login(usuario)
+                self._verificar_contrato_csp_y_html(self.client.get(url, {'carpeta': carpeta.pk, 'tipo': 'fotos'}))
+
     def _marcar_hitos(self):
         self.proyecto.hitos.update(cumplido_en=timezone.now(), cumplido_por=self.personal)
 

@@ -226,7 +226,6 @@ main {
     background-color: var(--bkb-salmon-800);
 }
 
-
 [data-theme="dark"] .btn-primary {
     background-color: var(--bkb-salmon-600);
 }
@@ -549,13 +548,6 @@ main {
     width: 100%;
 }
 
-.archivos-header {
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
 .archivos-title {
     margin: 0 0 0.5rem 0;
     color: var(--text-main);
@@ -566,81 +558,8 @@ main {
     font-size: 0.875rem;
 }
 
-.archivos-actions {
-    text-align: right;
-}
-
 .archivo-input-hidden {
     display: none;
-}
-
-.btn-subir {
-    background-color: var(--bkb-salmon-600);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--bkb-radius-input, 10px);
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.btn-subir:hover {
-    background-color: var(--bkb-salmon-700);
-}
-
-.upload-status {
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    display: none;
-}
-.upload-status.is-visible {
-    display: block;
-}
-
-.progreso-subida {
-    width: 100%;
-    margin-bottom: 0.25rem;
-}
-
-.tabs {
-    display: flex;
-    gap: 1rem;
-    border-bottom: 1px solid var(--card-border);
-    margin-bottom: 1.5rem;
-}
-
-.tab-btn {
-    background: none;
-    border: none;
-    padding: 0.75rem 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    color: var(--text-muted);
-    border-bottom: 2px solid transparent;
-    transition: color 0.2s, border-color 0.2s;
-}
-
-.tab-btn:hover {
-    color: var(--text-main);
-}
-
-.tab-btn.active {
-    color: var(--bkb-salmon-700);
-    border-bottom: 2px solid var(--bkb-salmon-700);
-}
-
-.tab-content {
-    display: block;
-}
-
-.tab-content.is-hidden {
-    display: none;
-}
-
-.archivos-grid {
-    display: grid;
-    gap: 1rem;
 }
 
 .archivos-empty {
@@ -653,51 +572,6 @@ main {
 }
 
 /* Item de Archivo */
-.archivo-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background-color: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-}
-
-.archivo-nombre {
-    font-weight: bold;
-    margin-bottom: 0.25rem;
-}
-
-.archivo-meta {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-.archivo-actions-cell {
-    text-align: right;
-}
-
-.archivo-tamano {
-    font-size: 0.875rem;
-    font-weight: bold;
-    color: var(--text-main);
-}
-
-.archivo-botones {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.link-descargar {
-    font-size: 0.75rem;
-    color: var(--bkb-salmon-700);
-    font-weight: bold;
-    text-decoration: none;
-}
-.link-descargar:hover {
-    color: var(--bkb-salmon-800);
-}
 
 .form-eliminar {
     margin: 0;
@@ -715,33 +589,6 @@ main {
 }
 .btn-eliminar:hover {
     text-decoration: underline;
-}
-
-@media (max-width: 480px) {
-    .archivos-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-    }
-    .archivos-actions {
-        text-align: left;
-    }
-    .btn-subir {
-        width: 100%;
-        text-align: center;
-    }
-    .archivo-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-    .archivo-actions-cell {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: left;
-    }
 }
 
 /* Jerarquía v1.3: Vistas de empresas y formularios */
@@ -1068,17 +915,6 @@ fieldset.form-group-fieldset legend.form-label {
     grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
     gap: 0.75rem;
     margin-bottom: 1rem;
-}
-
-.carpetas-grid .project-card {
-    padding: 1rem;
-}
-
-.carpetas-grid .project-card-title {
-    display: block;
-    margin: 0;
-    font-size: 1rem;
-    overflow-wrap: anywhere;
 }
 
 /* Panel de hitos del proyecto (Tarea 24) */
@@ -2226,3 +2062,299 @@ fieldset.form-group-fieldset legend.form-label {
     }
 }
 
+/* ==========================================================================
+   Página: proyecto (paso C · DS-4 y DS-5)
+   ========================================================================== */
+.proyecto-cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.proyecto-cabecera .archivos-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+}
+
+.proyecto-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.proyecto-acciones .btn-primary,
+.proyecto-acciones .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    width: auto;
+    min-height: 48px;
+    padding: 0 var(--space-6);
+}
+
+/* Estado del flujo de hitos */
+.pastilla-flujo {
+    padding: 2px var(--space-3);
+    border: 1px solid;
+    border-radius: var(--bkb-radius-pill);
+    font-size: var(--bkb-text-body-sm);
+    font-weight: 600;
+}
+
+.pastilla-flujo-en_curso {
+    color: var(--bkb-sec-info-text);
+    background-color: var(--bkb-sec-info-bg);
+    border-color: var(--bkb-sec-info-border);
+}
+
+.pastilla-flujo-esperando_recepcion {
+    color: var(--bkb-sec-warning-text);
+    background-color: var(--bkb-sec-warning-bg);
+    border-color: var(--bkb-sec-warning-border);
+}
+
+.pastilla-flujo-recibido {
+    color: var(--bkb-sec-ok-text);
+    background-color: var(--bkb-sec-ok-bg);
+    border-color: var(--bkb-sec-ok-border);
+}
+
+/* Hitos como lista de pasos */
+.hito {
+    justify-content: flex-start;
+}
+
+.hito-icono {
+    color: var(--text-muted);
+}
+
+.hito.is-cumplido .hito-icono {
+    color: var(--bkb-success);
+}
+
+.hito-detalle {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: var(--bkb-text-body-sm);
+}
+
+/* Carpetas compactas */
+.carpetas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+
+.carpeta-pastilla {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0 var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-input);
+    color: var(--text-main);
+    text-decoration: none;
+}
+
+.carpeta-pastilla:hover {
+    border-color: var(--bkb-salmon-300);
+}
+
+.carpeta-nombre {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.carpeta-conteo {
+    grid-column: 2;
+    color: var(--text-muted);
+    font-size: var(--bkb-text-body-sm);
+}
+
+.carpeta-activa-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+@media (max-width: 599.98px) {
+    .carpetas-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Filas de archivo: tarjeta apilada en celular, fila alineada desde 768 px */
+.archivos-lista {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.archivo-fila {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-input);
+}
+
+.archivo-ext {
+    align-self: start;
+    padding: 2px var(--space-2);
+    border: 1px solid var(--card-border);
+    border-radius: var(--space-1);
+    font-family: var(--bkb-font-mono);
+    font-size: var(--bkb-text-mono-base);
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.archivo-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+}
+
+.archivo-nombre {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+.archivo-meta {
+    color: var(--text-muted);
+    font-size: var(--bkb-text-body-sm);
+}
+
+.archivo-botones {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.btn-descargar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 48px;
+    box-sizing: border-box;
+}
+
+.btn-eliminar {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: 44px;
+    font-size: var(--bkb-text-body-sm);
+    color: var(--bkb-danger);
+}
+
+@media (min-width: 768px) {
+    .archivo-fila {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+    }
+
+    .archivo-botones {
+        grid-column: auto;
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.archivos-empty p {
+    margin: 0 0 var(--space-3);
+}
+
+/* Aviso al cliente (paso C) */
+.aviso-hitos .hito {
+    justify-content: flex-start;
+}
+
+.aviso-hitos .hito .badge {
+    margin-left: auto;
+}
+
+.hito.is-actual .hito-icono {
+    color: var(--accent-text);
+}
+
+.aviso-acciones .btn-primary {
+    width: auto;
+    min-height: 48px;
+    padding: 0 var(--space-6);
+}
+
+.aviso-ayuda {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0;
+    color: var(--text-muted);
+    font-size: var(--bkb-text-body-sm);
+}
+
+.aviso-ayuda a {
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+/* Cola de subida (paso C · DS-5) */
+.cola-subida {
+    margin-bottom: var(--space-6);
+    padding: var(--space-4);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-input);
+}
+
+.cola-lista {
+    list-style: none;
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    display: grid;
+    gap: var(--space-3);
+}
+
+.cola-fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    font-size: var(--bkb-text-body-sm);
+}
+
+.cola-nombre {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.cola-tamano {
+    color: var(--text-muted);
+}
+
+.cola-fila progress {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+.cola-estado {
+    color: var(--text-muted);
+}

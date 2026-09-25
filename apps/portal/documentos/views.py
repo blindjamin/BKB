@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, Q
@@ -30,6 +31,7 @@ from .permisos import (
 from .avisos import enviar_aviso_recepcion
 from .models import Archivo, Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RespuestaRecepcion
 from .storage import url_descarga
+from .subidas import EXTENSIONES_PERMITIDAS
 
 
 def _get_client_ip(request):
@@ -167,12 +169,26 @@ def detalle_proyecto(request, pk):
         carpeta_activa = get_object_or_404(proyecto.carpetas, pk=carpeta_id)
 
     # carpeta_activa=None filtra carpeta IS NULL: los archivos de la raíz
-    archivos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
-    for archivo in archivos:
+    todos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
+    for archivo in todos:
         archivo.puede_borrar = puede_borrar(request.user, archivo)
+        archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
 
-    fotos = [a for a in archivos if a.tipo.startswith('image/')]
-    documentos = [a for a in archivos if not a.tipo.startswith('image/')]
+    fotos = [a for a in todos if a.tipo.startswith('image/')]
+    documentos = [a for a in todos if not a.tipo.startswith('image/')]
+    # Filtro por enlaces (docs/09 §5.3); cualquier otro valor muestra todos.
+    tipo = request.GET.get('tipo')
+    if tipo not in ('documentos', 'fotos'):
+        tipo = None
+    archivos = {'documentos': documentos, 'fotos': fotos}.get(tipo, todos)
+
+    # Cantidad por carpeta desde archivos_visibles: respeta el bloqueo del cliente (lección de B1).
+    conteo = dict(
+        archivos_visibles(request.user, proyecto).order_by().values_list('carpeta').annotate(n=Count('id'))
+    )
+    carpetas = list(proyecto.carpetas.all())
+    for c in carpetas:
+        c.n_archivos = conteo.get(c.pk, 0)
 
     gestiona_hitos = puede_gestionar_hitos(request.user)
     hitos = list(proyecto.hitos.select_related('cumplido_por'))
@@ -191,11 +207,17 @@ def detalle_proyecto(request, pk):
         'recepcion_conforme': (
             proyecto.respuestas_recepcion.filter(conforme=True).order_by('fecha').first() if recibido else None
         ),
-        'carpetas': proyecto.carpetas.all(),
+        'carpetas': carpetas,
         'carpeta_activa': carpeta_activa,
-        'fotos': fotos,
-        'documentos': documentos,
+        'archivos': archivos,
+        'tipo': tipo,
+        'n_todos': len(todos),
+        'n_documentos': len(documentos),
+        'n_fotos': len(fotos),
         'puede_subir': puede_subir(request.user),
+        # Límites de la subida para la validación previa del navegador (el servidor sigue decidiendo)
+        'max_upload_mb': settings.MAX_UPLOAD_MB,
+        'extensiones': sorted(EXTENSIONES_PERMITIDAS),
         'puede_gestionar': puede_gestionar_estructura(request.user),
     }
     return render(request, 'archivos.html', context)

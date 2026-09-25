@@ -348,6 +348,7 @@ Vistas al leer el código para este plan. **No están corregidas ni verificadas 
 - **Proyecto (5.3):** suma el estado del flujo (En curso, Esperando recepción, Recibido), el panel de hitos (personal y jefe), las carpetas y las migas *Empresa › Proyecto › Carpeta*.
 - **Fuera de alcance (sección 10):** "recuperación de contraseña" y "carpetas" ya no están fuera: se implementaron (tareas 28 y 23). Las carpetas son de un solo nivel y solo existen en la base de datos.
 - **Pestañas Documentos/Fotos:** DS-0 las dejó funcionando con JS externo. En el paso C pasan al filtro por enlaces `?tipo=` que propone 5.3.
+- **Filtro de archivos (paso C):** además de Documentos y Fotos hay un enlace "Todos", que es la opción por defecto (sin `?tipo=`): una sola página muestra todo lo que el usuario puede ver.
 
 ### 12.3 Pantallas nuevas
 
