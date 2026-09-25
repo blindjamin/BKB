@@ -1,0 +1,197 @@
+---
+import { SITE } from '../../config/site';
+---
+
+<!-- Aviso flotante de emergencias (esquina inferior izquierda; el de WhatsApp va a la derecha) -->
+<aside
+  id="emergency-notice"
+  class="emergency-notice fixed z-40"
+  aria-label="Equipo para servicios de emergencia"
+  hidden
+>
+  <div class="en-card relative overflow-hidden rounded-[18px] border">
+    <!-- Franja superior de acento -->
+    <div class="en-stripe absolute inset-x-0 top-0 h-[3px]" aria-hidden="true"></div>
+
+    <button
+      type="button"
+      data-emergency-close
+      class="en-close absolute top-2.5 right-2.5 w-8 h-8 inline-flex items-center justify-center rounded-full transition-colors focus-bkb"
+      aria-label="Cerrar aviso de emergencia"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <div class="flex items-start gap-3.5 p-4 pr-11 sm:p-5 sm:pr-12">
+      <!-- Ícono con anillo pulsante -->
+      <div class="en-icon relative shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center" aria-hidden="true">
+        <span class="en-ring absolute inset-0 rounded-full"></span>
+        <svg class="relative w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M13 2 4.5 13.2c-.4.5 0 1.3.7 1.3H11l-1 7.5 8.5-11.2c.4-.5 0-1.3-.7-1.3H12l1-7.5Z"/>
+        </svg>
+      </div>
+
+      <div class="min-w-0 flex flex-col gap-1">
+        <span class="en-label hidden sm:inline-flex items-center gap-1.5 text-[12px] font-semibold">
+          <span class="en-dot w-1.5 h-1.5 shrink-0 rounded-full"></span>
+          Equipo para servicios de emergencia
+        </span>
+        <p class="en-title font-display font-bold text-[15px] sm:text-[18px] leading-[1.2] m-0">¿Emergencia en planta?</p>
+        <ul class="en-muted hidden sm:flex flex-col gap-1 text-[13px] leading-[1.45] m-0 mt-0.5 p-0 list-none">
+          <li class="flex gap-2"><span class="en-bullet mt-[7px] w-1 h-1 shrink-0 rounded-full"></span>Fallas en MT y BT</li>
+          <li class="flex gap-2"><span class="en-bullet mt-[7px] w-1 h-1 shrink-0 rounded-full"></span>Fallas en sistemas de fuerza, control y/o instrumentación</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="px-4 pb-4 sm:px-5 sm:pb-5 -mt-1">
+      <a href={SITE.phoneHref} class="en-call group flex items-center justify-center gap-2.5 w-full rounded-[12px] py-2.5 sm:py-3 px-4 font-semibold no-underline transition-all focus-bkb">
+        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 transition-transform group-hover:-rotate-12" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+        <span class="hidden sm:inline text-[13px] opacity-90">Llamar</span>
+        <span class="font-display text-[16px] sm:text-[17px] tracking-[0.01em]">{SITE.phoneDisplay}</span>
+      </a>
+    </div>
+  </div>
+</aside>
+
+<style>
+  .emergency-notice {
+    left: max(20px, env(safe-area-inset-left, 0px));
+    bottom: max(20px, env(safe-area-inset-bottom, 0px));
+    /* deja libre el botón de WhatsApp (56px + márgenes) a la derecha */
+    width: min(360px, calc(100vw - 116px));
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+    transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .emergency-notice.is-open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  /* ---------- Tema oscuro (por defecto) ----------
+     Versión suave: tintes en vez de colores sólidos, sin rojo intenso y con poco movimiento. */
+  .en-card {
+    /* Degradado: carbón claro -> negro -> toque cobrizo, con brillo naranjo en la esquina */
+    background:
+      radial-gradient(90% 80% at 100% 100%, rgba(250, 90, 54, 0.16), transparent 60%),
+      radial-gradient(80% 70% at 0% 0%, rgba(255, 255, 255, 0.06), transparent 60%),
+      linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(8, 12, 20, 0.97) 60%, rgba(22, 32, 53, 0.97) 100%);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+  }
+  .en-stripe { background: linear-gradient(90deg, rgba(250, 90, 54, 0.55), rgba(255, 165, 128, 0.25)); height: 2px; }
+  .en-icon {
+    color: var(--bkb-salmon-300);
+    background: rgba(250, 90, 54, 0.14);
+    border: 1px solid rgba(250, 90, 54, 0.28);
+  }
+  .en-ring {
+    border: 1.5px solid rgba(250, 90, 54, 0.45);
+    animation: en-pulse 3.2s ease-out infinite;
+  }
+  .en-label { color: var(--bkb-salmon-300); opacity: 0.9; }
+  .en-dot { background: var(--bkb-salmon-300); animation: en-blink 2.8s ease-in-out infinite; }
+  .en-title { color: #F8FAFC; }
+  .en-bullet { background: var(--bkb-salmon-300); opacity: 0.8; }
+  :global(html[data-theme="light"]) .en-bullet { background: var(--bkb-salmon-500); }
+  .en-muted { color: #94A3B8; }
+  .en-close { color: #8391A7; }
+  .en-close:hover { color: #F1F5F9; background: rgba(255, 255, 255, 0.07); }
+  .en-call {
+    color: var(--bkb-salmon-300);
+    background: rgba(250, 90, 54, 0.12);
+    border: 1px solid rgba(250, 90, 54, 0.3);
+  }
+  .en-call:hover { color: #FFFFFF; background: var(--bkb-salmon-500); border-color: var(--bkb-salmon-500); }
+
+  /* ---------- Tema claro ---------- */
+  :global(html[data-theme="light"]) .en-card {
+    background: linear-gradient(160deg, rgba(255, 253, 251, 0.98), rgba(255, 248, 242, 0.98));
+    border-color: #EADFD6;
+    box-shadow: 0 16px 36px -16px rgba(120, 72, 40, 0.22);
+  }
+  :global(html[data-theme="light"]) .en-stripe { background: linear-gradient(90deg, rgba(250, 90, 54, 0.45), rgba(250, 90, 54, 0.1)); }
+  :global(html[data-theme="light"]) .en-icon {
+    color: var(--bkb-salmon-700);
+    background: rgba(250, 90, 54, 0.1);
+    border-color: rgba(250, 90, 54, 0.22);
+  }
+  :global(html[data-theme="light"]) .en-ring { border-color: rgba(250, 90, 54, 0.3); }
+  :global(html[data-theme="light"]) .en-label { color: var(--bkb-salmon-700); }
+  :global(html[data-theme="light"]) .en-dot { background: var(--bkb-salmon-500); }
+  :global(html[data-theme="light"]) .en-title { color: var(--text-main); }
+  :global(html[data-theme="light"]) .en-muted { color: var(--text-muted); }
+  :global(html[data-theme="light"]) .en-close { color: var(--text-muted); }
+  :global(html[data-theme="light"]) .en-close:hover { color: var(--text-main); background: rgba(26, 21, 19, 0.05); }
+  :global(html[data-theme="light"]) .en-call {
+    color: var(--bkb-salmon-700);
+    background: rgba(250, 90, 54, 0.08);
+    border-color: rgba(194, 65, 12, 0.25);
+  }
+  :global(html[data-theme="light"]) .en-call:hover { color: #FFFFFF; background: var(--bkb-salmon-700); border-color: var(--bkb-salmon-700); }
+
+  @keyframes en-pulse {
+    0%   { transform: scale(1);    opacity: 0.6; }
+    70%  { transform: scale(1.35); opacity: 0; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+  @keyframes en-blink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+  }
+
+  /* Celular: más angosto y pegado a la esquina */
+  @media (max-width: 639px) {
+    .emergency-notice {
+      left: max(12px, env(safe-area-inset-left, 0px));
+      bottom: max(16px, env(safe-area-inset-bottom, 0px));
+      width: min(260px, calc(100vw - 100px));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .emergency-notice { transition: none; }
+    .en-ring, .en-dot { animation: none; }
+  }
+</style>
+
+<script>
+  // Aparece al pasar el hero (al llegar a "Qué hacemos"); si se cierra, no vuelve durante la sesión.
+  const KEY = 'bkb-emergency-closed';
+
+  function initEmergencyNotice() {
+    const notice = document.getElementById('emergency-notice');
+    if (!notice) return;
+
+    let closed = false;
+    try { closed = sessionStorage.getItem(KEY) === '1'; } catch {}
+    if (closed) return;
+
+    const trigger = document.getElementById('servicios');
+    const show = () => {
+      if (trigger && trigger.getBoundingClientRect().top > window.innerHeight * 0.6) return;
+      window.removeEventListener('scroll', show);
+      notice.hidden = false;
+      requestAnimationFrame(() => notice.classList.add('is-open'));
+    };
+    window.addEventListener('scroll', show, { passive: true });
+    show();
+
+    notice.querySelector('[data-emergency-close]')?.addEventListener('click', () => {
+      notice.classList.remove('is-open');
+      try { sessionStorage.setItem(KEY, '1'); } catch {}
+      setTimeout(() => { notice.hidden = true; }, 400);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initEmergencyNotice);
+  } else {
+    initEmergencyNotice();
+  }
+</script>

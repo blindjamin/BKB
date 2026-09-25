@@ -98,3 +98,16 @@ export const brands: BrandItem[] = [
 ];
 
 export const quoteOptions: string[] = ['Montaje TDF', 'Automatización', 'Trámite TE1', 'Mantención'];
+
+export interface TestimonialItem {
+  quote: string;
+  name: string;
+  role: string;
+}
+
+// TODO: PLACEHOLDER FICTICIO — reemplazar por reseñas reales (Google/clientes) antes de publicar a producción.
+export const testimonials: TestimonialItem[] = [
+  { quote: 'El equipo de BKB respondió a una falla crítica de tablero fuera de horario y evitó varias horas de parada de línea. Profesionalismo total de principio a fin.', name: 'J. Contreras', role: 'Jefe de Mantención · Sector Agroindustrial' },
+  { quote: 'Cumplieron los plazos comprometidos en el montaje de la subestación y toda la documentación SEC quedó en regla desde el primer día.', name: 'M. Herrera', role: 'Gerente de Proyectos · Sector Sanitario' },
+  { quote: 'Llevamos años trabajando con BKB en mantenciones preventivas. Comunicación clara, orden en terreno y un equipo técnico muy capacitado.', name: 'R. Salinas', role: 'Superintendente Eléctrico · Sector Energía' },
+];
