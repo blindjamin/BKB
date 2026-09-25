@@ -554,4 +554,4 @@ De `tasks/plan.md`: subida o solicitud de documentos por el cliente, marca inter
 - Texto de privacidad en el pie: requiere un texto confirmado por el usuario.
 - Lighthouse (accesibilidad ≥ 95) y las capturas pendientes a 320, 375 y 1280 px en ambos temas.
 - Mover los JS que quedan en `static/` a `static/js/` (cosmético).
-- Corregir el teléfono de la landing: `apps/web/src/config/site.ts` todavía muestra +56 9 8249 1403, que no está confirmado.
+- ~~Corregir el teléfono de la landing~~: resuelto en el PR #9 (25-09-2026).

@@ -58,4 +58,4 @@ Son dos aplicaciones con objetivos distintos y técnicamente desacopladas:
 - **Portal · 3 alertas de seguridad pendientes de decisión** (ver `04-seguridad-y-cumplimiento.md` §6): axes detrás del proxy, arranque sin `EMAIL_HOST` y chequeo de salud frente a la redirección HTTPS.
 - **Portal · verificaciones manuales:** las listadas en `tasks/todo.md` (checkpoints G y H, capturas a 320/375/1280 px en ambos temas, Lighthouse) y una revisión de UI/UX pendiente.
 - **Portal · PR hacia `desarrollo`:** fusionar el PR #8 y abrir los de las ramas siguientes.
-- **Landing:** `apps/web/src/config/site.ts` todavía muestra el teléfono +56 9 8249 1403, que no está confirmado (el portal usa +56 9 8975 3095 y +56 9 6191 1593).
+- **Landing:** los testimonios son provisorios (texto inventado) y hay que reemplazarlos por reseñas reales antes de publicar. El teléfono ya usa los confirmados (PR #9).

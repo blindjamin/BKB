@@ -272,3 +272,22 @@ Diseño: Paso C (DS-4 y DS-5: Detalle de proyecto y archivos con filtro `?tipo=`
 
 ### Punto de partida
 Tarea 16 (requiere al usuario, después de decidir las 3 alertas). El piloto de la Tarea 17 va después.
+
+---
+
+## Sesión 11 · 25 de Septiembre de 2026 (landing: cambios tomados de la rama de Lisandro, PR #9)
+
+### Resumen
+- **Botones del portal:** todos llevan a `/login/` en `portal.empresabkb.cl`. Antes apuntaban a `portal.bkb.cl/accounts/login/`, una ruta que no existe.
+- **Hero:** se quitó la tarjeta de acceso al portal. Quedan la información y el carrusel de empresas.
+- **Header de Lisandro:** con el botón "Soy cliente →". Está oculto sobre el hero y aparece al llegar a "Qué hacemos".
+- **Aviso "¿Emergencia en planta?":** es el de Lisandro, con los colores de nuestra landing. Aparece al pasar el hero.
+- **Secciones:** se quitaron las métricas y se agregaron los testimonios, que son provisorios.
+- **Contacto:** oficina central en El Parque 110, La Calera, con mapa que se carga al hacer clic.
+- **Teléfonos y WhatsApp:** se usan los confirmados, +56 9 8975 3095 (principal) y +56 9 6191 1593. El botón de WhatsApp abre un chat con el principal.
+- **Rama de Lisandro:** su `Lisandro-10-avances-landing-desa` se revisó en su carpeta aparte (`bkb-platform-lisandro`) sin mezclarla. Solo se trajeron las piezas pedidas.
+- **PR #8:** ya estaba fusionado cuando se subieron los pasos B a D. Esos commits van en el PR #10, que apunta a `desarrollo`.
+- **Despliegue:** se evaluó juntar la landing y el portal en un solo servidor o Droplet. Se mantiene la separación por subdominio (`empresabkb.cl` y `portal.empresabkb.cl`); el plan sigue siendo App Platform.
+
+### Punto de partida
+Revisar y fusionar los PR #9 (landing) y #10 (portal). Después: decidir las 3 alertas y pasar a la Tarea 16.
