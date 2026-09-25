@@ -5,7 +5,7 @@
   --bkb-salmon-600: #E04825;
   --bkb-salmon-700: #C2410C;  /* D3: botón primario / texto salmón en claro */
   --bkb-salmon-800: #9A3412;  /* D3: hover botón primario */
-  --bkb-salmon-soft: #FFF4EE;
+  --bkb-salmon-soft: #FDF1E8;
 
   /* Superficies nocturnas fijas (hero, guardia, maqueta portal, footer) */
   --bkb-night-950: #05080E;   /* footer */
@@ -14,7 +14,7 @@
   --bkb-night-700: #162035;   /* barra de maqueta / degradado guardia */
 
   /* Semánticos */
-  --bkb-success: #10B981;
+  --bkb-success: #C2410C;  /* naranjo (antes verde #10B981) */
   --bkb-warning: #F59E0B;
   --bkb-danger:  #EF4444;
   --bkb-locked:  #7F7269;

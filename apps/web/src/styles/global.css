@@ -23,6 +23,8 @@
   --color-night-950: var(--bkb-night-950);
   
   --color-success: var(--bkb-success);
+  --color-danger: var(--bkb-danger);
+  --color-warning: var(--bkb-warning);
   
   --font-display: var(--bkb-font-display);
   --font-sans: var(--bkb-font-sans);
@@ -49,7 +51,17 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Evita scroll horizontal en celular (p. ej. el panel del menú móvil, que se esconde
+   fuera de pantalla). "clip" y no "hidden" para no romper el header sticky. */
+html,
 body {
+  overflow-x: clip;
+}
+
+body {
+  /* Degradado de fondo (solo tema oscuro; en claro --page-gradient es none) */
+  background-image: var(--page-gradient, none);
+  background-attachment: fixed;
   margin: 0;
   padding: 0;
   min-height: 100vh;

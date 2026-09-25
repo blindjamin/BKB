@@ -4,7 +4,8 @@ import { servicios } from '../../data/landing';
 import SectionHeading from '../ui/SectionHeading.astro';
 ---
 
-<section id="servicios" class="py-24 max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10 scroll-mt-[80px]">
+<!-- w-full: al ser hijo de un contenedor flex con mx-auto, sin ancho fijo tomaría el ancho de todo el carrusel -->
+<section id="servicios" class="w-full py-24 max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10 scroll-mt-[80px]">
   <div class="reveal">
     <SectionHeading
       eyebrow="QUÉ HACEMOS"
@@ -68,6 +69,10 @@ import SectionHeading from '../ui/SectionHeading.astro';
   }
   .carousel-btn:hover { background: #FA5A36; }
   .carousel-btn:focus-visible { outline: 2px solid #FA5A36; outline-offset: 2px; }
+  /* En celular se desliza con el dedo; las flechas tapaban el texto de la tarjeta */
+  @media (max-width: 639px) {
+    .carousel-btn { display: none; }
+  }
 </style>
 
 <script>

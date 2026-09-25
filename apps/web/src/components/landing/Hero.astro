@@ -5,7 +5,7 @@ import { getPath } from '../../utils/paths';
 import faenaHero from '../../assets/landing/faena-hero.jpg';
 ---
 
-<section class="relative w-full min-h-[100svh] overflow-hidden flex items-center bg-night-900" aria-label="Hero">
+<section id="top" class="relative w-full overflow-hidden flex items-center bg-night-900" style="min-height: calc(100svh - 310px);" aria-label="Hero">
   <div class="absolute inset-0 overflow-hidden">
     <Image 
       src={faenaHero} 
@@ -17,7 +17,7 @@ import faenaHero from '../../assets/landing/faena-hero.jpg';
     <div class="absolute inset-0 bg-gradient-to-br from-night-900/90 via-night-900/70 to-night-900/50"></div>
   </div>
 
-  <div class="relative z-10 mx-auto w-full px-4 sm:px-10 pt-[96px] pb-[200px] grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-14 items-start" style="max-width: var(--bkb-container);">
+  <div class="relative z-10 mx-auto w-full px-4 sm:px-10 pt-[64px] pb-[64px] grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-14 items-start" style="max-width: var(--bkb-container);">
 
     <div class="flex flex-col gap-6 pt-5">
       <div class="hero-in inline-flex self-start items-center gap-2 bg-salmon-500/15 border border-salmon-500/40 text-salmon-300 text-[13px] font-semibold tracking-[0.02em] px-4 py-[9px] rounded-pill">
@@ -37,20 +37,20 @@ import faenaHero from '../../assets/landing/faena-hero.jpg';
     </div>
 
     <!-- Portal access card -->
-    <div class="hero-in bg-night-800/75 backdrop-blur-md border border-[rgba(255,255,255,0.16)] rounded-[20px] shadow-[0_30px_60px_rgba(0,0,0,0.6),0_0_40px_rgba(250,90,54,0.12)] p-8 flex flex-col gap-5">
+    <div class="portal-card hero-in backdrop-blur-md border rounded-[20px] p-8 flex flex-col gap-5">
       <div class="flex items-center gap-3">
         <img src={getPath('/assets/bkb-logo-final.png')} alt="" aria-hidden="true" width="48" height="48" class="w-12 h-12 shrink-0 object-contain" />
         <div>
-          <div class="font-display text-[17px] font-bold text-[#F8FAFC]">Portal Digital BKB</div>
-          <div class="text-[12px] text-[#94A3B8]">Gestión Documental</div>
+          <div class="portal-card-title font-display text-[17px] font-bold">Portal Digital BKB</div>
+          <div class="portal-card-muted text-[12px]">Gestión Documental</div>
         </div>
       </div>
       
-      <p class="m-0 text-[14px] text-[#94A3B8] leading-[1.5]">
+      <p class="portal-card-muted m-0 text-[14px] leading-[1.5]">
         Ingresa al portal para acceder a tu documentación.
       </p>
 
-      <a href={PORTAL_URLS.cliente} class="flex items-center justify-center p-4 rounded-[10px] bg-salmon-500 text-white font-semibold text-[15px] no-underline transition-colors hover:bg-salmon-600 focus-bkb">
+      <a href={PORTAL_URLS.cliente} class="flex items-center justify-center p-4 rounded-[10px] bg-salmon-500 text-white font-semibold text-[15px] no-underline transition-colors hover:bg-salmon-700 focus-bkb">
         Soy Cliente &rarr;
       </a>
     </div>
@@ -62,4 +62,22 @@ import faenaHero from '../../assets/landing/faena-hero.jpg';
   .hero-bg-img {
     animation: heroZoom 22s infinite alternate ease-in-out;
   }
+
+  /* Tarjeta del portal: oscura en tema oscuro, naranjo suave en tema claro */
+  .portal-card {
+    /* Degradado carbón -> negro (antes azul marino) */
+    background: linear-gradient(160deg, rgba(44, 44, 48, 0.82) 0%, rgba(22, 22, 24, 0.86) 60%, rgba(38, 24, 20, 0.86) 100%);
+    border-color: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(250, 90, 54, 0.12);
+  }
+  .portal-card-title { color: #F8FAFC; }
+  .portal-card-muted { color: #A1A1AA; }
+
+  :global(html[data-theme="light"]) .portal-card {
+    background: rgba(255, 250, 246, 0.95);
+    border-color: var(--card-border);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35), 0 0 40px rgba(250, 90, 54, 0.18);
+  }
+  :global(html[data-theme="light"]) .portal-card-title { color: var(--text-main); }
+  :global(html[data-theme="light"]) .portal-card-muted { color: var(--text-muted); }
 </style>

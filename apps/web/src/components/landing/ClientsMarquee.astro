@@ -4,8 +4,8 @@ import { brands } from '../../data/landing';
 import Eyebrow from '../ui/Eyebrow.astro';
 ---
 
-<section class="absolute bottom-0 inset-x-0 z-20 py-6 overflow-hidden">
-  <div class="text-center mb-4 reveal [&>span]:!text-[#F8FAFC]">
+<section class="pt-5 pb-3 border-y border-card-border overflow-hidden">
+  <div class="text-center mb-4 reveal">
     <Eyebrow text="TRAYECTORIA COMPARTIDA" />
   </div>
 
@@ -15,8 +15,8 @@ import Eyebrow from '../ui/Eyebrow.astro';
       <!-- Primera vuelta -->
       <ul class="marquee-list m-0 p-0 list-none flex items-center gap-6">
         {brands.map(brand => (
-          <li class="shrink-0 w-[150px] h-[84px] bg-white rounded-[10px] flex items-center justify-center p-3">
-            <Image src={brand.img} alt={brand.alt} class="w-full h-full object-contain mix-blend-multiply" />
+          <li class="logo-card shrink-0 w-[150px] h-[84px] flex items-center justify-center p-3">
+            <Image src={brand.img} alt={brand.alt} class="w-full h-full object-contain" />
           </li>
         ))}
       </ul>
@@ -24,8 +24,8 @@ import Eyebrow from '../ui/Eyebrow.astro';
       <!-- Segunda vuelta (oculta para lectores de pantalla) -->
       <ul class="marquee-list m-0 p-0 list-none flex items-center gap-6" aria-hidden="true">
         {brands.map(brand => (
-          <li class="shrink-0 w-[150px] h-[84px] bg-white rounded-[10px] flex items-center justify-center p-3">
-            <Image src={brand.img} alt="" class="w-full h-full object-contain mix-blend-multiply" />
+          <li class="logo-card shrink-0 w-[150px] h-[84px] flex items-center justify-center p-3">
+            <Image src={brand.img} alt="" class="w-full h-full object-contain" />
           </li>
         ))}
       </ul>
@@ -38,13 +38,50 @@ import Eyebrow from '../ui/Eyebrow.astro';
   .marquee-container {
     width: 100%;
     overflow: hidden;
+    padding-block: 14px; /* espacio para la ampliación y sombra en hover */
+    /* Desvanecido en los bordes para que los logos entren y salgan suavemente */
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
   }
-  
+
+  /* Tarjeta blanca con borde naranjo (salmón de marca) */
+  .logo-card {
+    background: #FFFFFF;
+    border: 2px solid var(--bkb-salmon-500);
+    border-radius: 12px;
+  }
+  .logo-card:hover {
+    box-shadow: 0 6px 18px rgba(250, 90, 54, 0.28);
+  }
+
+  /* Logos en blanco y negro atenuados; color y leve ampliación al pasar el mouse */
+  .marquee-list li {
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+  }
+  .marquee-list li :global(img) {
+    filter: grayscale(1);
+    opacity: 0.6;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+  }
+  .marquee-list li:hover {
+    transform: scale(1.1);
+  }
+  .marquee-list li:hover :global(img) {
+    filter: grayscale(0);
+    opacity: 1;
+  }
+
+  /* Sin gap entre las dos vueltas: cada lista lleva su propio espacio final,
+     así el -50% de la animación calza exacto y no hay salto al reiniciar. */
   .marquee-track {
     display: flex;
-    gap: 1.5rem; /* gap-6 (24px) */
     width: max-content;
-    animation: marqueeScroll 32s linear infinite;
+    animation: marqueeScroll 55s linear infinite;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  .marquee-list {
+    padding-right: 1.5rem !important;
   }
 
   .pause {

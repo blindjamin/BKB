@@ -13,7 +13,9 @@ export default defineConfig({
     host: true
   },
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    // Solo servidor de desarrollo: permite compartir la vista previa por túnel temporal
+    server: { allowedHosts: ['.trycloudflare.com', '.devtunnels.ms'] }
   },
   redirects: {
     '/servicios': '/#servicios',

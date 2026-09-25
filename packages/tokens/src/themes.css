@@ -1,24 +1,28 @@
 :root, [data-theme="dark"] {
   color-scheme: dark;
-  --page-bg: #080C14;
-  --card-bg: #0F172A;
-  --card-border: rgba(255,255,255,0.09);
+  --page-bg: #18181A;   /* negro suave carbón (antes #080C14, casi negro azulado) */
+  --page-gradient:
+    radial-gradient(70% 50% at 100% 0%, rgba(250, 90, 54, 0.07), transparent 70%),
+    linear-gradient(170deg, #2A2A2D 0%, #1B1B1D 45%, #131314 100%);
+  --card-bg: #232326;
+  --card-border: rgba(255,255,255,0.1);
   --text-main: #F8FAFC;
-  --text-muted: #94A3B8;
-  --text-subtle: #8391A7; /* D3: subir subtle de #64748B a #8391A7 para contraste */
+  --text-muted: #A1A1AA;
+  --text-subtle: #8E8E96; /* gris neutro, contraste AA sobre tarjetas */
   --input-bg: rgba(255,255,255,0.04);
   --input-border: rgba(255,255,255,0.16);
   --accent-text: var(--bkb-salmon-500);
 }
 [data-theme="light"] {
   color-scheme: light;
-  --page-bg: #FFF4EE;
-  --card-bg: #FFFFFF;
-  --card-border: #F5D9C7;
+  --page-gradient: none;
+  --page-bg: #FDF1E8;   /* durazno tenue: cálido sin competir con los botones naranjos */
+  --card-bg: #FFFAF6;
+  --card-border: #E8DCD2; /* neutro cálido: el naranjo queda para lo accionable */
   --text-main: #1A1513;
-  --text-muted: #7D6F64;
-  --text-subtle: #7D6F64; /* D3: subir subtle en claro (recomendaba #7D6F64 en vez de #9A8F86) */
-  --input-bg: #FAF6F2;
-  --input-border: #F5D9C7;
-  --accent-text: var(--bkb-salmon-700);
+  --text-muted: #6B5D52;
+  --text-subtle: #6B5D52; /* contraste AA sobre el fondo naranjo suave */
+  --input-bg: #FFFDFB;
+  --input-border: #DDCFC3;
+  --accent-text: var(--bkb-salmon-700); /* 4.7:1 sobre #FDF1E8 (AA) */
 }

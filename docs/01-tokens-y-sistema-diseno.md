@@ -10,7 +10,7 @@
 ## 1. Principios
 1. **Salmón como color de marca** (`--bkb-salmon-500` `#FA5A36`), para fondos grandes, acentos y texto sobre fondo oscuro.
 2. **Dos temas** con el atributo `data-theme="dark|light"` en `<html>`. La landing es **oscura por defecto**. El portal es **claro por defecto**, con conmutador a oscuro.
-3. **Superficies nocturnas fijas** (`--bkb-night-*`) para lo que siempre es oscuro sin importar el tema: hero, tarjeta de guardia, maqueta del portal y footer.
+3. **Superficies nocturnas fijas** (`--bkb-night-*`) para lo que siempre es oscuro sin importar el tema: overlay del hero, tarjetas de servicios con foto, maqueta del portal y footer.
 4. **Todo sale de variables CSS.** Los componentes usan variables como `--page-bg` y `--text-main`, nunca colores fijos, para que el tema cambie solo.
 5. **Foco visible:** `outline: 3px solid var(--bkb-salmon-500)` con `outline-offset: 2px`.
 6. **Contraste WCAG 2.2 AA** (4,5:1 para texto normal). Ver la sección 3.
@@ -24,10 +24,12 @@
 |---|---|---|
 | `--bkb-salmon-300` | `#FFA580` | Acentos pequeños sobre oscuro |
 | `--bkb-salmon-500` | `#FA5A36` | **Color de marca** |
-| `--bkb-salmon-600` | `#E04825` | Hover sobre el color de marca |
-| `--bkb-salmon-700` | `#C2410C` | **Botón primario y texto salmón en tema claro** (blanco sobre este color: 5,18:1) |
-| `--bkb-salmon-800` | `#9A3412` | Hover del botón primario |
-| `--bkb-salmon-soft` | `#FFF4EE` | Fondos suaves |
+| `--bkb-salmon-600` | `#E04825` | Ya no se usa en el sitio (los hovers pasaron a `salmon-700`) |
+| `--bkb-salmon-700` | `#C2410C` | **Botón primario, texto salmón en tema claro y hover de botones** (blanco sobre este color: 5,18:1) |
+| `--bkb-salmon-800` | `#9A3412` | Hover del botón primario (`PillButton`) |
+| `--bkb-salmon-soft` | `#FDF1E8` | Fondos suaves (igual al fondo del tema claro) |
+
+**Regla de uso en el sitio (sesión 9):** tres tonos con rol fijo: `500` para botones y marca, `700` para texto, enlaces y hovers en tema claro, `300` para acentos sobre fondo oscuro. En tema claro el salmón fuerte queda reservado para lo accionable (botones, enlaces, teléfono); los bordes de tarjetas son neutros.
 
 ### Superficies nocturnas (siempre oscuras)
 | Token | Hex | Uso |
@@ -41,7 +43,10 @@
 `--bkb-ink-900` `#1A1513` · `--bkb-sand-600` `#7D6F64` · `--bkb-sand-500` `#9A8F86` · `--bkb-sand-300` `#F5D9C7` · `--bkb-paper-100` `#FAF6F2`
 
 ### Semánticos
-`--bkb-success` `#10B981` · `--bkb-warning` `#F59E0B` · `--bkb-danger` `#EF4444` · `--bkb-locked` `#7F7269`
+`--bkb-success` `#C2410C` · `--bkb-warning` `#F59E0B` · `--bkb-danger` `#EF4444` · `--bkb-locked` `#7F7269`
+
+- `--bkb-success` pasó de verde (`#10B981`) a naranjo (`#C2410C`, igual a `salmon-700`) a pedido del usuario (sesión 9). En el sitio solo lo usa la etiqueta "SEC TE1 VIGENTE" del portafolio. **Ojo al copiar los tokens al portal:** allí "éxito" dejaría de verse verde.
+- `success`, `warning` y `danger` están registrados en `@theme` de `apps/web/src/styles/global.css` (`bg-danger`, `text-warning`…). Antes `danger` y `warning` no lo estaban y esas clases no pintaban nada.
 
 ### Semáforo normativo SEC (lo usará el portal)
 | Estado | Texto | Fondo | Borde |
@@ -62,15 +67,20 @@ Variables por tema (definidas en `src/themes.css`):
 
 | Variable | Oscuro | Claro |
 |---|---|---|
-| `--page-bg` | `#080C14` | `#FFF4EE` |
-| `--card-bg` | `#0F172A` | `#FFFFFF` |
-| `--card-border` | `rgba(255,255,255,0.09)` | `#F5D9C7` |
+| `--page-bg` | `#18181A` (negro carbón) | `#FDF1E8` (durazno tenue) |
+| `--page-gradient` | Degradado carbón `#2A2A2D` → `#1B1B1D` → `#131314` con brillo salmón tenue arriba a la derecha | `none` |
+| `--card-bg` | `#232326` | `#FFFAF6` |
+| `--card-border` | `rgba(255,255,255,0.1)` | `#E8DCD2` (neutro cálido) |
 | `--text-main` | `#F8FAFC` | `#1A1513` |
-| `--text-muted` | `#94A3B8` | `#7D6F64` |
-| `--text-subtle` | `#8391A7` | `#7D6F64` |
-| `--input-bg` | `rgba(255,255,255,0.04)` | `#FAF6F2` |
-| `--input-border` | `rgba(255,255,255,0.16)` | `#F5D9C7` |
-| `--accent-text` | `--bkb-salmon-500` | `--bkb-salmon-700` |
+| `--text-muted` | `#A1A1AA` (gris neutro) | `#6B5D52` |
+| `--text-subtle` | `#8E8E96` | `#6B5D52` |
+| `--input-bg` | `rgba(255,255,255,0.04)` | `#FFFDFB` |
+| `--input-border` | `rgba(255,255,255,0.16)` | `#DDCFC3` |
+| `--accent-text` | `--bkb-salmon-500` | `--bkb-salmon-700` (4,7:1 sobre `#FDF1E8`) |
+
+- **Historial:** hasta la sesión 8 el tema oscuro era casi negro azulado (`#080C14`, tarjetas `#0F172A`) y el claro `#FFF4EE` con tarjetas blancas. En la sesión 9 se probó un azul noche (`#121A2A`) y el usuario eligió el negro carbón.
+- **Degradado de fondo:** `body` aplica `background-image: var(--page-gradient)` con `background-attachment: fixed`, así todas las secciones comparten un fondo continuo. Por eso las secciones **no** deben llevar `bg-page` propio (lo taparía).
+- Los grises del tema oscuro son neutros (sin tinte azul) para combinar con el carbón. Los componentes con colores oscuros propios (tarjeta del portal en el hero, aviso de emergencia) usan el mismo carbón en degradado.
 
 **Reglas de contraste (decisión D3 del rediseño):**
 - El texto blanco sobre `salmon-500` (3,19:1) **no cumple AA** en tamaños normales. Para botones y texto pequeño usar `salmon-700`.

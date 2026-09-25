@@ -2,51 +2,23 @@
 import { quoteOptions } from '../../data/landing';
 import { SITE, QUOTE_ENDPOINT } from '../../config/site';
 import { getPath } from '../../utils/paths';
+import SectionHeading from '../ui/SectionHeading.astro';
 
 const isEndpointAvailable = Boolean(QUOTE_ENDPOINT);
+const mapQuery = encodeURIComponent(`${SITE.officeAddress}, Chile`);
+const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 ---
 
-<section id="cotizar" class="py-24 bg-page border-t border-card-border scroll-mt-[80px]">
+<section id="cotizar" class="py-24 border-t border-card-border scroll-mt-[80px]">
   <div class="max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10">
-    
-    <div class="grid grid-cols-1 md:grid-cols-[0.9fr_1.1fr] gap-10 lg:gap-16 items-start">
-      
-      <!-- Tarjeta Guardia 24/7 (Siempre Oscura) -->
-      <div class="reveal rounded-[20px] bg-gradient-to-br from-[#162035] to-[#080C14] border border-salmon-500/30 p-8 sm:p-10 flex flex-col items-start gap-6 shadow-2xl relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-64 h-64 bg-salmon-500/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-        
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-danger/15 border border-danger/30 text-danger text-[11px] font-bold tracking-wider font-mono uppercase">
-          <span class="w-2 h-2 rounded-full bg-danger animate-pulse"></span>
-          Guardia de Urgencia 24/7
-        </div>
-        
-        <div>
-          <h2 class="font-display font-bold text-[32px] leading-[1.1] text-white mb-4">¿Emergencia en planta?</h2>
-          <p class="text-[15px] leading-[1.6] text-[#94A3B8] m-0">
-            Falla de tableros, cortes de suministro en faena o anomalías térmicas críticas. Respuesta inmediata dentro de la cobertura.
-          </p>
-        </div>
-        
-        <div class="mt-4 flex flex-col gap-1">
-          <span class="text-[12px] font-mono text-[#64748B] uppercase">Línea directa</span>
-          <a href={SITE.phoneHref} class="font-display font-bold text-[36px] text-salmon-300 no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm">
-            {SITE.phoneDisplay}
-          </a>
-        </div>
-        
-        <div class="w-full h-px bg-white/10 my-2"></div>
-        
-        <div class="flex flex-col gap-2 w-full">
-          <div class="flex items-center justify-between text-[13.5px] text-[#8391A7]">
-            <span class="font-medium text-white">Oficina Central</span>
-            <span>{SITE.office}</span>
-          </div>
-          <div class="flex items-center justify-between text-[13.5px] text-[#8391A7]">
-            <span class="font-medium text-white">Cobertura</span>
-            <span>{SITE.coverage}</span>
-          </div>
-        </div>
-      </div>
+
+    <div class="reveal">
+      <SectionHeading eyebrow="CONTACTO Y UBICACIÓN" title="Hablemos de tu proyecto." />
+    </div>
+
+    <!-- Formulario a la izquierda; datos de contacto y mapa a la derecha (apilados en celular) -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-8 items-stretch">
 
       <!-- Formulario -->
       <div class="reveal bg-card border border-card-border rounded-[18px] p-8 sm:p-10 shadow-lg">
@@ -108,7 +80,7 @@ const isEndpointAvailable = Boolean(QUOTE_ENDPOINT);
 
           <button 
             type="submit" 
-            class="mt-4 flex items-center justify-center h-[52px] rounded-pill bg-salmon-500 text-white font-semibold text-[15.5px] transition-all hover:bg-salmon-600 hover:-translate-y-0.5 focus:outline-none focus-visible:outline-[3px] focus-visible:outline-salmon-500 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            class="mt-4 flex items-center justify-center h-[52px] rounded-pill bg-salmon-500 text-white font-semibold text-[15.5px] transition-all hover:bg-salmon-700 hover:-translate-y-0.5 focus:outline-none focus-visible:outline-[3px] focus-visible:outline-salmon-500 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             disabled={!isEndpointAvailable}
           >
             Enviar Solicitud &rarr;
@@ -122,6 +94,77 @@ const isEndpointAvailable = Boolean(QUOTE_ENDPOINT);
         </form>
       </div>
 
+      <!-- Datos de contacto + mapa -->
+      <div class="reveal flex flex-col gap-6">
+        <div class="bg-card border border-card-border rounded-[18px] p-8 flex flex-col gap-5 shadow-lg">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-salmon-500/15 border border-salmon-500/35 flex items-center justify-center text-salmon-500 shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <div>
+              <div class="font-display font-bold text-[17px] text-main">Oficina Central</div>
+              <div class="text-[13.5px] text-muted">{SITE.officeAddress}</div>
+            </div>
+          </div>
+
+          <p class="text-[14.5px] leading-[1.6] text-muted m-0">
+            Atendemos proyectos en {SITE.coverage}. Coordina una visita técnica o retira/entrega documentación en nuestra oficina.
+          </p>
+
+          <div class="flex flex-col gap-3 pt-4 border-t border-card-border">
+            <a href={SITE.phoneHref} class="flex items-center gap-2 text-[14px] font-semibold text-main hover:text-salmon-500 transition-colors focus-bkb rounded-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-salmon-500" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+              {SITE.phoneDisplay}
+            </a>
+            <a href={`mailto:${SITE.email}`} class="flex items-center gap-2 text-[14px] font-semibold text-main hover:text-salmon-500 transition-colors focus-bkb rounded-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-salmon-500" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              {SITE.email}
+            </a>
+          </div>
+        </div>
+
+        <!-- Mapa bajo demanda: Google Maps (y sus cookies) solo se carga cuando la persona hace clic -->
+        <div class="map-box relative flex-1 bg-card rounded-[18px] overflow-hidden border border-card-border shadow-lg min-h-[300px]" data-map-box data-map-src={mapSrc}>
+          <div class="map-placeholder absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center" data-map-placeholder>
+            <div class="w-14 h-14 rounded-full bg-salmon-500/15 border border-salmon-500/35 flex items-center justify-center text-salmon-500">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/>
+              </svg>
+            </div>
+            <div>
+              <div class="font-display font-bold text-[16px] text-main">{SITE.officeAddress}</div>            </div>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <button type="button" data-map-load class="inline-flex items-center gap-2 px-5 py-2.5 rounded-pill bg-salmon-500 text-white text-[14px] font-semibold transition-colors hover:bg-salmon-700 focus-bkb cursor-pointer">
+                Ver mapa
+              </button>
+              <a href={mapLink} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-main hover:text-salmon-500 transition-colors focus-bkb rounded-sm">
+                Abrir en Google Maps
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
+
+<script>
+  // Carga el mapa de Google solo al hacer clic (privacidad: sin cookies de Google hasta que la persona lo pide)
+  document.querySelectorAll<HTMLElement>('[data-map-box]').forEach((box) => {
+    const btn = box.querySelector<HTMLButtonElement>('[data-map-load]');
+    btn?.addEventListener('click', () => {
+      const iframe = document.createElement('iframe');
+      iframe.src = box.dataset.mapSrc || '';
+      iframe.title = 'Mapa de ubicación de la oficina de BKB';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      iframe.style.cssText = 'border:0; width:100%; height:100%; min-height:300px; display:block;';
+      box.querySelector('[data-map-placeholder]')?.remove();
+      box.appendChild(iframe);
+      iframe.focus();
+    });
+  });
+</script>

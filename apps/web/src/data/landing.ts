@@ -1,11 +1,11 @@
 import esval from '../assets/clients/brand-esval.png';
-import sopraval from '../assets/clients/brand-sopraval.jpg';
-import castano from '../assets/clients/brand-castano.jpg';
-import generadora from '../assets/clients/brand-generadora.jpg';
-import ksb from '../assets/clients/brand-ksb.jpg';
+import sopraval from '../assets/clients/brand-sopraval.png';
+import castano from '../assets/clients/brand-castano.png';
+import generadora from '../assets/clients/brand-generadora.png';
+import ksb from '../assets/clients/brand-ksb.png';
 import venezia from '../assets/clients/brand-venezia.png';
-import algas from '../assets/clients/brand-algas.jpg';
-import tecfluid from '../assets/clients/brand-tecfluid.jpg';
+import algas from '../assets/clients/brand-algas.png';
+import tecfluid from '../assets/clients/brand-tecfluid.png';
 import propal from '../assets/clients/brand-propal.png';
 import ecorriles from '../assets/clients/brand-ecorriles.png';
 import maf from '../assets/clients/brand-maf.png';
@@ -13,7 +13,7 @@ import soldesp from '../assets/clients/brand-soldesp.png';
 import energias from '../assets/clients/brand-energias.png';
 import ingefrio from '../assets/clients/brand-ingefrio.png';
 import ingenproyect from '../assets/clients/brand-ingenproyect.png';
-import shs from '../assets/clients/brand-shs.jpg';
+import shs from '../assets/clients/brand-shs.png';
 
 import faena1 from '../assets/landing/faena-1.jpg';
 import faena2 from '../assets/landing/faena-2.jpg';
@@ -51,14 +51,16 @@ export interface ServicioItem {
   desc: string;
 }
 
-// Textos de los 4 primeros servicios: verificados (empresabkb.cl). Arriendo: dato entregado por el cliente.
+// Textos de Ingeniería, Automatización, Fabricación y Montaje: verificados (empresabkb.cl).
+// Tableros Eléctricos y Arriendo: datos entregados por el cliente.
 // TODO: fotos provisorias (faena), reemplazar por fotos de cada servicio
 export const servicios: ServicioItem[] = [
   { image: faena1, title: 'Ingeniería Eléctrica', desc: 'Desarrollo de ingenierías conceptual, básica y de detalle. Diseño y ejecución de proyectos eléctricos completos: canalización, alimentación, tableros y sistemas de control.' },
+  { image: faenaHero, title: 'Tableros Eléctricos', desc: 'Desarrollo, integración y fabricación de tableros eléctricos de fuerza, control y automatización.' },
   { image: faena2, title: 'Automatización PLC', desc: 'Programación y desarrollo de sistemas PLC con pruebas FAT/SAT e integración SCADA.' },
   { image: faena3, title: 'Fabricación Propia', desc: 'Fabricación de Sistemas Kit: Bombeo, Filtrado, Lubricación y otros componentes especializados.' },
   { image: faenaHero, title: 'Montaje y Soporte', desc: 'Montaje en terreno y puesta en marcha con soporte técnico post-entrega garantizado.' },
-  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo de instrumentación eléctrica: analizadores de red y medidores de tierra, de fuga y de aislación.' }
+  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo y/o servicios de medición y análisis eléctrico con equipos de alta gama, certificados y de marcas de prestigio como Fluke: mediciones de red, mallas a tierra, aislación, RIC 19, termografías y alineación láser.' }
 ];
 
 export interface PortfolioItem {
@@ -68,9 +70,9 @@ export interface PortfolioItem {
 }
 
 export const portafolio: PortfolioItem[] = [
-  { img: faena1, title: 'Ampliación Planta Cecinas Sopraval', spec: '450 kVA · Quilpué' },
-  { img: faena2, title: 'Estación de Bombeo e Impulsión ESVAL', spec: '800 kVA · Valparaíso' },
-  { img: faena3, title: 'Línea de Envasado Alimentos Castaño', spec: 'Control Siemens S7-1500 · Santiago' }
+  { img: faena1, title: 'Ampliación Planta Faenadora y Cecinas Sopraval', spec: 'Industria · La Calera' },
+  { img: faena2, title: 'Estación de Bombeo e Impulsión ESVAL', spec: 'Sanitaria · Valparaíso' },
+  { img: faena3, title: 'Línea de Envasado Alimentos Castaño', spec: 'Agroindustria · Santiago' }
 ];
 
 export interface BrandItem {
@@ -97,4 +99,17 @@ export const brands: BrandItem[] = [
   { img: shs, alt: 'SHS' }
 ];
 
-export const quoteOptions: string[] = ['Montaje TDF', 'Automatización', 'Trámite TE1', 'Mantención'];
+export const quoteOptions: string[] = ['Tableros eléctricos', 'Montaje TDF', 'Automatización', 'Trámite TE1', 'Mantención', 'Arriendo y mediciones'];
+
+export interface TestimonialItem {
+  quote: string;
+  name: string;
+  role: string;
+}
+
+// TODO: PLACEHOLDER FICTICIO — reemplazar por reseñas reales (Google/clientes) antes de publicar a producción.
+export const testimonials: TestimonialItem[] = [
+  { quote: 'El equipo de BKB respondió a una falla crítica de tablero fuera de horario y evitó varias horas de parada de línea. Profesionalismo total de principio a fin.', name: 'J. Contreras', role: 'Jefe de Mantención · Sector Agroindustrial' },
+  { quote: 'Cumplieron los plazos comprometidos en el montaje de la subestación y toda la documentación SEC quedó en regla desde el primer día.', name: 'M. Herrera', role: 'Gerente de Proyectos · Sector Sanitario' },
+  { quote: 'Llevamos años trabajando con BKB en mantenciones preventivas. Comunicación clara, orden en terreno y un equipo técnico muy capacitado.', name: 'R. Salinas', role: 'Superintendente Eléctrico · Sector Energía' },
+];
