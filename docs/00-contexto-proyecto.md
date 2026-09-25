@@ -42,16 +42,20 @@ Son dos aplicaciones con objetivos distintos y técnicamente desacopladas:
 
 ---
 
-## 4. Estado Actual del Repositorio (al 20-09-2026)
+## 4. Estado Actual del Repositorio (al 25-09-2026)
 - **Estructura:** monorepo con `npm workspaces` en `bkb-platform/`.
 - **Sistema de diseño (`packages/tokens`):** v2.0.0, paleta salmón, temas oscuro y claro, y semáforo normativo SEC (que usará el portal). Ver `01-tokens-y-sistema-diseno.md`.
 - **Sitio público (`apps/web`):** landing de una página (Hero, Clientes, Servicios, Métricas, Mercados, Portafolio, Portal SEC y Cotización) más `/trabaja-con-nosotros`, `/privacidad`, `/terminos` y `404`. Las rutas antiguas (`/servicios`, `/obras`, `/nosotros`, `/contacto`) redirigen a su ancla. Ver `02-sitio-web-astro.md`.
-- **Portal (`apps/portal`):** esqueleto de Django (`config/` y `/health/`). Sin modelos ni pantallas todavía. Spec en `03-portal-django.md`, plan en `tasks/plan.md` y tareas en `tasks/todo.md`.
+- **Portal (`apps/portal`):** Django 5.2 implementado en local y listo para App Platform (tarea 15): tres tipos de usuario (personal, jefe y cliente), jerarquía Empresa → Proyecto → Carpeta, hitos con recepción obligatoria del cliente y correo, gestión de usuarios con invitación, recuperación de contraseña y diseño completo (DS-0 a DS-7). 304 pruebas en verde. Falta el despliegue (tarea 16) y el piloto. Estado, desviaciones y seguimiento en `03-portal-django.md` §15; plan en `tasks/plan.md` y tareas en `tasks/todo.md`.
 - **Despliegue continuo:** GitHub Action que publica el sitio estático en GitHub Pages (`https://blindjamin.github.io/BKB/`) tras cada merge a `desarrollo`.
 - **Jerarquía Git:** `main` (producción) → `desarrollo` (integración) → ramas de tarea `[nombre]/[fecha]-[descripcion]` con Pull Request manual. Ver `05-git-workflow.md`.
-- **Ramas relevantes:** `benjamin/2026-09-15-rediseno-landing` contiene el rediseño de la landing y ya está subida a GitHub. El trabajo del portal parte en ramas nuevas desde `desarrollo`.
+- **Ramas relevantes:** `benjamin/2026-09-15-rediseno-landing` contiene el rediseño de la landing y ya está subida a GitHub. Las ramas del portal están encadenadas y sin fusionar: el PR #8 llega hasta `d910b22`; encima, solo en local, van los pasos B a D del diseño (`benjamin/2026-09-24-portal-diseno`) y la tarea 15 más esta documentación (`benjamin/2026-09-25-portal-prod`).
 
 ### Pendientes abiertos
 - **Landing:** validar el contenido D7 (origen de las fotos, autorización de los 16 logos de clientes, nombre oficial, métricas, obras y datos de contacto) y verificar las fases 8 a 10 del plan de rediseño.
 - **Formulario de cotización:** no tiene endpoint. El botón queda deshabilitado hasta definir `PUBLIC_QUOTE_ENDPOINT`.
-- **Portal:** crear la clave de acceso del Space solo para el portal y configurar CORS. El DNS de `empresabkb.cl` está en DigitalOcean: `portal.empresabkb.cl` se crea ahí en el despliegue.
+- **Portal · despliegue (tarea 16, requiere al usuario):** crear la clave del Space de producción, configurar CORS, cargar los secretos en App Platform y crear `portal.empresabkb.cl` (el DNS de `empresabkb.cl` está en DigitalOcean).
+- **Portal · 3 alertas de seguridad pendientes de decisión** (ver `04-seguridad-y-cumplimiento.md` §6): axes detrás del proxy, arranque sin `EMAIL_HOST` y chequeo de salud frente a la redirección HTTPS.
+- **Portal · verificaciones manuales:** las listadas en `tasks/todo.md` (checkpoints G y H, capturas a 320/375/1280 px en ambos temas, Lighthouse) y una revisión de UI/UX pendiente.
+- **Portal · PR hacia `desarrollo`:** fusionar el PR #8 y abrir los de las ramas siguientes.
+- **Landing:** `apps/web/src/config/site.ts` todavía muestra el teléfono +56 9 8249 1403, que no está confirmado (el portal usa +56 9 8975 3095 y +56 9 6191 1593).

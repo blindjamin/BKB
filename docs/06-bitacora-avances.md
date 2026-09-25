@@ -264,5 +264,11 @@ Diseño: Paso C (DS-4 y DS-5: Detalle de proyecto y archivos con filtro `?tipo=`
 - Con `DEBUG=False` y sin `EMAIL_HOST`, el arranque debería fallar (hoy los enlaces de contraseña irían a los logs).
 - Verificar en la T16 que el chequeo de salud no choque con la redirección HTTPS ni con `ALLOWED_HOSTS`.
 
+### Tarea 17 (parcial, solo documentación)
+- `docs/03`: estado "implementada en local", los 15 criterios del §9 con su evidencia y una sección 15 nueva (desviaciones verificadas en el código, alertas y seguimiento posterior, incluida una revisión de UI/UX pendiente).
+- Criterios de éxito: 12 de 15 demostrados por pruebas (14 y 15 solo en local, sin SMTP real); el 8 se verificó a mano con variables ficticias; el 9 y el 10 quedan pendientes del despliegue y del piloto.
+- `docs/00` al 25-09-2026 y `docs/04` con los controles hechos y su evidencia, más las 3 alertas pendientes de decisión.
+- 304 pruebas en verde; no se tocó código.
+
 ### Punto de partida
-Tarea 16 (requiere al usuario) o la parte de documentación de la Tarea 17.
+Tarea 16 (requiere al usuario, después de decidir las 3 alertas). El piloto de la Tarea 17 va después.
