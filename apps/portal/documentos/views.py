@@ -30,7 +30,7 @@ from .permisos import (
     puede_responder_recepcion,
 )
 from .avisos import enviar_aviso_recepcion
-from .models import Archivo, Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RespuestaRecepcion
+from .models import Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RespuestaRecepcion
 from .storage import url_descarga
 from .subidas import EXTENSIONES_PERMITIDAS
 
@@ -356,22 +356,19 @@ def descargar_archivo(request, pk):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def eliminar_archivo(request, pk):
-    if request.method == 'GET':
-        # Confirmación sin JS (docs/09 §5.5): solo muestra la pregunta, nunca borra.
-        archivo = get_object_or_404(archivos_visibles_para(request.user), pk=pk)
-        if not puede_borrar(request.user, archivo):
-            raise PermissionDenied("No tienes permisos para eliminar este archivo.")
-        return render(request, 'confirmar_eliminar.html', {'archivo': archivo})
-
-    archivo = get_object_or_404(Archivo, pk=pk)
-
+    # 404 si no lo ve (spec: "404 cuando no debe saber que existe"); 403 si lo ve pero no puede borrarlo.
+    # Ya eliminado o pendiente: no es visible, así que también da 404.
+    archivo = get_object_or_404(archivos_visibles_para(request.user), pk=pk)
     if not puede_borrar(request.user, archivo):
         raise PermissionDenied("No tienes permisos para eliminar este archivo.")
 
-    if archivo.eliminado_en is None:
-        archivo.eliminado_en = timezone.now()
-        archivo.eliminado_por = request.user
-        archivo.save()
-        messages.success(request, f'Se eliminó «{archivo.nombre_original}».')
+    if request.method == 'GET':
+        # Confirmación sin JS (docs/09 §5.5): solo muestra la pregunta, nunca borra.
+        return render(request, 'confirmar_eliminar.html', {'archivo': archivo})
+
+    archivo.eliminado_en = timezone.now()
+    archivo.eliminado_por = request.user
+    archivo.save()
+    messages.success(request, f'Se eliminó «{archivo.nombre_original}».')
 
     return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)

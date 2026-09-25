@@ -248,3 +248,21 @@ Paso B completado. Siguiente: Paso C (DS-4 y DS-5 con hitos, carpetas y aviso), 
 
 ### Punto de partida
 Diseño: Paso C (DS-4 y DS-5: Detalle de proyecto y archivos con filtro `?tipo=`, subida con cola, panel de hitos, carpetas y aviso modal).
+
+---
+
+## Sesión 10 · 25 de Septiembre de 2026 (pasos C y D de diseño y Tarea 15)
+
+### Resumen
+- **Diseño completo:** pasos C (proyecto, archivos, subida con cola) y D (diálogo de confirmación único, avisos, páginas 403, 404, 500 y de bloqueo, pulido) hechos por el equipo de agentes.
+- **Tarea 15 · Código listo para producción:** `DATABASE_URL` con `dj-database-url` (SQLite como respaldo local); estáticos comprimidos y con versión en el nombre (`CompressedManifestStaticFilesStorage`, solo con `DEBUG=False`); `.do/app.yaml` sin secretos (instancia única, gunicorn, `migrate` como `PRE_DEPLOY`, salud en `/health/`, variables `EMAIL_*` y `AVISO_RECEPCION_CORREOS`); `.python-version` 3.12 y README al día.
+- **Verificado en local, con variables ficticias solo en la terminal:** `check --deploy` sin advertencias y `collectstatic` sin errores (genera `portal.<hash>.css`, su `.gz` y `staticfiles.json`). No se conectó nada a DigitalOcean.
+- **Hallazgo del auditor corregido:** eliminar un archivo por POST ahora busca con `archivos_visibles_para`: un cliente con un archivo ajeno recibe 404 en vez de 403.
+
+### Pendientes de decisión del usuario (bloquean la Tarea 16)
+- axes detrás del proxy de App Platform: hoy 5 fallos de cualquiera bloquearían a todos.
+- Con `DEBUG=False` y sin `EMAIL_HOST`, el arranque debería fallar (hoy los enlaces de contraseña irían a los logs).
+- Verificar en la T16 que el chequeo de salud no choque con la redirección HTTPS ni con `ALLOWED_HOSTS`.
+
+### Punto de partida
+Tarea 16 (requiere al usuario) o la parte de documentación de la Tarea 17.

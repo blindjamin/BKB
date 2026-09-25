@@ -100,3 +100,11 @@ class BorrarArchivoTests(TestCase):
         self.assertNotContains(response, 'window.confirm')
         self.assertContains(response, 'js/confirmar.js')
         self.assertContains(response, 'id="dialogo-confirmar"')
+
+    def test_post_de_cliente_con_archivo_ajeno_da_404(self):
+        # Spec: "404 cuando no debe saber que existe"; antes respondía 403 y revelaba el archivo.
+        ajeno = Usuario.objects.create_user('ajeno@otra.cl', 'Clave123!', rol=Rol.CLIENTE)
+        self.client.force_login(ajeno)
+        self.assertEqual(self.client.post(self.url_eliminar).status_code, 404)
+        self.archivo.refresh_from_db()
+        self.assertIsNone(self.archivo.eliminado_en)

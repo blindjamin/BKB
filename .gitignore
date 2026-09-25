@@ -44,3 +44,7 @@ graphify-out/
 .graphifyignore
 .claude/
 .agents/
+
+# Portal Django: estáticos recolectados y media local
+apps/portal/staticfiles/
+apps/portal/media/
