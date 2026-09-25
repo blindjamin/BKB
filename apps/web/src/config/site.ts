@@ -7,12 +7,14 @@ export const SITE = {
   coverage: 'Valparaíso y Región Metropolitana',
 } as const;
 
-const PORTAL = import.meta.env.PUBLIC_PORTAL_URL || 'https://portal.bkb.cl';
+const PORTAL = import.meta.env.PUBLIC_PORTAL_URL || 'https://portal.empresabkb.cl';
+const LOGIN = `${PORTAL}/login/`;
 
+// Clientes y colaboradores entran por el mismo login; el portal decide qué ve cada uno.
 export const PORTAL_URLS = {
-  home: PORTAL,
-  cliente: `${PORTAL}/accounts/login/?perfil=cliente`,
-  colaborador: `${PORTAL}/accounts/login/?perfil=colaborador`,
+  home: LOGIN,
+  cliente: LOGIN,
+  colaborador: LOGIN,
 } as const;
 
 export const QUOTE_ENDPOINT = import.meta.env.PUBLIC_QUOTE_ENDPOINT || '';
