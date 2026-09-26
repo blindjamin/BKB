@@ -58,7 +58,7 @@ export const servicios: ServicioItem[] = [
   { image: faena2, title: 'Automatización PLC', desc: 'Programación y desarrollo de sistemas PLC con pruebas FAT/SAT e integración SCADA.' },
   { image: faena3, title: 'Fabricación Propia', desc: 'Fabricación de Sistemas Kit: Bombeo, Filtrado, Lubricación y otros componentes especializados.' },
   { image: faenaHero, title: 'Montaje y Soporte', desc: 'Montaje en terreno y puesta en marcha con soporte técnico post-entrega garantizado.' },
-  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo de instrumentación eléctrica: analizadores de red y medidores de tierra, de fuga y de aislación.' }
+  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo y/o servicios de medición y análisis eléctrico con equipos de alta gama, certificados y de marcas de prestigio como Fluke: mediciones de red, mallas a tierra, aislación, RIC 19, termografías y alineación láser.' }
 ];
 
 export interface PortfolioItem {
@@ -68,9 +68,9 @@ export interface PortfolioItem {
 }
 
 export const portafolio: PortfolioItem[] = [
-  { img: faena1, title: 'Ampliación Planta Cecinas Sopraval', spec: '450 kVA · Quilpué' },
-  { img: faena2, title: 'Estación de Bombeo e Impulsión ESVAL', spec: '800 kVA · Valparaíso' },
-  { img: faena3, title: 'Línea de Envasado Alimentos Castaño', spec: 'Control Siemens S7-1500 · Santiago' }
+  { img: faena1, title: 'Ampliación Planta Faenadora y Cecinas Sopraval', spec: 'Industria · La Calera' },
+  { img: faena2, title: 'Estación de Bombeo e Impulsión ESVAL', spec: 'Sanitaria · Valparaíso' },
+  { img: faena3, title: 'Línea de Envasado Alimentos Castaño', spec: 'Agroindustria · Santiago' }
 ];
 
 export interface BrandItem {
