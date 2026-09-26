@@ -1,13 +1,15 @@
 import uuid
 
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Q
-from django.http import HttpResponseBadRequest, HttpResponseForbidden, Http404
+from django.db.models import Count, Max, Q
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponseBadRequest, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
 
 from .forms import EmpresaForm, ProyectoForm
@@ -28,8 +30,9 @@ from .permisos import (
     puede_responder_recepcion,
 )
 from .avisos import enviar_aviso_recepcion
-from .models import Archivo, Carpeta, DescargaLog, Empresa, EstadoProyecto, Proyecto, RespuestaRecepcion
+from .models import Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RespuestaRecepcion
 from .storage import url_descarga
+from .subidas import EXTENSIONES_PERMITIDAS
 
 
 def _get_client_ip(request):
@@ -37,6 +40,29 @@ def _get_client_ip(request):
     if x_forwarded_for:
         return x_forwarded_for.split(',')[-1].strip()
     return request.META.get('REMOTE_ADDR')
+
+
+def _tarjetas_de_proyecto(usuario, proyectos):
+    """Proyectos con conteo de archivos disponibles y última carga, cerrados al final (docs/09 §12.1)."""
+    disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True)
+    proyectos = proyectos.annotate(
+        archivos_count=Count('archivos', filter=disponibles),
+        ultima_carga=Max('archivos__subido_en', filter=disponibles),
+    ).order_by('estado', 'nombre')
+    return _ocultar_conteo_bloqueados(usuario, proyectos)
+
+
+def _ocultar_conteo_bloqueados(usuario, proyectos):
+    """El cliente no ve el conteo ni la última carga de un proyecto que espera su recepción (§12.3.5)."""
+    if puede_gestionar_hitos(usuario):
+        return proyectos
+    proyectos = list(proyectos)
+    # ponytail: una consulta de estado por proyecto (N+1); un cliente tiene pocos proyectos.
+    for p in proyectos:
+        p.bloqueado = estado_proyecto(p) == EstadoFlujoProyecto.ESPERANDO_RECEPCION
+        if p.bloqueado:
+            p.archivos_count, p.ultima_carga = 0, None
+    return proyectos
 
 
 @login_required
@@ -47,14 +73,14 @@ def lista_proyectos(request):
         )
         return render(request, 'empresas.html', {'empresas': empresas})
 
-    proyectos = proyectos_visibles(request.user).select_related('empresa')
+    proyectos = _tarjetas_de_proyecto(request.user, proyectos_visibles(request.user).select_related('empresa'))
     return render(request, 'proyectos.html', {'proyectos': proyectos})
 
 
 @login_required
 def crear_empresa(request):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para crear empresas.")
+        raise PermissionDenied("No tienes permisos para crear empresas.")
 
     if request.method == 'POST':
         form = EmpresaForm(request.POST)
@@ -73,7 +99,7 @@ def detalle_empresa(request, pk):
     if not puede_ver_empresa(request.user, empresa):
         raise Http404("No tienes acceso a esta empresa.")
 
-    proyectos = proyectos_de_empresa(request.user, empresa)
+    proyectos = _tarjetas_de_proyecto(request.user, proyectos_de_empresa(request.user, empresa))
     context = {
         'empresa': empresa,
         'proyectos': proyectos,
@@ -85,7 +111,7 @@ def detalle_empresa(request, pk):
 @login_required
 def crear_proyecto(request):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para crear proyectos.")
+        raise PermissionDenied("No tienes permisos para crear proyectos.")
 
     initial = {}
     empresa_id = request.GET.get('empresa')
@@ -110,7 +136,7 @@ def crear_proyecto(request):
 @login_required
 def editar_proyecto(request, pk):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para editar proyectos.")
+        raise PermissionDenied("No tienes permisos para editar proyectos.")
 
     proyecto = get_object_or_404(Proyecto, pk=pk)
 
@@ -144,12 +170,26 @@ def detalle_proyecto(request, pk):
         carpeta_activa = get_object_or_404(proyecto.carpetas, pk=carpeta_id)
 
     # carpeta_activa=None filtra carpeta IS NULL: los archivos de la raíz
-    archivos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
-    for archivo in archivos:
+    todos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
+    for archivo in todos:
         archivo.puede_borrar = puede_borrar(request.user, archivo)
+        archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
 
-    fotos = [a for a in archivos if a.tipo.startswith('image/')]
-    documentos = [a for a in archivos if not a.tipo.startswith('image/')]
+    fotos = [a for a in todos if a.tipo.startswith('image/')]
+    documentos = [a for a in todos if not a.tipo.startswith('image/')]
+    # Filtro por enlaces (docs/09 §5.3); cualquier otro valor muestra todos.
+    tipo = request.GET.get('tipo')
+    if tipo not in ('documentos', 'fotos'):
+        tipo = None
+    archivos = {'documentos': documentos, 'fotos': fotos}.get(tipo, todos)
+
+    # Cantidad por carpeta desde archivos_visibles: respeta el bloqueo del cliente (lección de B1).
+    conteo = dict(
+        archivos_visibles(request.user, proyecto).order_by().values_list('carpeta').annotate(n=Count('id'))
+    )
+    carpetas = list(proyecto.carpetas.all())
+    for c in carpetas:
+        c.n_archivos = conteo.get(c.pk, 0)
 
     gestiona_hitos = puede_gestionar_hitos(request.user)
     hitos = list(proyecto.hitos.select_related('cumplido_por'))
@@ -168,11 +208,17 @@ def detalle_proyecto(request, pk):
         'recepcion_conforme': (
             proyecto.respuestas_recepcion.filter(conforme=True).order_by('fecha').first() if recibido else None
         ),
-        'carpetas': proyecto.carpetas.all(),
+        'carpetas': carpetas,
         'carpeta_activa': carpeta_activa,
-        'fotos': fotos,
-        'documentos': documentos,
+        'archivos': archivos,
+        'tipo': tipo,
+        'n_todos': len(todos),
+        'n_documentos': len(documentos),
+        'n_fotos': len(fotos),
         'puede_subir': puede_subir(request.user),
+        # Límites de la subida para la validación previa del navegador (el servidor sigue decidiendo)
+        'max_upload_mb': settings.MAX_UPLOAD_MB,
+        'extensiones': sorted(EXTENSIONES_PERMITIDAS),
         'puede_gestionar': puede_gestionar_estructura(request.user),
     }
     return render(request, 'archivos.html', context)
@@ -182,7 +228,7 @@ def detalle_proyecto(request, pk):
 @require_POST
 def crear_carpeta(request, pk):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para crear carpetas.")
+        raise PermissionDenied("No tienes permisos para crear carpetas.")
 
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     nombre = request.POST.get('nombre', '').strip()
@@ -203,7 +249,7 @@ def crear_carpeta(request, pk):
 @require_POST
 def eliminar_carpeta(request, pk):
     if not puede_gestionar_estructura(request.user):
-        return HttpResponseForbidden("No tienes permisos para eliminar carpetas.")
+        raise PermissionDenied("No tienes permisos para eliminar carpetas.")
 
     carpeta = get_object_or_404(Carpeta.objects.filter(proyecto__in=proyectos_visibles(request.user)), pk=pk)
     proyecto_pk = carpeta.proyecto_id
@@ -215,7 +261,7 @@ def eliminar_carpeta(request, pk):
 @require_POST
 def avanzar_hito(request, pk):
     if not puede_gestionar_hitos(request.user):
-        return HttpResponseForbidden("No tienes permisos para marcar hitos.")
+        raise PermissionDenied("No tienes permisos para marcar hitos.")
 
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     with transaction.atomic():
@@ -232,7 +278,7 @@ def avanzar_hito(request, pk):
 @require_POST
 def retroceder_hito(request, pk):
     if not puede_gestionar_hitos(request.user):
-        return HttpResponseForbidden("No tienes permisos para deshacer hitos.")
+        raise PermissionDenied("No tienes permisos para deshacer hitos.")
 
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     with transaction.atomic():
@@ -253,7 +299,7 @@ def retroceder_hito(request, pk):
 def responder_recepcion(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     if not puede_responder_recepcion(request.user, proyecto):
-        return HttpResponseForbidden("No puedes responder la recepción de este proyecto.")
+        raise PermissionDenied("No puedes responder la recepción de este proyecto.")
 
     resultado = request.POST.get('resultado')
     if resultado not in ('conforme', 'no_conforme'):
@@ -308,16 +354,21 @@ def descargar_archivo(request, pk):
 
 
 @login_required
-@require_POST
+@require_http_methods(['GET', 'POST'])
 def eliminar_archivo(request, pk):
-    archivo = get_object_or_404(Archivo, pk=pk)
-
+    # 404 si no lo ve (spec: "404 cuando no debe saber que existe"); 403 si lo ve pero no puede borrarlo.
+    # Ya eliminado o pendiente: no es visible, así que también da 404.
+    archivo = get_object_or_404(archivos_visibles_para(request.user), pk=pk)
     if not puede_borrar(request.user, archivo):
-        return HttpResponseForbidden("No tienes permisos para eliminar este archivo.")
+        raise PermissionDenied("No tienes permisos para eliminar este archivo.")
 
-    if archivo.eliminado_en is None:
-        archivo.eliminado_en = timezone.now()
-        archivo.eliminado_por = request.user
-        archivo.save()
+    if request.method == 'GET':
+        # Confirmación sin JS (docs/09 §5.5): solo muestra la pregunta, nunca borra.
+        return render(request, 'confirmar_eliminar.html', {'archivo': archivo})
+
+    archivo.eliminado_en = timezone.now()
+    archivo.eliminado_por = request.user
+    archivo.save()
+    messages.success(request, f'Se eliminó «{archivo.nombre_original}».')
 
     return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)

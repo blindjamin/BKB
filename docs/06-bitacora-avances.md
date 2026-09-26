@@ -231,4 +231,63 @@ Seguir la tabla "Orden de ejecución" de `tasks/todo.md`, comenzando por la **Ta
 - Los estáticos no llevan versión en el nombre, así que el navegador puede seguir usando el CSS viejo tras un despliegue.
 
 ### Punto de partida
-Diseño: paso B (DS-2 y DS-3 con Gestión y contraseña), luego C (DS-4 y DS-5) y D (DS-6 y DS-7); después la Tarea 15. La Tarea 16 (DigitalOcean) requiere al usuario.
+Paso B completado. Siguiente: Paso C (DS-4 y DS-5 con hitos, carpetas y aviso), luego Paso D (DS-6 y DS-7) y la Tarea 15. La Tarea 16 (DigitalOcean) requiere al usuario.
+
+---
+
+## Sesión 9 · 24 de Septiembre de 2026 (Paso B: DS-2, DS-3, Empresas, Formularios, Gestión y Contraseñas)
+
+### Resumen
+- **Forma de trabajo:** El paso B lo hizo el usuario con otro asistente (commit `8a1ffda`). El equipo de agentes lo revisó el 25-09-2026: 271 pruebas en verde, sin estilos ni scripts en línea; se corrigió que el conteo de archivos mostrara al cliente datos de un proyecto bloqueado (ver el commit siguiente).
+- **DS-2 · Login Institucional:** Panel de marca para escritorio (≥ 900 px) con logo e identidad, tarjeta centrada en móvil (375 px), alternador accesible "Mostrar / Ocultar" contraseña (`login.js` externo cumpliendo CSP), alertas semánticas con `role="alert"` y teléfonos oficiales de asistencia (+56 9 8975 3095 / +56 9 6191 1593).
+- **DS-3 · Catálogo de Empresas y Proyectos:** Tarjetas con tipografía de 18 px (`--bkb-text-body-lg`), pastillas de estado (`Activo` / `Cerrado`), optimización de consultas para conteo de archivos y última fecha de carga en `views.py`, foco visible de 3 px y estados vacíos asistidos.
+- **Formularios de Empresa y Proyecto:** Estandarización de bordes (radio 10 px), etiquetas permanentes visibles, renderizado accesible de errores (ícono SVG de alerta + texto explicativo) y selector estilizado de clientes mediante casillas ordenadas.
+- **Gestión de Usuarios y Contraseñas:** Tabla responsiva en escritorio y tarjetas apiladas en móvil para `/gestion/usuarios/`, filtros combinables (`?rol=&activo=`) con `aria-current`, visibilidad condicional de "Reenviar invitación" (solo cuando está pendiente) y pantallas de invitación, restablecimiento y confirmación de contraseña integradas visualmente.
+- **Contrato CSP y Pruebas:** Cero estilos ni manejadores en línea. 271 pruebas unitarias (19 pruebas nuevas cubriendo accesibilidad, filtros, conteos y formularios), todas en verde al 100%.
+- **Aislamiento de red:** Cero llamadas o conexiones a DigitalOcean ni CDNs externas; operación 100% local.
+
+### Punto de partida
+Diseño: Paso C (DS-4 y DS-5: Detalle de proyecto y archivos con filtro `?tipo=`, subida con cola, panel de hitos, carpetas y aviso modal).
+
+---
+
+## Sesión 10 · 25 de Septiembre de 2026 (pasos C y D de diseño y Tarea 15)
+
+### Resumen
+- **Diseño completo:** pasos C (proyecto, archivos, subida con cola) y D (diálogo de confirmación único, avisos, páginas 403, 404, 500 y de bloqueo, pulido) hechos por el equipo de agentes.
+- **Tarea 15 · Código listo para producción:** `DATABASE_URL` con `dj-database-url` (SQLite como respaldo local); estáticos comprimidos y con versión en el nombre (`CompressedManifestStaticFilesStorage`, solo con `DEBUG=False`); `.do/app.yaml` sin secretos (instancia única, gunicorn, `migrate` como `PRE_DEPLOY`, salud en `/health/`, variables `EMAIL_*` y `AVISO_RECEPCION_CORREOS`); `.python-version` 3.12 y README al día.
+- **Verificado en local, con variables ficticias solo en la terminal:** `check --deploy` sin advertencias y `collectstatic` sin errores (genera `portal.<hash>.css`, su `.gz` y `staticfiles.json`). No se conectó nada a DigitalOcean.
+- **Hallazgo del auditor corregido:** eliminar un archivo por POST ahora busca con `archivos_visibles_para`: un cliente con un archivo ajeno recibe 404 en vez de 403.
+
+### Pendientes de decisión del usuario (bloquean la Tarea 16)
+- axes detrás del proxy de App Platform: hoy 5 fallos de cualquiera bloquearían a todos.
+- Con `DEBUG=False` y sin `EMAIL_HOST`, el arranque debería fallar (hoy los enlaces de contraseña irían a los logs).
+- Verificar en la T16 que el chequeo de salud no choque con la redirección HTTPS ni con `ALLOWED_HOSTS`.
+
+### Tarea 17 (parcial, solo documentación)
+- `docs/03`: estado "implementada en local", los 15 criterios del §9 con su evidencia y una sección 15 nueva (desviaciones verificadas en el código, alertas y seguimiento posterior, incluida una revisión de UI/UX pendiente).
+- Criterios de éxito: 12 de 15 demostrados por pruebas (14 y 15 solo en local, sin SMTP real); el 8 se verificó a mano con variables ficticias; el 9 y el 10 quedan pendientes del despliegue y del piloto.
+- `docs/00` al 25-09-2026 y `docs/04` con los controles hechos y su evidencia, más las 3 alertas pendientes de decisión.
+- 304 pruebas en verde; no se tocó código.
+
+### Punto de partida
+Tarea 16 (requiere al usuario, después de decidir las 3 alertas). El piloto de la Tarea 17 va después.
+
+---
+
+## Sesión 11 · 25 de Septiembre de 2026 (landing: cambios tomados de la rama de Lisandro, PR #9)
+
+### Resumen
+- **Botones del portal:** todos llevan a `/login/` en `portal.empresabkb.cl`. Antes apuntaban a `portal.bkb.cl/accounts/login/`, una ruta que no existe.
+- **Hero:** se quitó la tarjeta de acceso al portal. Quedan la información y el carrusel de empresas.
+- **Header de Lisandro:** con el botón "Soy cliente →". Está oculto sobre el hero y aparece al llegar a "Qué hacemos".
+- **Aviso "¿Emergencia en planta?":** es el de Lisandro, con los colores de nuestra landing. Aparece al pasar el hero.
+- **Secciones:** se quitaron las métricas y se agregaron los testimonios, que son provisorios.
+- **Contacto:** oficina central en El Parque 110, La Calera, con mapa que se carga al hacer clic.
+- **Teléfonos y WhatsApp:** se usan los confirmados, +56 9 8975 3095 (principal) y +56 9 6191 1593. El botón de WhatsApp abre un chat con el principal.
+- **Rama de Lisandro:** su `Lisandro-10-avances-landing-desa` se revisó en su carpeta aparte (`bkb-platform-lisandro`) sin mezclarla. Solo se trajeron las piezas pedidas.
+- **PR #8:** ya estaba fusionado cuando se subieron los pasos B a D. Esos commits van en el PR #10, que apunta a `desarrollo`.
+- **Despliegue:** se evaluó juntar la landing y el portal en un solo servidor o Droplet. Se mantiene la separación por subdominio (`empresabkb.cl` y `portal.empresabkb.cl`); el plan sigue siendo App Platform.
+
+### Punto de partida
+Revisar y fusionar los PR #9 (landing) y #10 (portal). Después: decidir las 3 alertas y pasar a la Tarea 16.

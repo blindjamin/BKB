@@ -10,36 +10,105 @@
             <p class="view-subtitle">Personal y clientes del portal</p>
         </div>
         <div>
-            <a href="{% url 'gestion:crear_usuario' %}" class="btn-action">+ Nuevo usuario</a>
+            <a href="{% url 'gestion:crear_usuario' %}" class="btn-primary btn-action">+ Nuevo usuario</a>
         </div>
     </div>
 
-
-    <nav class="filtros" aria-label="Filtrar usuarios">
-        <a href="?" class="filtro{% if not rol and not activo %} is-active{% endif %}">Todos</a>
-        <a href="?rol=personal" class="filtro{% if rol == 'personal' %} is-active{% endif %}">Personal</a>
-        <a href="?rol=cliente" class="filtro{% if rol == 'cliente' %} is-active{% endif %}">Clientes</a>
-        <a href="?activo=1" class="filtro{% if activo == '1' %} is-active{% endif %}">Activos</a>
-        <a href="?activo=0" class="filtro{% if activo == '0' %} is-active{% endif %}">Desactivados</a>
+    {# Cada grupo se limpia por separado: su "Todos" conserva el filtro del otro grupo. #}
+    <nav class="filtros" aria-label="Filtrar por tipo">
+        <span>Tipo:</span>
+        <a href="?{% if activo %}activo={{ activo }}{% endif %}" class="filtro{% if not rol %} is-active{% endif %}"{% if not rol %} aria-current="page"{% endif %}>Todos</a>
+        <a href="?rol=personal{% if activo %}&activo={{ activo }}{% endif %}" class="filtro{% if rol == 'personal' %} is-active{% endif %}"{% if rol == 'personal' %} aria-current="page"{% endif %}>Personal</a>
+        <a href="?rol=cliente{% if activo %}&activo={{ activo }}{% endif %}" class="filtro{% if rol == 'cliente' %} is-active{% endif %}"{% if rol == 'cliente' %} aria-current="page"{% endif %}>Clientes</a>
+    </nav>
+    <nav class="filtros" aria-label="Filtrar por estado">
+        <span>Estado:</span>
+        <a href="?{% if rol %}rol={{ rol }}{% endif %}" class="filtro{% if not activo %} is-active{% endif %}"{% if not activo %} aria-current="page"{% endif %}>Todos</a>
+        <a href="?{% if rol %}rol={{ rol }}&{% endif %}activo=1" class="filtro{% if activo == '1' %} is-active{% endif %}"{% if activo == '1' %} aria-current="page"{% endif %}>Activos</a>
+        <a href="?{% if rol %}rol={{ rol }}&{% endif %}activo=0" class="filtro{% if activo == '0' %} is-active{% endif %}"{% if activo == '0' %} aria-current="page"{% endif %}>Desactivados</a>
     </nav>
 
     {% if usuarios %}
-        <div class="proyectos-grid">
+        <!-- Vista de escritorio (>= 768px): Tabla de usuarios -->
+        <div class="usuarios-table-wrapper">
+            <table class="usuarios-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Correo</th>
+                        <th scope="col">Rol</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Contraseña</th>
+                        <th scope="col" class="usuarios-th-acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                        <tr>
+                            <td class="usuarios-col-nombre">
+                                <a href="{% url 'gestion:editar_usuario' usuario.pk %}" class="usuarios-nombre-link">{{ usuario.nombre|default:usuario.email }}</a>
+                            </td>
+                            <td class="usuarios-col-correo">
+                                <span class="usuarios-email-mono">{{ usuario.email }}</span>
+                            </td>
+                            <td class="usuarios-col-rol">
+                                <span class="badge badge-rol badge-rol-{{ usuario.rol }}">{{ usuario.get_rol_display }}</span>
+                            </td>
+                            <td class="usuarios-col-estado">
+                                {% if usuario.is_active %}
+                                    <span class="badge badge-activo">Activo</span>
+                                {% else %}
+                                    <span class="badge badge-cerrado">Desactivado</span>
+                                {% endif %}
+                            </td>
+                            <td class="usuarios-col-password">
+                                {% if not usuario.has_usable_password %}
+                                    <span class="usuarios-clave-pendiente">Invitación pendiente</span>
+                                {% else %}
+                                    <span class="usuarios-clave-ok">Contraseña configurada</span>
+                                {% endif %}
+                            </td>
+                            <td class="usuarios-col-acciones">
+                                <a href="{% url 'gestion:editar_usuario' usuario.pk %}" class="btn-link">Editar</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Vista móvil (< 768px): Tarjetas apiladas -->
+        <div class="usuarios-cards">
             {% for usuario in usuarios %}
-                <a href="{% url 'gestion:editar_usuario' usuario.pk %}" class="project-card">
-                    <div class="project-card-header">
-                        <h2 class="project-card-title">{{ usuario.nombre|default:usuario.email }}</h2>
-                        <span class="badge badge-activo">{{ usuario.get_rol_display }}</span>
+                <article class="usuarios-card">
+                    <div class="usuarios-card-header">
+                        <h2 class="usuarios-card-nombre">
+                            <a href="{% url 'gestion:editar_usuario' usuario.pk %}" class="usuarios-nombre-link">{{ usuario.nombre|default:usuario.email }}</a>
+                        </h2>
+                        <span class="badge badge-rol badge-rol-{{ usuario.rol }}">{{ usuario.get_rol_display }}</span>
                     </div>
-                    <div class="project-card-meta">
-                        <span>{{ usuario.email }}</span>
-                        {% if not usuario.is_active %}
-                            <span class="badge badge-cerrado">Desactivado</span>
-                        {% elif not usuario.has_usable_password %}
-                            <span class="badge badge-cerrado">Invitación pendiente</span>
-                        {% endif %}
+                    <div class="usuarios-card-correo">
+                        <span class="usuarios-email-mono">{{ usuario.email }}</span>
                     </div>
-                </a>
+                    <div class="usuarios-card-meta">
+                        <div class="usuarios-card-badges">
+                            {% if usuario.is_active %}
+                                <span class="badge badge-activo">Activo</span>
+                            {% else %}
+                                <span class="badge badge-cerrado">Desactivado</span>
+                            {% endif %}
+
+                            {% if not usuario.has_usable_password %}
+                                <span class="usuarios-clave-pendiente">Invitación pendiente</span>
+                            {% else %}
+                                <span class="usuarios-clave-ok">Contraseña configurada</span>
+                            {% endif %}
+                        </div>
+                        <div class="usuarios-card-action">
+                            <a href="{% url 'gestion:editar_usuario' usuario.pk %}" class="btn-link">Editar</a>
+                        </div>
+                    </div>
+                </article>
             {% endfor %}
         </div>
     {% else %}

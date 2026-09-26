@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar archivo - BKB Portal{% endblock %}
+
+{% block content %}
+{# Confirmación sin JS (docs/09 §5.5). Con JS, confirmar.js muestra el diálogo y esta página no se usa. #}
+<section class="pagina-error" aria-labelledby="confirmar-titulo">
+    <h1 id="confirmar-titulo">¿Eliminar «{{ archivo.nombre_original }}»?</h1>
+    <p>El archivo dejará de verse para todos, incluidos los clientes.</p>
+    <form method="post" action="{% url 'documentos:eliminar_archivo' archivo.pk %}" class="dialogo-acciones">
+        {% csrf_token %}
+        <a href="{% url 'documentos:detalle_proyecto' archivo.proyecto_id %}" class="btn-secondary">Cancelar</a>
+        <button type="submit" class="btn-peligro">Eliminar</button>
+    </form>
+</section>
+{% endblock %}

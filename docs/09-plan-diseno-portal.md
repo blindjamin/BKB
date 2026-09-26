@@ -348,6 +348,7 @@ Vistas al leer el código para este plan. **No están corregidas ni verificadas 
 - **Proyecto (5.3):** suma el estado del flujo (En curso, Esperando recepción, Recibido), el panel de hitos (personal y jefe), las carpetas y las migas *Empresa › Proyecto › Carpeta*.
 - **Fuera de alcance (sección 10):** "recuperación de contraseña" y "carpetas" ya no están fuera: se implementaron (tareas 28 y 23). Las carpetas son de un solo nivel y solo existen en la base de datos.
 - **Pestañas Documentos/Fotos:** DS-0 las dejó funcionando con JS externo. En el paso C pasan al filtro por enlaces `?tipo=` que propone 5.3.
+- **Filtro de archivos (paso C):** además de Documentos y Fotos hay un enlace "Todos", que es la opción por defecto (sin `?tipo=`): una sola página muestra todo lo que el usuario puede ver.
 
 ### 12.3 Pantallas nuevas
 
@@ -385,3 +386,10 @@ Vistas al leer el código para este plan. **No están corregidas ni verificadas 
 | B | DS-2 y DS-3, más empresas, formularios, Gestión y contraseña | la misma |
 | C | DS-4 y DS-5, más hitos, carpetas y aviso | la misma |
 | D | DS-6 y DS-7, más la página 429 | la misma |
+
+### 12.5 Cierre del diseño (25-09-2026)
+- Pasos A a D hechos (DS-0 a DS-7). Diálogo de confirmación único (`static/js/confirmar.js`) para borrar archivos y carpetas, deshacer hitos y desactivar usuarios; sin JS, borrar un archivo pasa por una página de confirmación.
+- Páginas propias 403, 404, 500 y de bloqueo (axes), con los dos teléfonos.
+- Filtro de archivos con "Todos" por defecto, más Documentos y Fotos (decisión del paso C).
+- Verificado: con pruebas automáticas (contrato CSP en todas las pantallas nuevas, un solo `<h1>` en login, inicio, proyecto y Gestión, avisos con `role="alert"`/`role="status"`, `prefers-reduced-motion` y transiciones de 150 ms o menos solo en color y borde). Pendiente del usuario: capturas de login, inicio, proyecto y Gestión a 320, 375 y 1280 px en ambos temas (revisión visual del tema oscuro y del ancho de 320 px), foco de 3 px con teclado y Lighthouse (accesibilidad ≥ 95).
+- Los JS siguen en `static/` salvo `js/login.js` y `js/confirmar.js`: moverlos es cosmético.

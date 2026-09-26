@@ -14,7 +14,7 @@
             <h1 class="proyectos-title">{{ usuario.nombre|default:usuario.email }}</h1>
             <p class="view-subtitle">
                 Correo: {{ usuario.email }}
-                {% if not usuario.is_active %}&middot; Desactivado{% elif not usuario.has_usable_password %}&middot; Invitación pendiente{% endif %}
+                {% if not usuario.is_active %}&middot; Desactivado{% elif not usuario.has_usable_password %}&middot; Invitación pendiente{% else %}&middot; Contraseña configurada{% endif %}
             </p>
         {% else %}
             <h1 class="proyectos-title">Nuevo usuario</h1>
@@ -51,12 +51,14 @@
 
         {% if usuario %}
         <div class="form-actions">
-            {% if usuario.is_active %}
+            {% if usuario.is_active and not usuario.has_usable_password %}
                 <form action="{% url 'gestion:reenviar_invitacion' usuario.pk %}" method="post">
                     {% csrf_token %}
                     <button type="submit" class="btn-secondary">Reenviar invitación</button>
                 </form>
-                <form action="{% url 'gestion:desactivar_usuario' usuario.pk %}" method="post" data-confirmar="{{ usuario.email }} ya no podrá entrar al portal. ¿Desactivar?">
+            {% endif %}
+            {% if usuario.is_active %}
+                <form action="{% url 'gestion:desactivar_usuario' usuario.pk %}" method="post" data-confirmar="{{ usuario.email }} ya no podrá entrar al portal. ¿Desactivar?" data-confirmar-titulo="Desactivar usuario" data-confirmar-accion="Desactivar">
                     {% csrf_token %}
                     <button type="submit" class="btn-eliminar">Desactivar</button>
                 </form>
@@ -72,6 +74,3 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'archivos.js' %}" nonce="{{ request.csp_nonce }}"></script>
-{% endblock %}

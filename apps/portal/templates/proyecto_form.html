@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ titulo }} - BKB Portal{% endblock %}
 
 {% block content %}
 <div class="proyectos-container">
-    <nav class="breadcrumbs">
+    <nav class="breadcrumbs" aria-label="Navegación secundaria">
         {% if proyecto %}
             <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}">&larr; Volver al Proyecto</a>
         {% else %}
@@ -19,63 +20,113 @@
             {% csrf_token %}
 
             {% if form.non_field_errors %}
-                <div class="form-error">
-                    {% for error in form.non_field_errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
+                <div class="form-error" role="alert">
+                    <svg class="icono form-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                    <div class="form-error-content">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
                 </div>
             {% endif %}
 
             <div class="form-group">
-                <label for="{{ form.empresa.id_for_label }}">{{ form.empresa.label }}</label>
+                <label for="{{ form.empresa.id_for_label }}">
+                    {{ form.empresa.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
                 {{ form.empresa }}
                 {% if form.empresa.errors %}
-                    <div class="field-error">{{ form.empresa.errors.0 }}</div>
+                    <div class="field-error" id="{{ form.empresa.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.empresa.errors.0 }}</span>
+                    </div>
                 {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
+                <label for="{{ form.nombre.id_for_label }}">
+                    {{ form.nombre.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
                 {{ form.nombre }}
                 {% if form.nombre.errors %}
-                    <div class="field-error">{{ form.nombre.errors.0 }}</div>
+                    <div class="field-error" id="{{ form.nombre.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.nombre.errors.0 }}</span>
+                    </div>
                 {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="{{ form.estado.id_for_label }}">{{ form.estado.label }}</label>
+                <label for="{{ form.estado.id_for_label }}">
+                    {{ form.estado.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
                 {{ form.estado }}
                 {% if form.estado.errors %}
-                    <div class="field-error">{{ form.estado.errors.0 }}</div>
+                    <div class="field-error" id="{{ form.estado.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.estado.errors.0 }}</span>
+                    </div>
                 {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="{{ form.hitos_texto.id_for_label }}">{{ form.hitos_texto.label }}</label>
+                <label for="{{ form.hitos_texto.id_for_label }}">
+                    {{ form.hitos_texto.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
                 {{ form.hitos_texto }}
-                <small class="form-help">{{ form.hitos_texto.help_text }}</small>
+                <small class="form-help" id="{{ form.hitos_texto.id_for_label }}-help">
+                    {% if form.hitos_texto.help_text %}
+                        {{ form.hitos_texto.help_text }}
+                    {% else %}
+                        Escribe un hito por línea. Los hitos se ordenarán cronológicamente.
+                    {% endif %}
+                </small>
                 {% if form.hitos_texto.errors %}
-                    <div class="field-error">{{ form.hitos_texto.errors.0 }}</div>
+                    <div class="field-error" id="{{ form.hitos_texto.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.hitos_texto.errors.0 }}</span>
+                    </div>
                 {% endif %}
             </div>
 
-            <div class="form-group">
-                <label>{{ form.clientes.label }}</label>
-                <small class="form-help">{{ form.clientes.help_text }}</small>
-                <div class="checkbox-list">
+            <fieldset class="form-group form-group-fieldset">
+                <legend class="form-label" id="label-clientes">{{ form.clientes.label }}</legend>
+                {% if form.clientes.help_text %}
+                    <small class="form-help" id="help-clientes">{{ form.clientes.help_text }}</small>
+                {% endif %}
+                <div class="checkbox-list" role="group" aria-labelledby="label-clientes">
                     {% for choice in form.clientes %}
                         <div class="checkbox-item">
                             {{ choice.tag }}
-                            <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                            <label for="{{ choice.id_for_label }}" class="checkbox-label">
+                                {% with cliente=choice.data.value.instance %}
+                                    {% if cliente and cliente.nombre %}
+                                        <span class="client-name">{{ cliente.nombre }}</span>
+                                        <span class="client-email">{{ cliente.email }}</span>
+                                    {% else %}
+                                        <span class="client-name">{{ choice.choice_label }}</span>
+                                        {% if cliente and cliente.email and cliente.email != choice.choice_label %}
+                                            <span class="client-email">{{ cliente.email }}</span>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endwith %}
+                            </label>
                         </div>
                     {% empty %}
-                        <p class="text-muted">No hay cuentas de cliente registradas aún.</p>
+                        <p class="text-muted empty-checklist">No hay cuentas de cliente registradas.</p>
                     {% endfor %}
                 </div>
                 {% if form.clientes.errors %}
-                    <div class="field-error">{{ form.clientes.errors.0 }}</div>
+                    <div class="field-error" id="error-clientes" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.clientes.errors.0 }}</span>
+                    </div>
                 {% endif %}
-            </div>
+            </fieldset>
 
             <div class="form-actions">
                 <button type="submit" class="btn-primary">{{ accion }}</button>

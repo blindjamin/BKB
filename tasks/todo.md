@@ -25,10 +25,10 @@
 | 11 | [x] **Tarea 27:** Gestión de usuarios e invitación | `benjamin/2026-09-24-portal-gestion` (creada desde `benjamin/2026-09-22-avance-portal`, que aún no está fusionada) |
 | 12 | [x] **Tarea 28:** "¿Olvidaste tu contraseña?" | la misma |
 | ⏸ | [x] **Checkpoint H** (parte automática, 24-09-2026): pruebas y `check --deploy` en verde. **Pendiente del usuario:** flujo manual y PR hacia `desarrollo` | — |
-| 13 | Diseño (`docs/09` §12.4): [x] DS-1 hecho · **DS-2 y DS-3** ← **empezar aquí** · DS-4 a DS-7 (pasos agrupados: B = DS-2+3 con Gestión y contraseña, más los hallazgos de la T27: "Reenviar invitación" solo con invitación pendiente y filtros combinables · C = DS-4+5 · D = DS-6+7. Ojo: las líneas antiguas de `docs/09` §5 todavía citan +56 9 8249 1403; vale la §12.1 · login revisado por el auditor a 1280 px claro y 375 px oscuro; pendiente del usuario: inicio y proyecto a 375 y 1280 px en ambos temas, y el foco de 3 px con teclado) | `benjamin/2026-09-24-portal-diseno` |
-| 14 | Tarea 15: código listo para producción | `benjamin/AAAA-MM-DD-portal-prod` |
-| 15 | Tarea 16: puesta en marcha en DigitalOcean (requiere al usuario) | la misma |
-| 16 | Tarea 17: piloto y documentación | la misma |
+| 13 | Diseño (`docs/09` §12.4): [x] DS-1 hecho · [x] **Paso B (DS-2 y DS-3)** hecho (24-09-2026, commit `8a1ffda`; brechas corregidas en el commit siguiente) · [x] **Paso C (DS-4 y DS-5)** hecho (25-09-2026) · [x] **Paso D (DS-6 y DS-7)** hecho (25-09-2026). Ojo: las líneas antiguas de `docs/09` §5 todavía citan +56 9 8249 1403; vale la §12.1. **Pendiente del usuario:** login revisado por el auditor a 1280 px claro y 375 px oscuro; falta revisar inicio, empresa, formularios, Gestión y las pantallas de contraseña a 375 y 1280 px en ambos temas, y el foco de 3 px con teclado. Paso C: capturas del proyecto a 320, 375 y 1280 px en ambos temas, como personal y como cliente, con nombres de 100+ caracteres y unos 30 archivos; y contra el Space, una foto y un PDF reales desde "Subir archivos", una foto desde "Tomar foto" en el celular, un archivo de más de 50 MB y una extensión no permitida Paso D: capturas de login, inicio, proyecto y Gestión a 320, 375 y 1280 px en ambos temas, diálogo de confirmación y Esc en el navegador, y Lighthouse (accesibilidad ≥ 95) | `benjamin/2026-09-24-portal-diseno` |
+| 14 | [x] **Tarea 15:** código listo para producción (25-09-2026; quedan 2 alertas "preguntar primero" pendientes de decisión del usuario) | `benjamin/2026-09-25-portal-prod` |
+| 15 | **Tarea 16:** puesta en marcha en DigitalOcean (**requiere al usuario**; antes, decidir las 3 alertas de la T15) ← **empezar aquí** | la misma |
+| 16 | Tarea 17: piloto y documentación (documentación hecha el 25-09-2026; falta el piloto, que requiere la T16) | la misma |
 
 Al terminar cada tarea, el agente marca `[x]` aquí y en su detalle, y actualiza la flecha **← empezar aquí** a la siguiente.
 
@@ -418,20 +418,21 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 
 ## Fase 4 · Producción
 
-### [ ] Tarea 15: Código listo para producción
+### [x] Tarea 15: Código listo para producción
 **Descripción:** Conectar PostgreSQL y describir la aplicación para App Platform.
 **Criterios:**
-- [ ] `DATABASE_URL` configura la base con `dj-database-url`, y SQLite queda solo como respaldo local
-- [ ] Estáticos: `STORAGES` con el almacenamiento comprimido de WhiteNoise y `collectstatic` en el comando de build
-- [ ] `.do/app.yaml` versionado (instancia única, comando de `gunicorn`, `migrate` antes de cada despliegue, verificación en `/health/`, variables sin valores secretos)
-- [ ] Pasos de despliegue y sincronización de tokens documentados
-- [ ] (Auditoría 24-09) Estáticos con versión en el nombre (`CompressedManifestStaticFilesStorage`): sin eso, tras cada despliegue el navegador sigue usando el `portal.css` viejo (visto en local)
-- [ ] (Auditoría 24-09, **preguntar primero**: toca seguridad) axes detrás del proxy de App Platform: hoy usa `REMOTE_ADDR`, que en producción es la IP del proxy, así que 5 logins fallidos de cualquiera bloquean a todos. Configurar la IP real del cliente y alinear `_get_client_ip` (usado por el límite de "¿Olvidaste tu contraseña?") con lo mismo
-- [ ] (Auditoría 24-09, **preguntar primero**) Con `DEBUG=False` y sin `EMAIL_HOST`, el arranque debe fallar: hoy cae al backend de consola y los enlaces de invitación y recuperación quedarían en los logs de App Platform
+- [x] `DATABASE_URL` configura la base con `dj-database-url`, y SQLite queda solo como respaldo local
+- [x] Estáticos: `STORAGES` con el almacenamiento comprimido de WhiteNoise y `collectstatic` en el comando de build
+- [x] `.do/app.yaml` versionado (instancia única, comando de `gunicorn`, `migrate` antes de cada despliegue, verificación en `/health/`, variables sin valores secretos)
+- [x] Pasos de despliegue y sincronización de tokens documentados
+- [x] (Auditoría 24-09) Estáticos con versión en el nombre (`CompressedManifestStaticFilesStorage`): sin eso, tras cada despliegue el navegador sigue usando el `portal.css` viejo (visto en local)
+- [ ] (Auditoría 24-09, **preguntar primero**: toca seguridad) axes detrás del proxy de App Platform: hoy usa `REMOTE_ADDR`, que en producción es la IP del proxy, así que 5 logins fallidos de cualquiera bloquean a todos. Configurar la IP real del cliente y alinear `_get_client_ip` (usado por el límite de "¿Olvidaste tu contraseña?") con lo mismo · **Pendiente de decisión del usuario (25-09-2026). Bloquea la T16.**
+- [ ] (Auditoría 24-09, **preguntar primero**) Con `DEBUG=False` y sin `EMAIL_HOST`, el arranque debe fallar: hoy cae al backend de consola y los enlaces de invitación y recuperación quedarían en los logs de App Platform · **Pendiente de decisión del usuario (25-09-2026). Bloquea la T16.**
+- [ ] (Para verificar en la T16) El chequeo de salud de App Platform podría llegar por HTTP interno o con un `Host` fuera de `ALLOWED_HOSTS`: con `SECURE_SSL_REDIRECT` respondería 301 o 400. Si el servicio queda "no saludable", la solución toca seguridad y requiere al usuario
 **Verificación:**
-- [ ] `python manage.py check --deploy` sin advertencias
-- [ ] `python manage.py test` sigue pasando
-- [ ] (v1.2) Variables `EMAIL_*` y `AVISO_RECEPCION_CORREOS` en `.do/app.yaml` (sin valores secretos)
+- [x] `python manage.py check --deploy` sin advertencias
+- [x] `python manage.py test` sigue pasando
+- [x] (v1.2) Variables `EMAIL_*` y `AVISO_RECEPCION_CORREOS` en `.do/app.yaml` (sin valores secretos)
 **Dependencias:** Checkpoint H · **Alcance:** S · **Archivos:** `config/settings.py`, `.do/app.yaml`, `apps/portal/README.md`
 
 ### [ ] Tarea 16: Puesta en marcha en DigitalOcean
@@ -457,13 +458,13 @@ En cada **Checkpoint** no se sigue a la tarea siguiente: el agente corre todas l
 ### [ ] Tarea 17: Piloto y documentación
 **Descripción:** Probar con un caso real y dejar la documentación al día.
 **Criterios:**
-- [ ] Piloto con un proyecto de prueba, un usuario del personal y un cliente de confianza: login → el personal sube → el cliente ve y descarga → el personal borra. (v1.2) Además: el jefe da de alta al cliente, el personal marca los hitos y el cliente confirma la recepción
-- [ ] `docs/03-portal-django.md`: marcar la spec como implementada y anotar las desviaciones que hayan surgido
-- [ ] `docs/00-contexto-proyecto.md` con el nuevo estado y `docs/06-bitacora-avances.md` con la entrada de la sesión
-- [ ] `docs/04-seguridad-y-cumplimiento.md`: marcar como hechos los controles implementados (criterio 10 de la spec)
-- [ ] Lista de seguimiento posterior escrita (incluir: editar nombre y RUT de una empresa desde `/gestion/`, §13.2, que quedó fuera de la T27)
+- [ ] (Requiere la T16) Piloto con un proyecto de prueba, un usuario del personal y un cliente de confianza: login → el personal sube → el cliente ve y descarga → el personal borra. (v1.2) Además: el jefe da de alta al cliente, el personal marca los hitos y el cliente confirma la recepción
+- [x] `docs/03-portal-django.md`: marcar la spec como implementada y anotar las desviaciones que hayan surgido
+- [x] `docs/00-contexto-proyecto.md` con el nuevo estado y `docs/06-bitacora-avances.md` con la entrada de la sesión
+- [x] `docs/04-seguridad-y-cumplimiento.md`: marcar como hechos los controles implementados (criterio 10 de la spec)
+- [x] Lista de seguimiento posterior escrita (`docs/03` §15.3, con la revisión de UI/UX pendiente) (incluir: editar nombre y RUT de una empresa desde `/gestion/`, §13.2, que quedó fuera de la T27)
 **Verificación:**
-- [ ] Los 15 criterios de éxito de la spec (sección 9) marcados uno a uno
+- [ ] Los 15 criterios de éxito de la spec (sección 9) marcados uno a uno · parcial: 12 de 15 demostrados por pruebas (14 y 15 solo en local); el 8 se verificó a mano con variables ficticias, y el 9 y el 10 quedan pendientes del despliegue y del piloto
 **Dependencias:** 16 · **Alcance:** M · **Archivos:** `docs/03-portal-django.md`, `docs/00-contexto-proyecto.md`, `docs/04-seguridad-y-cumplimiento.md`, `docs/06-bitacora-avances.md`
 
 ### Checkpoint F: v1 terminada

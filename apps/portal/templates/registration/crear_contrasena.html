@@ -1,37 +1,62 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Elige tu contraseña - BKB Portal{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <h1>Elige tu contraseña</h1>
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-card-logo">
+            <img src="{% static 'img/logo-bkb.png' %}" alt="BKB" width="88" height="88" class="auth-logo-img">
+        </div>
 
-    {% if validlink %}
-        <p class="view-subtitle">Usa al menos 12 caracteres. Evita contraseñas comunes o parecidas a tu correo.</p>
-        <form method="post">
-            {% csrf_token %}
-            {% if form.non_field_errors %}
-                <div class="form-error">{{ form.non_field_errors.0 }}</div>
-            {% endif %}
-            <div class="form-group">
-                <label for="{{ form.new_password1.id_for_label }}">Nueva contraseña</label>
-                {{ form.new_password1 }}
-                {% for error in form.new_password1.errors %}
-                    <div class="field-error">{{ error }}</div>
-                {% endfor %}
+        <h1 class="auth-title">Elige tu contraseña</h1>
+
+        {% if validlink %}
+            <p class="auth-subtitle">Usa al menos 12 caracteres. Evita contraseñas comunes o parecidas a tu correo.</p>
+            <form method="post" class="auth-form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="form-error" role="alert">
+                        <svg class="icono form-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
+                        <span>{{ form.non_field_errors.0 }}</span>
+                    </div>
+                {% endif %}
+                <div class="form-group">
+                    <label for="{{ form.new_password1.id_for_label }}">Nueva contraseña</label>
+                    {{ form.new_password1 }}
+                    {% for error in form.new_password1.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.new_password2.id_for_label }}">Repite la contraseña</label>
+                    {{ form.new_password2 }}
+                    {% for error in form.new_password2.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn-primary auth-submit-btn">Guardar contraseña</button>
+            </form>
+        {% else %}
+            <div class="form-error" role="alert">
+                <svg class="icono form-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
+                <span>El enlace venció o ya se usó. Pide al jefe que te reenvíe la invitación.</span>
             </div>
-            <div class="form-group">
-                <label for="{{ form.new_password2.id_for_label }}">Repite la contraseña</label>
-                {{ form.new_password2 }}
-                {% for error in form.new_password2.errors %}
-                    <div class="field-error">{{ error }}</div>
-                {% endfor %}
+            <div class="auth-support">
+                <p class="auth-support-label">
+                    <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
+                    <span>¿Necesitas asistencia? Llámanos:</span>
+                </p>
+                <div class="auth-support-phones">
+                    <a href="tel:+56989753095" class="auth-phone-link">+56 9 8975 3095</a>
+                    <a href="tel:+56961911593" class="auth-phone-link">+56 9 6191 1593</a>
+                </div>
             </div>
-            <button type="submit" class="btn-primary">Guardar contraseña</button>
-        </form>
-    {% else %}
-        <div class="form-error">El enlace venció o ya se usó. Pide al jefe que te reenvíe la invitación.</div>
-        <p><a href="{% url 'login' %}" class="btn-link">Ir al inicio de sesión</a></p>
-    {% endif %}
+            <div class="auth-footer-link">
+                <a href="{% url 'login' %}" class="btn-link">Ir al inicio de sesión</a>
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

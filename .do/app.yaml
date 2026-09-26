@@ -1,0 +1,81 @@
+# Especificación de DigitalOcean App Platform para el portal (Tarea 15).
+# Sin secretos: las variables type: SECRET no llevan value; se cargan en el panel de App Platform (Tarea 16).
+# Aún no se valida con `doctl apps spec validate` (necesita sesión de DigitalOcean): queda para la Tarea 16.
+name: bkb-portal
+region: nyc
+
+# Variables comunes al servicio y al job de migración (alcance por defecto: build y ejecución;
+# collectstatic en el build necesita DJANGO_SECRET_KEY porque settings.py no arranca sin ella con DEBUG=False).
+envs:
+  - key: DJANGO_DEBUG
+    value: "False"
+  - key: DJANGO_ALLOWED_HOSTS
+    value: portal.empresabkb.cl
+  - key: DJANGO_SECRET_KEY
+    type: SECRET
+  - key: DATABASE_URL
+    value: ${bkb-portal-db.DATABASE_URL}
+  - key: SPACES_BUCKET
+    value: bkb-space
+  - key: SPACES_REGION
+    value: nyc3
+  - key: SPACES_ENDPOINT
+    value: https://nyc3.digitaloceanspaces.com
+  - key: SPACES_PREFIX
+    value: portal/
+  - key: SPACES_KEY
+    type: SECRET
+  - key: SPACES_SECRET
+    type: SECRET
+  - key: MAX_UPLOAD_MB
+    value: "50"
+  - key: EMAIL_HOST
+    value: smtp.gmail.com
+  - key: EMAIL_PORT
+    value: "587"
+  - key: EMAIL_HOST_USER
+    value: instrumentacion@empresabkb.cl
+  - key: EMAIL_HOST_PASSWORD
+    type: SECRET
+  - key: DEFAULT_FROM_EMAIL
+    value: instrumentacion@empresabkb.cl
+  - key: AVISO_RECEPCION_CORREOS
+    type: SECRET
+
+services:
+  - name: portal
+    source_dir: apps/portal
+    github:
+      repo: blindjamin/BKB
+      branch: main
+      deploy_on_push: false  # se despliega solo desde main, por PR y a mano
+    environment_slug: python
+    build_command: python manage.py collectstatic --noinput
+    # ponytail: 2 workers con LocMemCache: el límite de "¿Olvidaste tu contraseña?" queda en 10 pedidos por IP cada 15 min.
+    run_command: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    health_check:
+      http_path: /health/
+
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    source_dir: apps/portal
+    github:
+      repo: blindjamin/BKB
+      branch: main
+      deploy_on_push: false
+    environment_slug: python
+    run_command: python manage.py migrate --noinput
+
+databases:
+  - name: bkb-portal-db
+    engine: PG
+    production: true
+
+domains:
+  - domain: portal.empresabkb.cl
+    type: PRIMARY
+    zone: empresabkb.cl

@@ -11,6 +11,9 @@ from .permisos import puede_subir, proyectos_visibles
 from .models import Archivo, Carpeta, EstadoArchivo
 from .storage import post_subida, clave_para, tamano_en_space
 
+# Una sola fuente: la plantilla la pasa al navegador para la validación previa (docs/09 §5.4).
+EXTENSIONES_PERMITIDAS = {'.pdf', '.jpg', '.jpeg', '.png', '.heic', '.doc', '.docx', '.xls', '.xlsx', '.dwg', '.dxf'}
+
 @login_required
 @require_POST
 def iniciar_subida(request, pk):
@@ -36,10 +39,9 @@ def iniciar_subida(request, pk):
     except ValueError:
         return JsonResponse({'error': 'El tamaño debe ser un número entero.'}, status=400)
         
-    ext_permitidas = {'.pdf', '.jpg', '.jpeg', '.png', '.heic', '.doc', '.docx', '.xls', '.xlsx', '.dwg', '.dxf'}
     _, ext = os.path.splitext(nombre.lower())
-    if ext not in ext_permitidas:
-        return JsonResponse({'error': f'Tipo de archivo no permitido. Extensiones válidas: {", ".join(ext_permitidas)}'}, status=400)
+    if ext not in EXTENSIONES_PERMITIDAS:
+        return JsonResponse({'error': f'Tipo de archivo no permitido. Extensiones válidas: {", ".join(sorted(EXTENSIONES_PERMITIDAS))}'}, status=400)
         
     max_bytes = settings.MAX_UPLOAD_MB * 1024 * 1024
     if tamano > max_bytes:

@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block title %}Página no encontrada - BKB Portal{% endblock %}
+
+{% block content %}
+{# No revela nada del recurso pedido: un proyecto ajeno se ve igual que uno inexistente #}
+{% include "includes/pagina_error.html" with titulo="Página no encontrada" frase="No encontramos esa página." %}
+{% endblock %}

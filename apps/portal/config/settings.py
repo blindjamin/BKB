@@ -6,6 +6,7 @@ Conforme al Plan de Implementación de BKB (Seguridad ASVS Nivel 2).
 import os
 from pathlib import Path
 
+import dj_database_url
 from csp.constants import NONE, NONCE, SELF
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
@@ -87,12 +88,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Base de datos: PostgreSQL en producción / SQLite para desarrollo local
+# Base de datos: PostgreSQL desde DATABASE_URL (App Platform ya incluye sslmode=require);
+# sin DATABASE_URL, SQLite local de respaldo.
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 # Hashing de contraseñas robusto: Argon2id prioritario (ASVS 5.0)
@@ -120,6 +123,15 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
+# Producción: comprimidos y con versión en el nombre (collectstatic va en el build de App Platform).
+# ponytail: sin manifiesto con DEBUG=True; correr las pruebas con DJANGO_DEBUG=False exige un collectstatic previo.
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage' if DEBUG
+        else 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -201,7 +213,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 AXES_FAILURE_LIMIT = 5
-AXES_LOCKOUT_TEMPLATE = None
+AXES_LOCKOUT_TEMPLATE = 'bloqueo.html'  # solo cambia la página del bloqueo (docs/09 §5.6)
 
 # Rutas de autenticación
 LOGIN_URL = '/login/'

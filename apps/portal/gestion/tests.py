@@ -70,6 +70,40 @@ class ListadoTests(GestionTests):
     def test_filtro_invalido_se_ignora(self):
         self.assertEqual(len(self._emails(rol='jefe', activo='x')), 3)
 
+    def test_filtros_combinables_y_aria_current(self):
+        # 1. Por defecto, solo "Todos" tiene aria-current="page"
+        resp_base = self.client.get(self.url_usuarios)
+        self.assertContains(resp_base, 'href="?" class="filtro is-active" aria-current="page"')
+
+        # 2. Con rol=cliente y activo=1 ambos filtros quedan activos y con aria-current="page"
+        resp_combo = self.client.get(self.url_usuarios, {'rol': 'cliente', 'activo': '1'})
+        self.assertContains(resp_combo, 'class="filtro is-active" aria-current="page">Clientes</a>')
+        self.assertContains(resp_combo, 'class="filtro is-active" aria-current="page">Activos</a>')
+        # Verifica que los enlaces preservan los otros parámetros
+        self.assertContains(resp_combo, 'href="?rol=cliente&activo=1"')
+        self.assertContains(resp_combo, 'href="?rol=personal&activo=1"')
+        self.assertContains(resp_combo, 'href="?rol=cliente&activo=0"')
+
+        # 3. Solo rol=personal
+        resp_personal = self.client.get(self.url_usuarios, {'rol': 'personal'})
+        self.assertContains(resp_personal, 'class="filtro is-active" aria-current="page">Personal</a>')
+        # Los filtros se limpian por grupo (brecha B5): solo el "Todos" de estado queda activo, no el de tipo.
+        self.assertContains(resp_personal, 'class="filtro is-active" aria-current="page">Todos</a>', count=1)
+        self.assertContains(resp_personal, 'href="?rol=personal" class="filtro is-active" aria-current="page">Todos</a>')
+        self.assertContains(resp_personal, 'href="?rol=personal&activo=1"')
+
+    def test_listado_renderiza_tabla_y_tarjetas_responsivas(self):
+        response = self.client.get(self.url_usuarios)
+        self.assertContains(response, 'usuarios-table-wrapper')
+        self.assertContains(response, 'usuarios-table')
+        self.assertContains(response, 'usuarios-cards')
+        self.assertContains(response, 'usuarios-card')
+        self.assertContains(response, reverse('gestion:crear_usuario'))
+        self.assertContains(response, '+ Nuevo usuario')
+        # Columnas
+        for th in ('Nombre', 'Correo', 'Rol', 'Estado', 'Contraseña', 'Acciones'):
+            self.assertContains(response, th)
+
 
 class CrearUsuarioTests(GestionTests):
     def setUp(self):
@@ -245,3 +279,44 @@ class EditarUsuarioTests(GestionTests):
                 self.assertEqual(self.client.post(self._url(nombre, self.cliente)).status_code, 403)
         self.cliente.refresh_from_db()
         self.assertTrue(self.cliente.is_active)
+
+    def test_boton_reenviar_invitacion_solo_si_clave_pendiente(self):
+        # 1. Usuario activo con contraseña inutilizable (invitación pendiente)
+        self.cliente.set_unusable_password()
+        self.cliente.save()
+        resp_pendiente = self.client.get(self._url('editar_usuario', self.cliente))
+        self.assertContains(resp_pendiente, 'Reenviar invitación')
+
+        # 2. Usuario activo con contraseña ya configurada
+        self.cliente.set_password('Clave-Configurada-123!')
+        self.cliente.save()
+        resp_configurada = self.client.get(self._url('editar_usuario', self.cliente))
+        self.assertNotContains(resp_configurada, 'Reenviar invitación')
+
+        # 3. Usuario desactivado con invitación pendiente tampoco debe mostrarlo
+        self.cliente.set_unusable_password()
+        self.cliente.is_active = False
+        self.cliente.save()
+        resp_desactivado = self.client.get(self._url('editar_usuario', self.cliente))
+        self.assertNotContains(resp_desactivado, 'Reenviar invitación')
+
+
+class FiltrosSeparadosTests(GestionTests):
+    def test_todos_de_cada_grupo_conserva_el_otro_filtro(self):
+        self.client.force_login(self.jefe)
+        html = self.client.get(self.url_usuarios, {'rol': 'cliente', 'activo': '0'}).content.decode()
+        tipo = html[html.index('aria-label="Filtrar por tipo"'):html.index('aria-label="Filtrar por estado"')]
+        estado = html[html.index('aria-label="Filtrar por estado"'):]
+        todos_tipo = re.search(r'<a href="([^"]*)"[^>]*>Todos</a>', tipo).group(1)
+        todos_estado = re.search(r'<a href="([^"]*)"[^>]*>Todos</a>', estado).group(1)
+        self.assertIn('activo=0', todos_tipo)
+        self.assertNotIn('rol=', todos_tipo)
+        self.assertIn('rol=cliente', todos_estado)
+        self.assertNotIn('activo=', todos_estado)
+
+    def test_filtros_invalidos_no_llegan_a_los_enlaces(self):
+        self.client.force_login(self.jefe)
+        html = self.client.get(self.url_usuarios, {'rol': 'xyz', 'activo': '9'}).content.decode()
+        for href in re.findall(r'href="([^"]*)"', html):
+            self.assertNotIn('xyz', href)
+            self.assertNotIn('activo=9', href)

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Nueva Empresa - BKB Portal{% endblock %}
 
 {% block content %}
 <div class="proyectos-container">
-    <nav class="breadcrumbs">
+    <nav class="breadcrumbs" aria-label="Navegación secundaria">
         <a href="{% url 'documentos:lista_proyectos' %}">&larr; Volver a Empresas</a>
     </nav>
 
@@ -16,18 +17,27 @@
             {% csrf_token %}
 
             {% if form.non_field_errors %}
-                <div class="form-error">
-                    {% for error in form.non_field_errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
+                <div class="form-error" role="alert">
+                    <svg class="icono form-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                    <div class="form-error-content">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
                 </div>
             {% endif %}
 
             <div class="form-group">
-                <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
+                <label for="{{ form.nombre.id_for_label }}">
+                    {{ form.nombre.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
                 {{ form.nombre }}
                 {% if form.nombre.errors %}
-                    <div class="field-error">{{ form.nombre.errors.0 }}</div>
+                    <div class="field-error" id="{{ form.nombre.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.nombre.errors.0 }}</span>
+                    </div>
                 {% endif %}
             </div>
 
@@ -35,7 +45,10 @@
                 <label for="{{ form.rut.id_for_label }}">{{ form.rut.label }}</label>
                 {{ form.rut }}
                 {% if form.rut.errors %}
-                    <div class="field-error">{{ form.rut.errors.0 }}</div>
+                    <div class="field-error" id="{{ form.rut.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.rut.errors.0 }}</span>
+                    </div>
                 {% endif %}
             </div>
 

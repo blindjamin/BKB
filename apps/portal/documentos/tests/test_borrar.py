@@ -63,3 +63,48 @@ class BorrarArchivoTests(TestCase):
         self.client.force_login(self.cliente)
         response = self.client.get(url_descarga)
         self.assertEqual(response.status_code, 404)
+
+    # GET a eliminar/: página de confirmación sin JS (docs/09 §5.5). Nunca borra.
+
+    def test_autor_ve_la_confirmacion_y_nada_se_borra(self):
+        self.client.force_login(self.personal_autor)
+        response = self.client.get(self.url_eliminar)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'confirmar_eliminar.html')
+        self.assertContains(response, '¿Eliminar «doc.pdf»?')
+        self.assertContains(response, f'<form method="post" action="{self.url_eliminar}"')
+        self.archivo.refresh_from_db()
+        self.assertIsNone(self.archivo.eliminado_en)
+
+    def test_get_sin_permiso_da_403(self):
+        for usuario in (self.personal_otro, self.cliente):
+            with self.subTest(usuario=usuario.email):
+                self.client.force_login(usuario)
+                self.assertEqual(self.client.get(self.url_eliminar).status_code, 403)
+        self.archivo.refresh_from_db()
+        self.assertIsNone(self.archivo.eliminado_en)
+
+    def test_get_de_archivo_ajeno_o_ya_eliminado_da_404(self):
+        ajeno = Usuario.objects.create_user('ajeno@otra.cl', 'Clave123!', rol=Rol.CLIENTE)
+        self.client.force_login(ajeno)
+        self.assertEqual(self.client.get(self.url_eliminar).status_code, 404)
+
+        self.client.force_login(self.personal_autor)
+        self.client.post(self.url_eliminar)
+        self.assertEqual(self.client.get(self.url_eliminar).status_code, 404)
+
+    def test_post_borra_y_avisa(self):
+        self.client.force_login(self.personal_autor)
+        response = self.client.post(self.url_eliminar, follow=True)
+        self.assertContains(response, 'Se eliminó «doc.pdf»')
+        self.assertNotContains(response, 'window.confirm')
+        self.assertContains(response, 'js/confirmar.js')
+        self.assertContains(response, 'id="dialogo-confirmar"')
+
+    def test_post_de_cliente_con_archivo_ajeno_da_404(self):
+        # Spec: "404 cuando no debe saber que existe"; antes respondía 403 y revelaba el archivo.
+        ajeno = Usuario.objects.create_user('ajeno@otra.cl', 'Clave123!', rol=Rol.CLIENTE)
+        self.client.force_login(ajeno)
+        self.assertEqual(self.client.post(self.url_eliminar).status_code, 404)
+        self.archivo.refresh_from_db()
+        self.assertIsNone(self.archivo.eliminado_en)

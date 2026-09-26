@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from accounts.models import Rol
 from documentos.forms import EmpresaForm, ProyectoForm
-from documentos.models import Empresa, EstadoProyecto, Hito, Membresia, Proyecto, RespuestaRecepcion
+from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Membresia, Proyecto, RespuestaRecepcion
 
 Usuario = get_user_model()
 
@@ -314,3 +314,162 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('hitos_texto', form.errors)
         self.assertTrue(self._form_hitos('Hito Cumplido').is_valid())
+
+    def test_detalle_empresa_anotaciones_archivos_y_metadatos_ds3(self):
+        # Crear archivo disponible en proy_a1
+        Archivo.objects.create(
+            proyecto=self.proy_a1,
+            nombre_original='doc_a1.pdf',
+            clave_space='portal-dev/doc_a1.pdf',
+            tamano=1024,
+            tipo='application/pdf',
+            estado=EstadoArchivo.DISPONIBLE,
+            subido_por=self.personal,
+        )
+        # Archivo pendiente en proy_a1 (no cuenta)
+        Archivo.objects.create(
+            proyecto=self.proy_a1,
+            nombre_original='doc_a1_pend.pdf',
+            clave_space='portal-dev/doc_a1_pend.pdf',
+            tamano=1024,
+            tipo='application/pdf',
+            estado=EstadoArchivo.PENDIENTE,
+            subido_por=self.personal,
+        )
+
+        self.client.force_login(self.personal)
+        url_detalle = reverse('documentos:detalle_empresa', args=[self.empresa_a.pk])
+        response = self.client.get(url_detalle)
+        self.assertEqual(response.status_code, 200)
+
+        proyectos = {p.nombre: p for p in response.context['proyectos']}
+        self.assertEqual(proyectos['Proyecto Alfa Activo'].archivos_count, 1)
+        self.assertIsNotNone(proyectos['Proyecto Alfa Activo'].ultima_carga)
+        self.assertEqual(proyectos['Proyecto Alfa Cerrado'].archivos_count, 0)
+        self.assertIsNone(proyectos['Proyecto Alfa Cerrado'].ultima_carga)
+
+        # Verificación en HTML
+        self.assertContains(response, '1 archivo')
+        self.assertContains(response, '0 archivos · Sin cargas aún')
+        self.assertContains(response, 'RUT: 11.111.111-1')
+
+    def test_empresa_card_rut_mono_y_conteo_activos(self):
+        self.client.force_login(self.personal)
+        response = self.client.get(reverse('documentos:lista_proyectos'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'RUT: 11.111.111-1')
+        self.assertContains(response, '1 proyecto activo')
+
+    def test_empresa_detalle_empty_state_crear_proyecto_y_telefonos(self):
+        self.client.force_login(self.personal)
+        url_detalle = reverse('documentos:detalle_empresa', args=[self.empresa_sin_proyectos.pk])
+        response = self.client.get(url_detalle)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Esta empresa aún no cuenta con proyectos registrados.')
+        self.assertContains(response, '+ Crear Proyecto')
+        self.assertContains(response, reverse('documentos:crear_proyecto'))
+        self.assertContains(response, 'tel:+56989753095')
+        self.assertContains(response, '+56 9 8975 3095')
+        self.assertContains(response, 'tel:+56961911593')
+        self.assertContains(response, '+56 9 6191 1593')
+        self.assertNotContains(response, '8249 1403')
+        self.assertNotContains(response, '82491403')
+
+    def test_empresas_empty_state_registrar_empresa_y_telefonos(self):
+        # Desactivar todos los proyectos para ver estado vacío en inicio de personal
+        Proyecto.objects.all().update(estado=EstadoProyecto.CERRADO)
+        self.client.force_login(self.personal)
+        response = self.client.get(reverse('documentos:lista_proyectos'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No hay empresas con proyectos activos actualmente.')
+        self.assertContains(response, '+ Nueva empresa')
+        self.assertContains(response, reverse('documentos:crear_empresa'))
+        self.assertContains(response, 'tel:+56989753095')
+        self.assertContains(response, '+56 9 8975 3095')
+        self.assertContains(response, 'tel:+56961911593')
+        self.assertContains(response, '+56 9 6191 1593')
+        self.assertNotContains(response, '8249 1403')
+        self.assertNotContains(response, '82491403')
+
+    def test_formulario_empresa_estructura_accesible_y_alertas(self):
+        self.client.force_login(self.personal)
+        url = reverse('documentos:crear_empresa')
+
+        # GET verifica estructura accesible
+        get_resp = self.client.get(url)
+        self.assertEqual(get_resp.status_code, 200)
+        self.assertContains(get_resp, 'class="form-container"')
+        self.assertContains(get_resp, 'class="form-card"')
+        self.assertContains(get_resp, 'for="id_nombre"')
+        self.assertContains(get_resp, 'for="id_rut"')
+        self.assertContains(get_resp, 'class="campo-requerido"')
+        self.assertContains(get_resp, 'id="id_nombre"')
+        self.assertContains(get_resp, 'id="id_rut"')
+
+        # POST con error verifica mensaje con ícono SVG explicativo
+        post_resp = self.client.post(url, {'nombre': '', 'rut': '12.345.678-9'})
+        self.assertEqual(post_resp.status_code, 200)
+        self.assertContains(post_resp, 'class="field-error"')
+        self.assertContains(post_resp, 'field-error-icon')
+        self.assertContains(post_resp, '#alerta')
+        self.assertContains(post_resp, 'Este campo es obligatorio.')
+
+    def test_formulario_proyecto_estructura_accesible_y_hitos(self):
+        self.client.force_login(self.personal)
+        url = reverse('documentos:crear_proyecto')
+
+        # GET verifica estructura accesible, hitos multilínea y checklist de clientes
+        get_resp = self.client.get(url)
+        self.assertEqual(get_resp.status_code, 200)
+        self.assertContains(get_resp, 'class="form-container"')
+        self.assertContains(get_resp, 'class="form-card"')
+        self.assertContains(get_resp, 'for="id_empresa"')
+        self.assertContains(get_resp, 'for="id_nombre"')
+        self.assertContains(get_resp, 'for="id_estado"')
+        self.assertContains(get_resp, 'for="id_hitos_texto"')
+        self.assertContains(get_resp, 'class="form-help"')
+        self.assertContains(get_resp, 'class="checkbox-list"')
+        self.assertContains(get_resp, 'class="checkbox-item"')
+        self.assertContains(get_resp, 'class="client-name"')
+        self.assertContains(get_resp, 'cli1@empresa.cl')
+
+        # POST sin hitos verifica mensaje de error con ícono SVG explicativo
+        post_resp = self.client.post(url, {
+            'empresa': str(self.empresa_a.pk),
+            'nombre': 'Proyecto Incompleto',
+            'estado': 'activo',
+            'hitos_texto': '',
+        })
+        self.assertEqual(post_resp.status_code, 200)
+        self.assertContains(post_resp, 'class="field-error"')
+        self.assertContains(post_resp, 'field-error-icon')
+        self.assertContains(post_resp, '#alerta')
+        self.assertContains(post_resp, 'Este campo es obligatorio.')
+
+        # Error de validación al intentar alterar hitos cumplidos
+        Hito.objects.create(
+            proyecto=self.proy_a1, orden=1, nombre='Hito Inicial Cumplido',
+            cumplido_en=timezone.now(), cumplido_por=self.personal
+        )
+        url_editar = reverse('documentos:editar_proyecto', args=[self.proy_a1.pk])
+        resp_editar_err = self.client.post(url_editar, {
+            'empresa': str(self.empresa_a.pk),
+            'nombre': self.proy_a1.nombre,
+            'estado': self.proy_a1.estado,
+            'hitos_texto': 'Hito Modificado Ilegal',
+        })
+        self.assertEqual(resp_editar_err.status_code, 200)
+        self.assertContains(resp_editar_err, 'class="field-error"')
+        self.assertContains(resp_editar_err, '#alerta')
+        self.assertContains(resp_editar_err, 'Los hitos ya cumplidos no se pueden editar, quitar ni reordenar.')
+
+    def test_formulario_proyecto_checklist_clientes_vacio(self):
+        # Eliminar todos los clientes para validar el estado vacío
+        Usuario.objects.filter(rol=Rol.CLIENTE).delete()
+        self.client.force_login(self.personal)
+        url = reverse('documentos:crear_proyecto')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No hay cuentas de cliente registradas.')
+
+

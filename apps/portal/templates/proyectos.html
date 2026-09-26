@@ -1,25 +1,44 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Proyectos - BKB Portal{% endblock %}
 
 {% block content %}
 <div class="proyectos-container">
-    <h1 class="proyectos-title">Proyectos</h1>
-    
+    <div class="proyectos-header-box">
+        <h1 class="proyectos-title">Proyectos</h1>
+        {% if proyectos %}
+            <p class="proyectos-subtitle">Tienes acceso a {{ proyectos|length }} proyecto{{ proyectos|length|pluralize }}</p>
+        {% endif %}
+    </div>
+
     {% if proyectos %}
         <div class="proyectos-grid">
             {% for proyecto in proyectos %}
-                <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="project-card">
-                    <h2 class="project-card-title">{{ proyecto.nombre }}</h2>
-                    <div class="project-card-meta">
-                        <span>🏢 {{ proyecto.empresa.nombre }}</span>
-                        <span>
-                            {% if proyecto.estado == 'activo' %}
-                                <span class="badge badge-activo">ACTIVO</span>
-                            {% else %}
-                                <span class="badge badge-cerrado">CERRADO</span>
-                            {% endif %}
+                <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="project-card{% if proyecto.estado != 'activo' %} is-cerrado{% endif %}">
+                    <div class="project-card-top">
+                        <span class="project-card-empresa">
+                            <svg class="icono icono-empresa" aria-hidden="true"><use href="{% static 'icons.svg' %}#empresa"></use></svg>
+                            {{ proyecto.empresa.nombre }}
                         </span>
+                        <span class="badge pastilla-estado {% if proyecto.estado == 'activo' %}badge-activo pastilla-activo{% else %}badge-cerrado pastilla-cerrado{% endif %}">
+                            {% if proyecto.estado == 'activo' %}ACTIVO{% else %}CERRADO{% endif %}
+                        </span>
+                    </div>
+
+                    <h2 class="project-card-title">{{ proyecto.nombre }}</h2>
+
+                    <div class="project-card-meta">
+                        <div class="project-card-secondary">
+                            {% if proyecto.bloqueado %}
+                                <span>Confirma la recepción para ver los archivos</span>
+                            {% elif proyecto.archivos_count %}
+                                <span>{{ proyecto.archivos_count }} archivo{{ proyecto.archivos_count|pluralize }} · última carga {{ proyecto.ultima_carga|date:"d b Y" }}</span>
+                            {% else %}
+                                <span>0 archivos · Sin cargas aún</span>
+                            {% endif %}
+                        </div>
+                        <span class="card-arrow" aria-hidden="true">&rarr;</span>
                     </div>
                 </a>
             {% endfor %}
@@ -27,7 +46,16 @@
     {% else %}
         <div class="proyectos-empty">
             <p class="proyectos-empty-text">No tienes proyectos asignados actualmente.</p>
+            <div class="empty-support-box">
+                <p class="empty-support-text">Si esperabas ver algún proyecto asignado a tu cuenta, comunícate con BKB:</p>
+                <div class="empty-support-phones">
+                    <a href="tel:+56989753095" class="support-phone-link">+56 9 8975 3095</a>
+                    <span class="support-phone-separator">&middot;</span>
+                    <a href="tel:+56961911593" class="support-phone-link">+56 9 6191 1593</a>
+                </div>
+            </div>
         </div>
     {% endif %}
 </div>
 {% endblock %}
+

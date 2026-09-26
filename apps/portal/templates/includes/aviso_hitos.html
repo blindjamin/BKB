@@ -1,3 +1,4 @@
+{% load static %}
 <dialog id="aviso-hitos" class="aviso-hitos" open aria-labelledby="aviso-hitos-titulo"{% if estado == 'esperando_recepcion' %} data-bloqueante{% endif %}>
     <h2 id="aviso-hitos-titulo" class="seccion-title">Avance del proyecto</h2>
     <p class="aviso-mensaje">
@@ -15,11 +16,11 @@
         <ol class="hitos-lista">
             {% for hito in hitos %}
                 {% if hito.cumplido %}
-                    <li class="hito is-cumplido"><span class="hito-nombre">✓ {{ hito.nombre }}</span></li>
+                    <li class="hito is-cumplido"><svg class="icono hito-icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#cumplido"></use></svg><span class="hito-nombre">{{ hito.nombre }}</span></li>
                 {% elif hito == hito_actual %}
-                    <li class="hito is-actual"><span class="hito-nombre">➜ {{ hito.nombre }}</span><span class="badge badge-activo">En curso</span></li>
+                    <li class="hito is-actual"><svg class="icono hito-icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#flecha"></use></svg><span class="hito-nombre">{{ hito.nombre }}</span><span class="badge badge-activo">En curso</span></li>
                 {% else %}
-                    <li class="hito"><span class="hito-nombre">○ {{ hito.nombre }}</span><span class="badge badge-cerrado">Pendiente</span></li>
+                    <li class="hito"><svg class="icono hito-icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#pendiente"></use></svg><span class="hito-nombre">{{ hito.nombre }}</span><span class="badge badge-cerrado">Pendiente</span></li>
                 {% endif %}
             {% endfor %}
         </ol>
@@ -29,7 +30,7 @@
             {% csrf_token %}
             {# El diálogo modal tapa los mensajes de la página: se repiten aquí #}
             {% for message in messages %}
-                <div class="{% if message.level_tag == 'error' %}form-error{% else %}form-aviso{% endif %}">{{ message }}</div>
+                {% include "includes/aviso_mensaje.html" %}
             {% endfor %}
             <label for="nombre-revisor">Nombre de quien revisa</label>
             <input type="text" id="nombre-revisor" name="nombre_revisor" maxlength="200" required autocomplete="name">
@@ -37,9 +38,15 @@
                 <input type="checkbox" name="revisado" value="1"> Recepcionado y revisado
             </label>
             <div class="aviso-acciones">
-                <button type="submit" name="resultado" value="conforme" class="btn-action">Confirmar</button>
+                <button type="submit" name="resultado" value="conforme" class="btn-primary">Confirmar</button>
                 <button type="submit" name="resultado" value="no_conforme" class="btn-secondary">No conforme</button>
             </div>
+            <p class="aviso-ayuda">
+                <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
+                ¿Dudas? Llama a BKB:
+                <a href="tel:+56989753095">+56 9 8975 3095</a>
+                <a href="tel:+56961911593">+56 9 6191 1593</a>
+            </p>
         </form>
     {% else %}
         <form method="dialog" class="aviso-acciones">

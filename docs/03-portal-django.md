@@ -1,6 +1,6 @@
 # 03 · Portal de Archivos BKB (`apps/portal`): especificación
 
-> **Estado:** especificación APROBADA v1.2 (22-09-2026), sobre la v1.1 (21-09-2026). Plan de implementación: [`tasks/plan.md`](../tasks/plan.md). Tareas: [`tasks/todo.md`](../tasks/todo.md).
+> **Estado:** IMPLEMENTADA en local (25-09-2026): tareas 0 a 28, diseño DS-0 a DS-7 y tarea 15, con 304 pruebas en verde. Pendientes: despliegue (tarea 16) y piloto (tarea 17). Desviaciones y seguimiento en la sección 15. Especificación APROBADA v1.2 (22-09-2026), sobre la v1.1 (21-09-2026). Plan de implementación: [`tasks/plan.md`](../tasks/plan.md). Tareas: [`tasks/todo.md`](../tasks/todo.md).
 > **Sustituye** al diseño anterior de este documento, que quedó desactualizado.
 > **Origen:** entrevista de intención con el usuario (20-09-2026).
 > **Cambios de la v1.1 (21-09-2026):** BKB indicó que el cliente **no puede subir archivos**, solo verlos. Por eso: (1) los roles pasan de tres a dos, (2) se elimina la marca interno/compartido, (3) todo el personal ve todos los proyectos, y (4) el personal puede borrar lo que él subió (el administrador, cualquier archivo).
@@ -263,20 +263,35 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 ## 9. Criterios de éxito (v1 terminada)
 
 1. La matriz de permisos completa pasa: **un cliente nunca ve un proyecto no asignado ni sus archivos**, ni por listado, ni por enlace directo, ni por UUID adivinado (todos dan 404). El personal ve todos los proyectos y archivos.
+   - **Estado (25-09-2026):** [x] `documentos/tests/test_permisos.py` (matriz y visibles), `test_vistas_archivos.py::VistasArchivosTests.test_cliente_no_ve_proyectos_ajenos`, `test_descarga.py::test_descarga_archivo_ajeno_da_404`.
 2. El personal sube un archivo y, una vez confirmado, lo ven de inmediato los clientes asignados. Un cliente que intenta subir o confirmar recibe 403.
+   - **Estado (25-09-2026):** [x] `documentos/tests/test_subida.py` (`test_confirmar_y_visibilidad_cliente`, `test_iniciar_subida_cliente_403`, `test_confirmar_ajeno`), con el Space simulado. La subida real contra `portal-dev/` se probó a mano en la tarea 12.
 3. Se rechazan archivos de más de `MAX_UPLOAD_MB` y con extensiones fuera de la lista permitida.
+   - **Estado (25-09-2026):** [x] `test_subida.py::test_iniciar_subida_tamano_no_permitido` y `test_iniciar_subida_tipo_no_permitido`; `test_storage.py` (`content-length-range`).
 4. El personal borra un archivo que subió y desaparece al instante para todos (el cliente ya no lo ve y su descarga da 404). El personal no puede borrar uno ajeno (403), el administrador puede borrar cualquiera y el cliente no puede borrar.
+   - **Estado (25-09-2026):** [x] `documentos/tests/test_borrar.py` (autor, otro personal 403, superusuario, cliente 403, descarga 404 tras borrar).
 5. Toda descarga autorizada (de personal o de cliente) devuelve una URL prefirmada de **60 s**, como adjunto, y deja un `DescargaLog`.
+   - **Estado (25-09-2026):** [x] `test_descarga.py::test_descarga_registra_log_y_redirige`; `test_storage.py` (60 s y adjunto).
 6. Las pruebas demuestran que ninguna clave generada queda fuera del prefijo `portal/`.
+   - **Estado (25-09-2026):** [x] `documentos/tests/test_storage.py` (`test_es_prefijo_mas_uuids`, `test_toda_operacion_rechaza_claves_fuera_del_prefijo`).
 7. Tras 5 intentos fallidos el login queda bloqueado, y el mensaje de error no revela si el correo existe.
+   - **Estado (25-09-2026):** [x] `accounts/tests/test_login.py` (`test_bloqueo_fuerza_bruta`, `test_error_generico`). Ojo: detrás del proxy de App Platform falta configurar la IP real (sección 15.2).
 8. `python manage.py check --deploy` sin advertencias con variables de producción.
+   - **Estado (25-09-2026):** [ ] Sin prueba automática: se ejecutó a mano con variables ficticias en la tarea 15, sin advertencias. Se repite en producción (tarea 16).
 9. Desplegado en `portal.empresabkb.cl` con HTTPS, `/health/` respondiendo y un piloto completo (login → el personal sube → el cliente ve y descarga → el personal borra) con un proyecto de prueba.
+   - **Estado (25-09-2026):** [ ] Pendiente del despliegue y del piloto (tareas 16 y 17).
 10. `docs/00`, `docs/04` y la bitácora `docs/06` reflejan el estado final del portal.
+   - **Estado (25-09-2026):** [ ] Parcial: los documentos reflejan el estado en local al 25-09-2026; el "estado final" llega tras la tarea 16 y el piloto.
 11. (v1.2) El personal crea un proyecto con sus hitos desde el portal, sin entrar a `/admin/`, y los marca en orden.
+   - **Estado (25-09-2026):** [x] `test_vistas_empresas.py::test_crear_proyecto_personal_con_hitos_y_clientes`; `documentos/tests/test_hitos.py` (avanza en orden, sin saltos).
 12. (v1.2) El cliente ve el aviso con el avance al abrir el proyecto y, mientras no se marque el último hito, lo cierra y ve los archivos.
+   - **Estado (25-09-2026):** [x] `test_vistas_archivos.py::AvisoHitosTests` (aviso en los 3 estados; en curso se puede cerrar y los archivos se ven). Cerrar con Esc en el navegador sigue pendiente de verificación manual.
 13. (v1.2) Con el último hito marcado y sin recepción conforme, el cliente no ve ni descarga ningún archivo del proyecto (lista vacía y descarga 404, también por enlace directo), aunque desactive JavaScript.
+   - **Estado (25-09-2026):** [x] `test_permisos.py::test_esperando_recepcion_bloquea_clientes_y_mantiene_personal_y_jefe`, `test_descarga.py::test_descarga_en_esperando_recepcion_bloquea_cliente_y_permite_personal`, `test_vistas_archivos.py` (ni en la raíz ni en carpetas). El bloqueo es del servidor, no depende de JS.
 14. (v1.2) Al confirmar con el nombre del revisor, los archivos vuelven a verse y llega un correo a `AVISO_RECEPCION_CORREOS`. "No conforme" también manda un correo y mantiene el bloqueo.
+   - **Estado (25-09-2026):** [x] en local: `documentos/tests/test_recepcion.py` (`mail.outbox`). La entrega real por SMTP queda pendiente del piloto.
 15. (v1.2) El jefe, sin entrar a `/admin/`, crea una empresa y un cliente. El cliente recibe un correo, crea su contraseña con el enlace y entra al portal. Un usuario de tipo personal que abre `/gestion/` recibe 403.
+   - **Estado (25-09-2026):** [x] en local: `test_vistas_empresas.py::test_crear_empresa_personal_y_jefe_ok`, `gestion/tests.py` (crear cliente con invitación, crear contraseña y entrar, personal 403), `accounts/tests/test_contrasena.py`. El correo real queda pendiente del piloto.
 
 ---
 
@@ -490,3 +505,53 @@ Login → [ / ]
 - En `/`: botón `+ Nueva Empresa` (formulario simple con nombre y RUT).
 - En `/empresas/<uuid>/`: botón `+ Nuevo Proyecto` (con la empresa preseleccionada).
 - En `/proyectos/<uuid>/`: botón `+ Nueva Carpeta` y botón `+ Subir Archivo` (con selector de carpeta destino).
+
+---
+
+## 15. Implementación y desviaciones (25-09-2026)
+
+Estado verificado en el código de la rama `benjamin/2026-09-25-portal-prod`. Cada punto cita el archivo o la prueba que lo demuestra.
+
+### 15.1 Desviaciones respecto de la spec
+
+| Tema | La spec dice | El código hace | Por qué | Evidencia |
+|---|---|---|---|---|
+| Eliminar carpeta | §14.3: solo carpetas vacías | Elimina también con archivos; esos archivos vuelven a la raíz (`SET_NULL`) | Criterio aprobado en la tarea 23 (§14.2.2) | `documentos/tests/test_carpetas.py` (`EliminarCarpetaTests`) |
+| Destino de la subida | §14.4: selector de carpeta destino | Va a la carpeta **activa** (`data-carpeta-id`); sin selector | Más simple en terreno; se sube desde dentro de la carpeta | `documentos/subidas.py`, `test_carpetas.py` (`SubidaACarpetaTests`) |
+| Nombre de carpeta | §14.2: único por proyecto | Único sin distinguir mayúsculas | Evita "Informes" e "informes" | `documentos/views.py::crear_carpeta` (`nombre__iexact`) |
+| Editar hitos | §12.3.2: los hitos marcados no se editan | `ProyectoForm` rechaza editar, quitar o reordenar cumplidos, y cualquier cambio en un proyecto recibido | Mismo invariante que avanzar/retroceder | `documentos/forms.py`, `test_vistas_empresas.py` (`test_editar_proyecto_*`) |
+| Hito nuevo en espera | — | Agregar un hito mientras se espera la recepción devuelve el proyecto a "en curso" | Equivale a retroceder, que está permitido antes de una conforme | `documentos/permisos.py::estado_proyecto` |
+| Concurrencia | — | Avanzar, retroceder y responder la recepción bloquean la fila del proyecto (`select_for_update`) | Evita saltos de hitos y dobles respuestas | `documentos/views.py` |
+| Correo de recepción | §12.3.8 | Se envía después de guardar, fuera de la transacción; con `AVISO_RECEPCION_CORREOS` vacío no se envía y queda un `warning`; `DEFAULT_FROM_EMAIL` usa `portal@empresabkb.cl` por defecto | Un fallo del correo nunca pierde la respuesta | `documentos/avisos.py`, `config/settings.py`, `test_recepcion.py` |
+| Gestión: rutas | §5: `/gestion/usuarios/<uuid>/` | Desactivar, reactivar y reenviar son subrutas POST | Nunca cambios por GET | `gestion/urls.py` |
+| Gestión: correo | §13.2 | El correo no se edita | Fuera de alcance (§13.5) | `gestion/forms.py`, `gestion/tests.py` |
+| Gestión: destinos prohibidos | §8 | El jefe (él mismo, otro jefe) o un superusuario como destino da **404** | Una sola consulta (`_gestionables`) | `gestion/views.py`, `gestion/tests.py::test_superusuario_y_el_propio_jefe_dan_404` |
+| Gestión: empresas | §13.2: crear y editar empresas | **No implementado** en `/gestion/`; crear empresa sigue en `/empresas/nueva/` | Fuera de los criterios de la tarea 27 | Ver 15.3 |
+| Invitación | §13.3 | Helper propio `gestion.views.enviar_invitacion` | `PasswordResetForm` descarta a quien no tiene contraseña utilizable | `gestion/views.py` |
+| Recuperar contraseña | §13.3.4: "todos" | El jefe sí; el superusuario no (usa `manage.py changepassword`) | Menos superficie en la cuenta técnica | `accounts/views.py`, `gestion/views.py::CrearContrasenaView`, `test_contrasena.py` |
+| Límite de "olvidé" | 5 por IP cada 15 min | Contador en `LocMemCache`, por proceso: con 2 workers el efectivo es 10 | Sin dependencias nuevas | `accounts/views.py`, `test_contrasena.py::LimitePorIpTests` |
+| 403 | — | Las vistas HTML usan `PermissionDenied` y muestran `403.html` (mismo código); las respuestas JSON de subida siguen en JSON | Página propia sin cambiar el resultado | `documentos/tests/test_errores.py`, `test_subida.py` |
+| Borrado de archivo | §5 | GET muestra una página de confirmación sin JS (nunca borra); GET y POST buscan con `archivos_visibles_para`: 404 si no lo ve, 403 si lo ve pero no puede borrarlo | "404 cuando no debe saber que existe" | `documentos/views.py::eliminar_archivo`, `test_borrar.py` |
+| Filtro de archivos | `docs/09` §5.3: Documentos y Fotos | Además "Todos", por defecto | Una página muestra todo lo visible | `test_vistas_archivos.py::test_filtro_por_tipo_en_el_servidor` |
+| Conteos | — | Los conteos de archivos y la última carga respetan el bloqueo del cliente | Salen de `permisos.py` | `test_vistas_proyectos.py::ConteoProyectoBloqueadoTests`, `test_vistas_archivos.py` |
+| Estáticos | §3 | Manifiesto de WhiteNoise solo con `DEBUG=False` | Las pruebas no corren `collectstatic` | `config/settings.py`, `test_produccion.py` |
+| Ayuda | — | Se muestran +56 9 8975 3095 y +56 9 6191 1593 | Aprobados por el usuario (`docs/09` §12.1) | `templates/base.html`, `test_csp_contrato.py::BaseComunTests` |
+
+### 15.2 Alertas pendientes de decisión del usuario
+
+Detalle en `docs/04` §6. Resumen: axes detrás del proxy de App Platform, arranque sin `EMAIL_HOST` con `DEBUG=False`, y chequeo de salud frente a `SECURE_SSL_REDIRECT`/`ALLOWED_HOSTS`. Las tres bloquean o condicionan la tarea 16.
+
+### 15.3 Seguimiento posterior a la v1
+
+De `tasks/plan.md`: subida o solicitud de documentos por el cliente, marca interno/compartido, ClamAV, miniaturas y previsualización, avisos por correo al subir, limpieza de subidas pendientes, Google SSO y 2FA, panel de administración propio y migración de archivos antiguos. Además:
+- **Revisión de UI/UX pendiente**, planificada en el brief `brief-uiux.md` del equipo de agentes (no se hizo en esta ronda).
+- Editar nombre y RUT de una empresa desde `/gestion/` (§13.2).
+- Caché compartida (Redis o base de datos) para el límite de "olvidé mi contraseña" si hay más de un worker.
+- Limpieza de `Archivo` pendientes huérfanos (subidas cortadas y reintentos).
+- Cruzar el tipo MIME declarado con la extensión al subir (`docs/09` §11).
+- Desbloquear axes al recuperar la contraseña.
+- Versión vectorial del logo.
+- Texto de privacidad en el pie: requiere un texto confirmado por el usuario.
+- Lighthouse (accesibilidad ≥ 95) y las capturas pendientes a 320, 375 y 1280 px en ambos temas.
+- Mover los JS que quedan en `static/` a `static/js/` (cosmético).
+- ~~Corregir el teléfono de la landing~~: resuelto en el PR #9 (25-09-2026).

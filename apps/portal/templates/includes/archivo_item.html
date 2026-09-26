@@ -1,22 +1,23 @@
-<div class="archivo-item">
-    <div>
-        <div class="archivo-nombre">{{ archivo.nombre_original }}</div>
-        <div class="archivo-meta">
-            Subido por {{ archivo.subido_por.email }} • {{ archivo.subido_en|date:"d M Y, H:i" }}
-        </div>
+{% load static %}
+<article class="archivo-fila">
+    <span class="archivo-ext">{{ archivo.extension|default:"—" }}</span>
+    <div class="archivo-info">
+        <span class="archivo-nombre">{{ archivo.nombre_original }}</span>
+        <span class="archivo-meta">
+            Subido por {{ archivo.subido_por.nombre|default:archivo.subido_por.email }} · {{ archivo.subido_en|date:"d M Y, H:i" }} · {{ archivo.tamano|filesizeformat }}
+        </span>
     </div>
-    <div class="archivo-actions-cell">
-        <div class="archivo-tamano">
-            {{ archivo.tamano|filesizeformat }}
-        </div>
-        <div class="archivo-botones">
-            <a href="{% url 'documentos:descargar_archivo' archivo.pk %}" class="link-descargar">⬇ Descargar</a>
-            {% if puede_borrar or archivo.puede_borrar %}
-            <form action="{% url 'documentos:eliminar_archivo' archivo.pk %}" method="post" class="form-eliminar" data-confirmar="¿Seguro? El archivo dejará de verse para todos.">
-                {% csrf_token %}
-                <button type="submit" class="btn-eliminar">🗑 Eliminar</button>
-            </form>
-            {% endif %}
-        </div>
+    <div class="archivo-botones">
+        <a href="{% url 'documentos:descargar_archivo' archivo.pk %}" class="btn-secondary btn-descargar">
+            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#descargar"></use></svg>
+            Descargar
+        </a>
+        {% if puede_borrar or archivo.puede_borrar %}
+        {# Sin JS abre la página de confirmación (GET, nunca borra); con JS, confirmar.js abre el diálogo y envía POST #}
+        <a href="{% url 'documentos:eliminar_archivo' archivo.pk %}" class="btn-eliminar" data-confirmar-eliminar data-confirmar-titulo="¿Eliminar «{{ archivo.nombre_original }}»?" data-confirmar="El archivo dejará de verse para todos, incluidos los clientes." data-confirmar-accion="Eliminar">
+            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg>
+            Eliminar
+        </a>
+        {% endif %}
     </div>
-</div>
+</article>
