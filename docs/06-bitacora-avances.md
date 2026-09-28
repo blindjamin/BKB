@@ -140,7 +140,7 @@ El usuario confirmó que `https://empresabkb.cl/` (sitio antiguo en producción)
 | Guardia 24/7 y SEC TE1/Clase A | No aparecen | Sin respaldo |
 | Cobertura | Chile, norte y centro | Valparaíso y Región Metropolitana |
 
-- **Arriendo de equipos:** instrumentación eléctrica, analizadores, y medidores de tierra, de fuga y de aislación, además de calibración.
+- **Arriendo de equipos:** instrumentación eléctrica, analizadores, y medidores de tierra, de fuga y de aislación.
 - **Teléfonos reales:** `+56 9 8975 3095` y `+56 9 6191 1593`. El landing usa `+56 9 8249 1403` (`config/site.ts`), que no coincide con ninguno.
 
 ### Punto de partida
@@ -291,3 +291,17 @@ Tarea 16 (requiere al usuario, después de decidir las 3 alertas). El piloto de 
 
 ### Punto de partida
 Revisar y fusionar los PR #9 (landing) y #10 (portal). Después: decidir las 3 alertas y pasar a la Tarea 16.
+
+---
+
+## Sesión 12 · 28 de Septiembre de 2026 (landing: página de arriendo de equipos)
+
+### Resumen
+- **Página `/arriendo`:** 10 equipos en 2 grupos (8 Fluke y 2 generadores), en tarjetas `<details>`. Todo arriendo incluye técnico BKB; no se muestran precios.
+- **Cotización:** se suman varios equipos y un solo botón abre WhatsApp con la lista. La selección no se guarda. Mientras la barra está visible se ocultan el WhatsApp flotante y el aviso de emergencia.
+- **Acceso:** link "Arriendo" en el header y en el menú del celular (con `aria-current="page"` en la página), y "Ver equipos →" en la tarjeta de "Qué hacemos" (su texto no cambió).
+- **Carrusel de servicios:** los clones ahora van con `inert` para que el teclado no pase dos veces por el mismo link.
+- Los textos de uso de cada equipo son provisorios (`TODO: validar con BKB`).
+
+### Punto de partida
+Revisar la página con el usuario (claro, oscuro, 375 px, 1280 px) y validar los textos de uso con BKB.

@@ -2,9 +2,10 @@
 import { Image } from 'astro:assets';
 import { servicios } from '../../data/landing';
 import SectionHeading from '../ui/SectionHeading.astro';
+import { getPath } from '../../utils/paths';
 ---
 
-<section id="servicios" class="py-24 max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10 scroll-mt-[80px]">
+<section id="servicios" class="py-24 w-full max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10 scroll-mt-[80px]">
   <div class="reveal">
     <SectionHeading
       eyebrow="QUÉ HACEMOS"
@@ -34,6 +35,11 @@ import SectionHeading from '../ui/SectionHeading.astro';
           <div class="relative z-10 p-7 text-center">
             <h3 class="font-display font-bold text-[20px] leading-[1.25] text-[#F8FAFC] mb-3">{s.title}</h3>
             <p class="text-[14.5px] leading-[1.55] text-[#CBD5E1] m-0">{s.desc}</p>
+            {s.href && (
+              <a href={getPath(s.href)} class="inline-block mt-4 text-[14px] font-semibold text-salmon-300 underline underline-offset-4 hover:text-white focus-bkb rounded-sm">
+                Ver equipos &rarr;
+              </a>
+            )}
           </div>
         </div>
       ))}
@@ -68,6 +74,10 @@ import SectionHeading from '../ui/SectionHeading.astro';
   }
   .carousel-btn:hover { background: #FA5A36; }
   .carousel-btn:focus-visible { outline: 2px solid #FA5A36; outline-offset: 2px; }
+  /* En celular se desliza con el dedo; las flechas tapaban el texto */
+  @media (max-width: 639px) {
+    .carousel-btn { display: none; }
+  }
 </style>
 
 <script>
@@ -81,6 +91,7 @@ import SectionHeading from '../ui/SectionHeading.astro';
     const copy = () => cards.map((c) => {
       const el = c.cloneNode(true) as HTMLElement;
       el.setAttribute('aria-hidden', 'true');
+      el.setAttribute('inert', ''); // los clones no reciben foco: el link se alcanza una sola vez con Tab
       return el;
     });
     track.prepend(...copy());
