@@ -1,10 +1,9 @@
 ---
-import { PORTAL_URLS } from '../../config/site';
-
 interface Props {
-  links: { href: string; label: string }[];
+  links: { href: string; label: string; badge?: string; current?: boolean }[];
+  cotizarHref: string;
 }
-const { links } = Astro.props;
+const { links, cotizarHref } = Astro.props;
 ---
 
 <div class="xl:hidden">
@@ -54,13 +53,14 @@ const { links } = Astro.props;
 
     <nav class="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
       {links.map(link => (
-        <a href={link.href} class="mobile-nav-link block p-3 text-lg font-medium text-main rounded-md hover:bg-page hover:text-salmon-500 focus-bkb transition-colors">
+        <a href={link.href} aria-current={link.current ? 'page' : undefined} class="mobile-nav-link block p-3 text-lg font-medium text-main rounded-md hover:bg-page hover:text-salmon-500 aria-[current=page]:text-[var(--accent-text)] focus-bkb transition-colors">
           {link.label}
+          {link.badge && <span class="ml-2 align-middle rounded-pill bg-salmon-700 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">{link.badge}</span>}
         </a>
       ))}
       <div class="my-4 h-px bg-card-border"></div>
-      <a href={PORTAL_URLS.cliente} class="mobile-nav-link block p-3 text-lg font-semibold text-main rounded-md border border-card-border bg-page hover:border-salmon-500 text-center transition-colors">
-        Soy cliente &rarr;
+      <a href={cotizarHref} class="mobile-nav-link block p-3 text-lg font-semibold text-white rounded-md bg-salmon-500 text-center transition-transform hover:-translate-y-0.5 focus-bkb">
+        Cotizar Obra
       </a>
     </nav>
   </div>

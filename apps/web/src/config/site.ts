@@ -1,7 +1,7 @@
-// Teléfonos confirmados por BKB. El primero es el principal (aviso de emergencia, WhatsApp, datos para Google).
+// Teléfonos confirmados por BKB. El primero es el principal (aviso de emergencia, llamadas, WhatsApp, datos para Google); el segundo es de respaldo.
 const PHONES = [
-  { display: '+56 9 8975 3095', href: 'tel:+56989753095' },
   { display: '+56 9 6191 1593', href: 'tel:+56961911593' },
+  { display: '+56 9 6662 6540', href: 'tel:+56966626540' },
 ] as const;
 
 export const SITE = {
