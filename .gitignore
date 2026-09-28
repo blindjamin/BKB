@@ -37,3 +37,14 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Herramientas locales (no versionar)
+.mcp.json
+graphify-out/
+.graphifyignore
+.claude/
+.agents/
+
+# Portal Django: estáticos recolectados y media local
+apps/portal/staticfiles/
+apps/portal/media/

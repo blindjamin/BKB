@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BKB Portal{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'portal.css' %}">
+
+    <script nonce="{{ request.csp_nonce }}">
+        try {
+            var savedTheme = localStorage.getItem('bkb-theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        } catch (e) {}
+    </script>
+</head>
+<body>
+    <a href="#contenido" class="skip-link">Saltar al contenido</a>
+
+    <header class="encabezado">
+        <a href="{% url 'documentos:lista_proyectos' %}" class="marca">
+            <img src="{% static 'img/logo-bkb.png' %}" alt="BKB" class="marca-logo" height="44">
+            <span class="marca-nombre">Portal de Archivos</span>
+        </a>
+        <div class="header-actions">
+            {% if es_jefe %}
+            <a href="{% url 'gestion:usuarios' %}" class="btn-link">Gestión</a>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+            <span class="header-usuario">
+                <span class="header-email">{{ user.nombre|default:user.email }}</span>
+                <span class="pastilla">{{ user.get_rol_display }}</span>
+            </span>
+            {% endif %}
+
+            <button type="button" class="theme-toggle" id="theme-toggle-btn" aria-label="Tema oscuro" aria-pressed="false">
+                <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#luna"></use></svg>
+            </button>
+
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="btn-link">Salir</button>
+            </form>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="mensajes">
+        {% for message in messages %}{% if message.level_tag == 'error' %}
+            {% include "includes/aviso_mensaje.html" %}
+        {% endif %}{% endfor %}
+        <div role="status">
+            {% for message in messages %}{% if message.level_tag != 'error' %}
+                {% include "includes/aviso_mensaje.html" %}
+            {% endif %}{% endfor %}
+        </div>
+    </div>
+
+    <main id="contenido">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="pie">
+        <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
+        <span>¿Necesitas ayuda? Llama a BKB:</span>
+        <a href="tel:+56989753095">+56 9 8975 3095</a>
+        <a href="tel:+56961911593">+56 9 6191 1593</a>
+    </footer>
+
+    {# Diálogo único de confirmación (docs/09 §6): lo usa todo form[data-confirmar] y a[data-confirmar-eliminar] #}
+    {% if user.is_authenticated %}
+    <dialog id="dialogo-confirmar" class="dialogo" aria-labelledby="dialogo-confirmar-titulo" aria-describedby="dialogo-confirmar-texto">
+        <h2 id="dialogo-confirmar-titulo" class="seccion-title">¿Confirmar?</h2>
+        <p id="dialogo-confirmar-texto"></p>
+        <div class="dialogo-acciones">
+            <form method="dialog">
+                <button type="submit" id="dialogo-cancelar" class="btn-primary">Cancelar</button>
+            </form>
+            <form method="post" id="dialogo-confirmar-form">
+                {% csrf_token %}
+                <button type="button" id="dialogo-accion" class="btn-peligro">Confirmar</button>
+            </form>
+        </div>
+    </dialog>
+    {% endif %}
+
+    <script src="{% static 'tema.js' %}" nonce="{{ request.csp_nonce }}"></script>
+    <script src="{% static 'js/confirmar.js' %}" nonce="{{ request.csp_nonce }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

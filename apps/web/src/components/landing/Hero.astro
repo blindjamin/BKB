@@ -1,0 +1,45 @@
+---
+import { Image } from 'astro:assets';
+import faenaHero from '../../assets/landing/faena-hero.jpg';
+---
+
+<section class="relative w-full min-h-[100svh] overflow-hidden flex items-center bg-night-900" aria-label="Hero">
+  <div class="absolute inset-0 overflow-hidden">
+    <Image 
+      src={faenaHero} 
+      alt="Técnico BKB en faena eléctrica industrial" 
+      class="hero-bg-img w-full h-full object-cover" 
+      loading="eager" 
+      fetchpriority="high" 
+    />
+    <div class="absolute inset-0 bg-gradient-to-br from-night-900/90 via-night-900/70 to-night-900/50"></div>
+  </div>
+
+  <div class="relative z-10 mx-auto w-full px-4 sm:px-10 pt-[96px] pb-[200px] grid grid-cols-1 gap-14 items-start" style="max-width: var(--bkb-container);">
+
+    <div class="flex flex-col gap-6 pt-5">
+      <div class="hero-in inline-flex self-start items-center gap-2 bg-salmon-500/15 border border-salmon-500/40 text-salmon-300 text-[13px] font-semibold tracking-[0.02em] px-4 py-[9px] rounded-pill">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+          <path d="M11 21.9v-8.4H5.3c-.6 0-1-.6-.8-1.2l4.8-10.8c.2-.5.8-.8 1.4-.6.2.1.4.2.5.4l.2.4v7.9h5.3c.6 0 1 .6.8 1.2l-4.8 10.8c-.2.5-.8.8-1.4.6-.2-.1-.4-.2-.5-.3z"/>
+        </svg>
+        <span>Obras Eléctricas & Servicios Industriales · Más de 30 años de trayectoria</span>
+      </div>
+
+      <h1 class="hero-in font-display text-[length:var(--bkb-text-h1)] leading-[1.08] tracking-[-0.02em] m-0 font-extrabold text-[#F8FAFC]">
+        Energía que<br/><span class="text-salmon-500">no se detiene.</span>
+      </h1>
+
+      <p class="hero-in text-[18px] leading-[1.6] text-[#94A3B8] m-0 max-w-[48ch]">
+        Ingeniería de montaje, automatización PLC y mantenimiento eléctrico integral para plantas industriales en Chile. Garantía de continuidad operativa y certificación SEC TE1.
+      </p>
+    </div>
+
+    
+  </div>
+</section>
+
+<style>
+  .hero-bg-img {
+    animation: heroZoom 22s infinite alternate ease-in-out;
+  }
+</style>

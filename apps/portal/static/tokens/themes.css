@@ -1,0 +1,24 @@
+:root, [data-theme="dark"] {
+  color-scheme: dark;
+  --page-bg: #080C14;
+  --card-bg: #0F172A;
+  --card-border: rgba(255,255,255,0.09);
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-subtle: #8391A7; /* D3: subir subtle de #64748B a #8391A7 para contraste */
+  --input-bg: rgba(255,255,255,0.04);
+  --input-border: rgba(255,255,255,0.16);
+  --accent-text: var(--bkb-salmon-500);
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --page-bg: #FFF4EE;
+  --card-bg: #FFFFFF;
+  --card-border: #F5D9C7;
+  --text-main: #1A1513;
+  --text-muted: #7D6F64;
+  --text-subtle: #7D6F64; /* D3: subir subtle en claro (recomendaba #7D6F64 en vez de #9A8F86) */
+  --input-bg: #FAF6F2;
+  --input-border: #F5D9C7;
+  --accent-text: var(--bkb-salmon-700);
+}

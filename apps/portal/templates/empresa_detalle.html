@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ empresa.nombre }} - Proyectos - BKB Portal{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    {% if puede_gestionar %}
+    <nav class="breadcrumbs">
+        <a href="{% url 'documentos:lista_proyectos' %}">&larr; Volver a Empresas</a>
+    </nav>
+    {% endif %}
+
+    <div class="view-header">
+        <div>
+            <h1 class="proyectos-title">{{ empresa.nombre }}</h1>
+            {% if empresa.rut %}
+                <p class="view-subtitle"><span class="empresa-rut">RUT: {{ empresa.rut }}</span> · Historial de proyectos</p>
+            {% else %}
+                <p class="view-subtitle">Historial de proyectos</p>
+            {% endif %}
+        </div>
+        {% if puede_gestionar %}
+        <div>
+            <a href="{% url 'documentos:crear_proyecto' %}?empresa={{ empresa.pk }}" class="btn-action">+ Nuevo Proyecto</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if proyectos %}
+        <div class="proyectos-grid">
+            {% for proyecto in proyectos %}
+                <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="project-card{% if proyecto.estado != 'activo' %} is-cerrado{% endif %}">
+                    <div class="project-card-top">
+                        <span class="project-card-empresa">
+                            <svg class="icono icono-empresa" aria-hidden="true"><use href="{% static 'icons.svg' %}#empresa"></use></svg>
+                            {{ empresa.nombre }}
+                        </span>
+                        <span class="badge pastilla-estado {% if proyecto.estado == 'activo' %}badge-activo pastilla-activo{% else %}badge-cerrado pastilla-cerrado{% endif %}">
+                            {% if proyecto.estado == 'activo' %}ACTIVO{% else %}CERRADO{% endif %}
+                        </span>
+                    </div>
+
+                    <h2 class="project-card-title">{{ proyecto.nombre }}</h2>
+
+                    <div class="project-card-meta">
+                        <div class="project-card-secondary">
+                            {% if proyecto.bloqueado %}
+                                <span>Confirma la recepción para ver los archivos</span>
+                            {% elif proyecto.archivos_count %}
+                                <span>{{ proyecto.archivos_count }} archivo{{ proyecto.archivos_count|pluralize }} · última carga {{ proyecto.ultima_carga|date:"d b Y" }}</span>
+                            {% else %}
+                                <span>0 archivos · Sin cargas aún</span>
+                            {% endif %}
+                        </div>
+                        <span class="card-arrow" aria-hidden="true">Ingresar al proyecto &rarr;</span>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="proyectos-empty">
+            <p class="proyectos-empty-text">Esta empresa aún no cuenta con proyectos registrados.</p>
+            {% if puede_gestionar %}
+            <div class="empty-cta-wrapper">
+                <a href="{% url 'documentos:crear_proyecto' %}?empresa={{ empresa.pk }}" class="btn-action">+ Crear Proyecto</a>
+            </div>
+            {% endif %}
+            <div class="empty-support-box">
+                <p class="empty-support-text">Para asistencia o consultas sobre proyectos, comunícate con BKB:</p>
+                <div class="empty-support-phones">
+                    <a href="tel:+56989753095" class="support-phone-link">+56 9 8975 3095</a>
+                    <span class="support-phone-separator">&middot;</span>
+                    <a href="tel:+56961911593" class="support-phone-link">+56 9 6191 1593</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

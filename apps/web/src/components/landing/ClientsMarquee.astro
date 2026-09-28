@@ -1,0 +1,106 @@
+---
+import { Image } from 'astro:assets';
+import { brands } from '../../data/landing';
+import Eyebrow from '../ui/Eyebrow.astro';
+---
+
+<section class="absolute bottom-0 inset-x-0 z-20 py-[10px] overflow-hidden">
+  <div class="text-center mb-0.5 reveal [&>span]:!text-[#F8FAFC]">
+    <Eyebrow text="TRAYECTORIA COMPARTIDA" />
+  </div>
+
+  <div class="marquee-container reveal group">
+    <div class="marquee-track group-hover:pause group-focus-within:pause">
+      
+      <!-- Primera vuelta -->
+      <ul class="marquee-list m-0 p-0 list-none flex items-center gap-6">
+        {brands.map(brand => (
+          <li class="logo-card shrink-0 w-[150px] h-[84px] flex items-center justify-center p-3">
+            <Image src={brand.img} alt={brand.alt} class="w-full h-full object-contain mix-blend-multiply" />
+          </li>
+        ))}
+      </ul>
+
+      <!-- Segunda vuelta (oculta para lectores de pantalla) -->
+      <ul class="marquee-list m-0 p-0 list-none flex items-center gap-6" aria-hidden="true">
+        {brands.map(brand => (
+          <li class="logo-card shrink-0 w-[150px] h-[84px] flex items-center justify-center p-3">
+            <Image src={brand.img} alt="" class="w-full h-full object-contain mix-blend-multiply" />
+          </li>
+        ))}
+      </ul>
+      
+    </div>
+  </div>
+</section>
+
+<style>
+  .marquee-container {
+    width: 100%;
+    overflow: hidden;
+    padding-block: 14px; /* espacio para la ampliación y sombra en hover */
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  /* Tarjeta blanca con borde salmón de marca */
+  .logo-card {
+    background: #FFFFFF;
+    border: 2px solid var(--bkb-salmon-500);
+    border-radius: 12px;
+  }
+  .logo-card:hover {
+    box-shadow: 0 6px 18px rgba(250, 90, 54, 0.28);
+  }
+
+  /* Logos en gris atenuados; color y leve ampliación al pasar el mouse */
+  .marquee-list li {
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+  }
+  .marquee-list li :global(img) {
+    filter: grayscale(1);
+    opacity: 0.6;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+  }
+  .marquee-list li:hover {
+    transform: scale(1.1);
+  }
+  .marquee-list li:hover :global(img) {
+    filter: grayscale(0);
+    opacity: 1;
+  }
+
+  /* Sin gap entre vueltas: cada lista lleva su espacio final para que el -50% calce sin salto */
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marqueeScroll 55s linear infinite;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  .marquee-list {
+    padding-right: 1.5rem !important;
+  }
+
+  .pause {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track {
+      animation: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: var(--bkb-container);
+      margin: 0 auto;
+    }
+    .marquee-track > ul:last-child {
+      display: none;
+    }
+    .marquee-list {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+</style>

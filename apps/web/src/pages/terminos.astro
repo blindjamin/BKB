@@ -1,36 +1,39 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import Card from '../components/ui/Card.astro';
+import { SITE } from '../config/site';
 ---
 
 <Layout 
   title="Términos y Condiciones del Servicio"
   description="Términos y condiciones de uso del sitio web público y del portal de clientes de BKB SpA."
+  headerMode="solid"
 >
-  <div class="bg-[#FBF8F5] py-16 border-b border-[#E6DDD5]">
-    <div class="container-bkb">
-      <span class="text-xs font-mono font-bold tracking-wider text-[#B4470F] uppercase">Condiciones Generales</span>
-      <h1 class="display-lg text-[#1A1513] mt-2 mb-4">Términos del Servicio</h1>
-      <p class="body-sm text-[#7D6F64]">
-        Reglas de uso del sitio público y de la plataforma de clientes de BKB SpA.
+  <div class="bg-page py-16 border-b border-card-border">
+    <div class="max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10">
+      <SectionHeading eyebrow="Condiciones Generales" title="Términos del Servicio" />
+      <p class="text-[14.5px] text-muted m-0 leading-relaxed max-w-[60ch]">
+        Reglas de uso del sitio público y de la plataforma de clientes de {SITE.name}.
       </p>
     </div>
   </div>
 
-  <div class="container-bkb py-16 max-w-4xl">
-    <div class="card-bkb space-y-8 text-sm text-[#332B26] leading-relaxed">
+  <div class="max-w-[800px] mx-auto px-5 sm:px-10 py-16">
+    <Card class="flex flex-col gap-8">
       <section>
-        <h2 class="font-display text-xl font-bold text-[#1A1513] mb-3">1. Aceptación de los Términos</h2>
-        <p>
+        <h2 class="font-display font-bold text-[18px] text-main m-0 mb-3">1. Aceptación de los Términos</h2>
+        <p class="text-[14.5px] leading-[1.6] text-muted m-0">
           El acceso y utilización del sitio web <strong>www.bkb.cl</strong> y del portal de clientes implica la aceptación plena y sin reservas de las presentes condiciones por parte del usuario o mandante.
         </p>
       </section>
 
       <section>
-        <h2 class="font-display text-xl font-bold text-[#1A1513] mb-3">2. Uso Autorizado del Portal de Clientes</h2>
-        <p class="mb-2">
+        <h2 class="font-display font-bold text-[18px] text-main m-0 mb-3">2. Uso Autorizado del Portal de Clientes</h2>
+        <p class="text-[14.5px] leading-[1.6] text-muted m-0 mb-2">
           Las credenciales de acceso al portal documental son personales, nominativas e intransferibles. Queda estrictamente prohibido:
         </p>
-        <ul class="list-disc pl-5 space-y-1 text-[#7D6F64]">
+        <ul class="m-0 p-0 pl-4 list-disc flex flex-col gap-2 text-[14.5px] text-muted leading-[1.6]">
           <li>Compartir claves de acceso corporativas entre múltiples operadores no autorizados.</li>
           <li>Descargar planos, certificaciones o dossiers técnicos ajenos a las obras expresamente contratadas con BKB.</li>
           <li>Intentar eludir controles de autenticación, alterar registros de auditoría o explotar vulnerabilidades en la plataforma.</li>
@@ -38,18 +41,18 @@ import Layout from '../layouts/Layout.astro';
       </section>
 
       <section>
-        <h2 class="font-display text-xl font-bold text-[#1A1513] mb-3">3. Propiedad Intelectual e Industrial</h2>
-        <p>
+        <h2 class="font-display font-bold text-[18px] text-main m-0 mb-3">3. Propiedad Intelectual e Industrial</h2>
+        <p class="text-[14.5px] leading-[1.6] text-muted m-0">
           Los logotipos, esquemas de diseño, diagramas unilineales, códigos fuente y marcas comerciales exhibidas en este sitio son propiedad exclusiva de BKB SpA o de sus respectivos titulares de licencias y autorizaciones.
         </p>
       </section>
 
       <section>
-        <h2 class="font-display text-xl font-bold text-[#1A1513] mb-3">4. Ley Aplicable y Jurisdicción</h2>
-        <p>
+        <h2 class="font-display font-bold text-[18px] text-main m-0 mb-3">4. Ley Aplicable y Jurisdicción</h2>
+        <p class="text-[14.5px] leading-[1.6] text-muted m-0">
           Para todos los efectos legales derivados del uso de esta plataforma, las partes se someten a las leyes de la República de Chile y a la jurisdicción de sus tribunales ordinarios de justicia.
         </p>
       </section>
-    </div>
+    </Card>
   </div>
 </Layout>

@@ -1,0 +1,28 @@
+---
+import { mercados } from '../../data/landing';
+import SectionHeading from '../ui/SectionHeading.astro';
+---
+
+<section id="mercados" class="py-24 max-w-[var(--bkb-container)] mx-auto px-5 sm:px-10 scroll-mt-[80px]">
+  <div class="reveal">
+    <SectionHeading eyebrow="MERCADOS" title="Experiencia por industria." />
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {mercados.map((m, index) => (
+      <div 
+        class="reveal bg-card border border-card-border rounded-[16px] p-[28px] transition-transform duration-300 hover:-translate-y-1 flex flex-col h-full"
+        style={`transition-delay: ${index * 100}ms;`}
+      >
+        <h3 class="font-display font-bold text-[20px] leading-[1.25] text-main mb-3">{m.title}</h3>
+        <p class="text-[14.5px] leading-[1.55] text-muted m-0 mb-6 flex-1">{m.desc}</p>
+        
+        <div class="pt-5 border-t border-card-border mt-auto">
+          <span class="font-mono text-[12px] font-medium text-subtle uppercase tracking-[0.02em]">
+            <span class="text-main font-semibold mr-1">CLIENTES:</span> {m.clients}
+          </span>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>

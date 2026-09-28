@@ -1,0 +1,6 @@
+{% load static %}
+{# Un mensaje de django.contrib.messages como aviso (docs/09 §6). Los errores se anuncian de inmediato. #}
+<div class="aviso aviso-{{ message.level_tag|default:'info' }}"{% if message.level_tag == 'error' %} role="alert"{% endif %}>
+    <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#{% if message.level_tag == 'error' %}alerta{% elif message.level_tag == 'success' %}exito{% else %}info{% endif %}"></use></svg>
+    <span>{{ message }}</span>
+</div>

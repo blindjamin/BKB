@@ -1,0 +1,374 @@
+import uuid
+
+from django.conf import settings
+from django.contrib import messages
+from django.db import transaction
+from django.db.models import Count, Max, Q
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponseBadRequest, Http404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods, require_POST
+from django.utils import timezone
+
+from .forms import EmpresaForm, ProyectoForm
+from .permisos import (
+    _es_personal,
+    proyectos_visibles,
+    proyectos_de_empresa,
+    empresas_visibles,
+    puede_ver_empresa,
+    puede_gestionar_estructura,
+    archivos_visibles,
+    archivos_visibles_para,
+    puede_subir,
+    puede_borrar,
+    puede_gestionar_hitos,
+    estado_proyecto,
+    EstadoFlujoProyecto,
+    puede_responder_recepcion,
+)
+from .avisos import enviar_aviso_recepcion
+from .models import Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RespuestaRecepcion
+from .storage import url_descarga
+from .subidas import EXTENSIONES_PERMITIDAS
+
+
+def _get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[-1].strip()
+    return request.META.get('REMOTE_ADDR')
+
+
+def _tarjetas_de_proyecto(usuario, proyectos):
+    """Proyectos con conteo de archivos disponibles y última carga, cerrados al final (docs/09 §12.1)."""
+    disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True)
+    proyectos = proyectos.annotate(
+        archivos_count=Count('archivos', filter=disponibles),
+        ultima_carga=Max('archivos__subido_en', filter=disponibles),
+    ).order_by('estado', 'nombre')
+    return _ocultar_conteo_bloqueados(usuario, proyectos)
+
+
+def _ocultar_conteo_bloqueados(usuario, proyectos):
+    """El cliente no ve el conteo ni la última carga de un proyecto que espera su recepción (§12.3.5)."""
+    if puede_gestionar_hitos(usuario):
+        return proyectos
+    proyectos = list(proyectos)
+    # ponytail: una consulta de estado por proyecto (N+1); un cliente tiene pocos proyectos.
+    for p in proyectos:
+        p.bloqueado = estado_proyecto(p) == EstadoFlujoProyecto.ESPERANDO_RECEPCION
+        if p.bloqueado:
+            p.archivos_count, p.ultima_carga = 0, None
+    return proyectos
+
+
+@login_required
+def lista_proyectos(request):
+    if _es_personal(request.user):
+        empresas = empresas_visibles(request.user).annotate(
+            proyectos_activos_count=Count('proyectos', filter=Q(proyectos__estado=EstadoProyecto.ACTIVO))
+        )
+        return render(request, 'empresas.html', {'empresas': empresas})
+
+    proyectos = _tarjetas_de_proyecto(request.user, proyectos_visibles(request.user).select_related('empresa'))
+    return render(request, 'proyectos.html', {'proyectos': proyectos})
+
+
+@login_required
+def crear_empresa(request):
+    if not puede_gestionar_estructura(request.user):
+        raise PermissionDenied("No tienes permisos para crear empresas.")
+
+    if request.method == 'POST':
+        form = EmpresaForm(request.POST)
+        if form.is_valid():
+            empresa = form.save()
+            return redirect('documentos:detalle_empresa', pk=empresa.pk)
+    else:
+        form = EmpresaForm()
+
+    return render(request, 'empresa_form.html', {'form': form})
+
+
+@login_required
+def detalle_empresa(request, pk):
+    empresa = get_object_or_404(Empresa, pk=pk)
+    if not puede_ver_empresa(request.user, empresa):
+        raise Http404("No tienes acceso a esta empresa.")
+
+    proyectos = _tarjetas_de_proyecto(request.user, proyectos_de_empresa(request.user, empresa))
+    context = {
+        'empresa': empresa,
+        'proyectos': proyectos,
+        'puede_gestionar': puede_gestionar_estructura(request.user),
+    }
+    return render(request, 'empresa_detalle.html', context)
+
+
+@login_required
+def crear_proyecto(request):
+    if not puede_gestionar_estructura(request.user):
+        raise PermissionDenied("No tienes permisos para crear proyectos.")
+
+    initial = {}
+    empresa_id = request.GET.get('empresa')
+    if empresa_id:
+        initial['empresa'] = empresa_id
+
+    if request.method == 'POST':
+        form = ProyectoForm(request.POST)
+        if form.is_valid():
+            proyecto = form.save()
+            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+    else:
+        form = ProyectoForm(initial=initial)
+
+    return render(request, 'proyecto_form.html', {
+        'form': form,
+        'titulo': 'Nuevo Proyecto',
+        'accion': 'Crear Proyecto',
+    })
+
+
+@login_required
+def editar_proyecto(request, pk):
+    if not puede_gestionar_estructura(request.user):
+        raise PermissionDenied("No tienes permisos para editar proyectos.")
+
+    proyecto = get_object_or_404(Proyecto, pk=pk)
+
+    if request.method == 'POST':
+        form = ProyectoForm(request.POST, instance=proyecto)
+        if form.is_valid():
+            form.save()
+            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+    else:
+        form = ProyectoForm(instance=proyecto)
+
+    return render(request, 'proyecto_form.html', {
+        'form': form,
+        'proyecto': proyecto,
+        'titulo': f'Editar {proyecto.nombre}',
+        'accion': 'Guardar Cambios',
+    })
+
+
+@login_required
+def detalle_proyecto(request, pk):
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+
+    carpeta_activa = None
+    carpeta_id = request.GET.get('carpeta')
+    if carpeta_id:
+        try:
+            carpeta_id = uuid.UUID(carpeta_id)
+        except ValueError:
+            raise Http404("Carpeta no encontrada.")
+        carpeta_activa = get_object_or_404(proyecto.carpetas, pk=carpeta_id)
+
+    # carpeta_activa=None filtra carpeta IS NULL: los archivos de la raíz
+    todos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
+    for archivo in todos:
+        archivo.puede_borrar = puede_borrar(request.user, archivo)
+        archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
+
+    fotos = [a for a in todos if a.tipo.startswith('image/')]
+    documentos = [a for a in todos if not a.tipo.startswith('image/')]
+    # Filtro por enlaces (docs/09 §5.3); cualquier otro valor muestra todos.
+    tipo = request.GET.get('tipo')
+    if tipo not in ('documentos', 'fotos'):
+        tipo = None
+    archivos = {'documentos': documentos, 'fotos': fotos}.get(tipo, todos)
+
+    # Cantidad por carpeta desde archivos_visibles: respeta el bloqueo del cliente (lección de B1).
+    conteo = dict(
+        archivos_visibles(request.user, proyecto).order_by().values_list('carpeta').annotate(n=Count('id'))
+    )
+    carpetas = list(proyecto.carpetas.all())
+    for c in carpetas:
+        c.n_archivos = conteo.get(c.pk, 0)
+
+    gestiona_hitos = puede_gestionar_hitos(request.user)
+    hitos = list(proyecto.hitos.select_related('cumplido_por'))
+    estado = estado_proyecto(proyecto)
+    recibido = estado == EstadoFlujoProyecto.RECIBIDO
+
+    context = {
+        'proyecto': proyecto,
+        'hitos': hitos,
+        'puede_gestionar_hitos': gestiona_hitos,
+        'puede_avanzar': gestiona_hitos and not all(h.cumplido for h in hitos),
+        'puede_retroceder': gestiona_hitos and any(h.cumplido for h in hitos) and not recibido,
+        'estado': estado,
+        'mostrar_aviso': not gestiona_hitos,  # el aviso es para el cliente (§12.1)
+        'hito_actual': next((h for h in hitos if not h.cumplido), None),
+        'recepcion_conforme': (
+            proyecto.respuestas_recepcion.filter(conforme=True).order_by('fecha').first() if recibido else None
+        ),
+        'carpetas': carpetas,
+        'carpeta_activa': carpeta_activa,
+        'archivos': archivos,
+        'tipo': tipo,
+        'n_todos': len(todos),
+        'n_documentos': len(documentos),
+        'n_fotos': len(fotos),
+        'puede_subir': puede_subir(request.user),
+        # Límites de la subida para la validación previa del navegador (el servidor sigue decidiendo)
+        'max_upload_mb': settings.MAX_UPLOAD_MB,
+        'extensiones': sorted(EXTENSIONES_PERMITIDAS),
+        'puede_gestionar': puede_gestionar_estructura(request.user),
+    }
+    return render(request, 'archivos.html', context)
+
+
+@login_required
+@require_POST
+def crear_carpeta(request, pk):
+    if not puede_gestionar_estructura(request.user):
+        raise PermissionDenied("No tienes permisos para crear carpetas.")
+
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    nombre = request.POST.get('nombre', '').strip()
+    url_proyecto = reverse('documentos:detalle_proyecto', args=[proyecto.pk])
+
+    if not nombre:
+        messages.error(request, 'La carpeta necesita un nombre.')
+        return redirect(url_proyecto)
+    if proyecto.carpetas.filter(nombre__iexact=nombre).exists():
+        messages.error(request, f'Ya existe una carpeta llamada "{nombre}" en este proyecto.')
+        return redirect(url_proyecto)
+
+    carpeta = Carpeta.objects.create(proyecto=proyecto, nombre=nombre, creado_por=request.user)
+    return redirect(f'{url_proyecto}?carpeta={carpeta.pk}')
+
+
+@login_required
+@require_POST
+def eliminar_carpeta(request, pk):
+    if not puede_gestionar_estructura(request.user):
+        raise PermissionDenied("No tienes permisos para eliminar carpetas.")
+
+    carpeta = get_object_or_404(Carpeta.objects.filter(proyecto__in=proyectos_visibles(request.user)), pk=pk)
+    proyecto_pk = carpeta.proyecto_id
+    carpeta.delete()  # sus archivos vuelven a la raíz (SET_NULL); el Space no se toca
+    return redirect('documentos:detalle_proyecto', pk=proyecto_pk)
+
+
+@login_required
+@require_POST
+def avanzar_hito(request, pk):
+    if not puede_gestionar_hitos(request.user):
+        raise PermissionDenied("No tienes permisos para marcar hitos.")
+
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    with transaction.atomic():
+        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
+        hito = proyecto.hitos.filter(cumplido_en__isnull=True).order_by('orden').first()
+        if hito:
+            hito.cumplido_en = timezone.now()
+            hito.cumplido_por = request.user
+            hito.save(update_fields=['cumplido_en', 'cumplido_por'])
+    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+
+
+@login_required
+@require_POST
+def retroceder_hito(request, pk):
+    if not puede_gestionar_hitos(request.user):
+        raise PermissionDenied("No tienes permisos para deshacer hitos.")
+
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    with transaction.atomic():
+        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
+        if estado_proyecto(proyecto) == EstadoFlujoProyecto.RECIBIDO:
+            messages.error(request, 'El cliente ya confirmó la recepción; los hitos no se pueden deshacer.')
+            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+        hito = proyecto.hitos.filter(cumplido_en__isnull=False).order_by('-orden').first()
+        if hito:
+            hito.cumplido_en = None
+            hito.cumplido_por = None
+            hito.save(update_fields=['cumplido_en', 'cumplido_por'])
+    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+
+
+@login_required
+@require_POST
+def responder_recepcion(request, pk):
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not puede_responder_recepcion(request.user, proyecto):
+        raise PermissionDenied("No puedes responder la recepción de este proyecto.")
+
+    resultado = request.POST.get('resultado')
+    if resultado not in ('conforme', 'no_conforme'):
+        return HttpResponseBadRequest("Resultado no válido.")
+    conforme = resultado == 'conforme'
+    nombre = request.POST.get('nombre_revisor', '').strip()
+    if not nombre:
+        error = 'Escribe el nombre de quien revisó.'
+    elif len(nombre) > 200:
+        error = 'El nombre no puede superar 200 caracteres.'
+    elif conforme and not request.POST.get('revisado'):
+        error = 'Marca "Recepcionado y revisado" para confirmar.'
+    else:
+        error = None
+    if error:
+        messages.error(request, error)
+        return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+
+    with transaction.atomic():
+        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # mismo bloqueo que avanzar/retroceder
+        if not puede_responder_recepcion(request.user, proyecto):  # el estado pudo cambiar mientras tanto
+            messages.error(request, 'El proyecto ya no está esperando tu recepción.')
+            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+        respuesta = RespuestaRecepcion.objects.create(
+            proyecto=proyecto,
+            usuario=request.user,
+            nombre_revisor=nombre,
+            conforme=conforme,
+            ip=_get_client_ip(request),
+        )
+
+    enviar_aviso_recepcion(respuesta)  # fuera del atomic: un fallo del correo no deshace la respuesta
+    if conforme:
+        messages.success(request, 'Recepción confirmada.')
+    else:
+        messages.success(request, 'Registramos tu respuesta "No conforme". BKB te contactará.')
+    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+
+
+@login_required
+def descargar_archivo(request, pk):
+    archivo = get_object_or_404(archivos_visibles_para(request.user), pk=pk)
+
+    DescargaLog.objects.create(
+        usuario=request.user,
+        archivo=archivo,
+        ip=_get_client_ip(request),
+    )
+
+    url = url_descarga(archivo.clave_space, archivo.nombre_original)
+    return redirect(url)
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def eliminar_archivo(request, pk):
+    # 404 si no lo ve (spec: "404 cuando no debe saber que existe"); 403 si lo ve pero no puede borrarlo.
+    # Ya eliminado o pendiente: no es visible, así que también da 404.
+    archivo = get_object_or_404(archivos_visibles_para(request.user), pk=pk)
+    if not puede_borrar(request.user, archivo):
+        raise PermissionDenied("No tienes permisos para eliminar este archivo.")
+
+    if request.method == 'GET':
+        # Confirmación sin JS (docs/09 §5.5): solo muestra la pregunta, nunca borra.
+        return render(request, 'confirmar_eliminar.html', {'archivo': archivo})
+
+    archivo.eliminado_en = timezone.now()
+    archivo.eliminado_por = request.user
+    archivo.save()
+    messages.success(request, f'Se eliminó «{archivo.nombre_original}».')
+
+    return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)
