@@ -12,32 +12,34 @@ const { mode = 'solid' } = Astro.props;
 const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '/BKB/';
 const navLinks = [
   { href: isHome ? '#top' : getPath('/'), label: 'Inicio' },
-  { href: isHome ? '#mercados' : `${getPath('/')}#mercados`, label: 'Mercados' },
   { href: isHome ? '#servicios' : `${getPath('/')}#servicios`, label: 'Servicios' },
+  { href: isHome ? '#mercados' : `${getPath('/')}#mercados`, label: 'Mercados' },
+  { href: isHome ? '#testimonios' : `${getPath('/')}#testimonios`, label: 'Testimonios' },
   { href: isHome ? '#obras' : `${getPath('/')}#obras`, label: 'Obras' },
   { href: isHome ? '#cotizar' : `${getPath('/')}#cotizar`, label: 'Contacto' },
 ];
 
-const headerClasses = mode === 'reveal' 
-  ? 'site-header-reveal fixed top-0 left-0 right-0 z-50 pointer-events-none opacity-0 -translate-y-full'
-  : 'site-header-solid sticky top-0 z-50 transition-colors duration-300 backdrop-blur-md border-b bg-page/80 border-card-border';
+const headerClasses = mode === 'reveal'
+  ? 'site-header-reveal fixed top-0 left-0 right-0 z-50'
+  : 'site-header-solid sticky top-0 z-50 transition-colors duration-300 backdrop-blur-md border-b bg-page/95 border-card-border shadow-sm';
 ---
 
 <header class={headerClasses} id="site-header" data-mode={mode}>
   <div class="mx-auto flex items-center justify-between flex-nowrap" style="max-width: var(--bkb-container); padding: 14px 40px;">
-    
+
     <div class="flex items-center gap-3.5">
       <a href={getPath('/')} class="focus-bkb rounded-sm block">
         <img src={getPath('/assets/bkb-logo-final.png')} alt="BKB Ingeniería Eléctrica & Servicios" width="auto" height="52" class="h-[52px] w-auto object-contain" />
       </a>
-      <span class="hidden xl:inline-flex items-center px-2.5 py-1 rounded-pill bg-success/10 text-success font-mono text-[11px] font-bold tracking-[0.04em] whitespace-nowrap">
-        SEC CLASE A
-      </span>
     </div>
 
     <nav class="hidden xl:flex items-center gap-[30px]" aria-label="Navegación principal">
       {navLinks.map(link => (
-        <a href={link.href} class="text-main font-medium text-sm transition-colors hover:text-salmon-500 focus-bkb rounded-sm p-1">
+        <a
+          href={link.href}
+          data-navlink={link.href.replace(/^.*#/, '')}
+          class="nav-link navlink relative font-semibold text-sm transition-colors focus-bkb rounded-sm p-1"
+        >
           {link.label}
         </a>
       ))}
@@ -45,15 +47,15 @@ const headerClasses = mode === 'reveal'
 
     <div class="flex items-center gap-3">
       <ThemeToggle />
-      
-      <a href={PORTAL_URLS.home} class="hidden xl:inline-flex items-center gap-2 px-[18px] py-[10px] rounded-pill bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.2)] text-main text-sm font-semibold backdrop-blur-[8px] transition-colors hover:border-salmon-500 hover:text-salmon-500 focus-bkb" style="html[data-theme='light'] & { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }">
-        Acceso Portal
+
+      <a href={PORTAL_URLS.cliente} class="header-pill hidden xl:inline-flex items-center gap-2 px-[18px] py-[10px] rounded-pill bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.2)] text-main text-sm font-semibold backdrop-blur-[8px] transition-colors hover:border-salmon-500 hover:text-salmon-500 focus-bkb">
+        Soy cliente &rarr;
       </a>
-      
+
       <a href={isHome ? '#cotizar' : `${getPath('/')}#cotizar`} class="inline-flex items-center px-5 py-[10px] rounded-pill bg-salmon-500 text-white text-sm font-semibold transition-transform hover:-translate-y-0.5 focus-bkb whitespace-nowrap">
         Cotizar Obra
       </a>
-      
+
       <!-- Menú Móvil -->
       <MobileNav links={navLinks} />
     </div>
@@ -61,26 +63,80 @@ const headerClasses = mode === 'reveal'
 </header>
 
 <style>
+  /* Colores del header según fondo. Por defecto: fondo oscuro -> texto claro. */
+  #site-header {
+    --hdr-text: #F8FAFC;
+    --hdr-hover: var(--bkb-salmon-300);
+    --hdr-active: var(--bkb-salmon-300);
+    --pill-bg: rgba(255, 255, 255, 0.1);
+    --pill-border: rgba(255, 255, 255, 0.35);
+  }
+  /* Tema claro con fondo claro -> texto oscuro.
+     Llevan #site-header para ganarle en especificidad a la regla de arriba. */
+  :global(html[data-theme="light"]) #site-header.site-header-solid,
+  :global(html[data-theme="light"]) #site-header.site-header-reveal.is-scrolled,
+  :global(html[data-theme="light"]) #site-header.site-header-reveal:focus-within {
+    --hdr-text: var(--text-main);
+    --hdr-hover: var(--bkb-salmon-700);
+    --hdr-active: var(--bkb-salmon-700);
+    --pill-bg: rgba(26, 21, 19, 0.05);
+    --pill-border: rgba(26, 21, 19, 0.25);
+  }
+  :global(html[data-theme="dark"]) #site-header.site-header-solid {
+    background-color: rgba(30, 30, 33, 0.92);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  :global(html[data-theme="light"]) #site-header.site-header-solid {
+    background-color: rgba(253, 241, 232, 0.97);
+    border-color: #E8DCD2;
+  }
+
+  .nav-link {
+    color: var(--hdr-text);
+  }
+  .nav-link:hover {
+    color: var(--hdr-hover);
+  }
+  #site-header :global(.header-pill) {
+    color: var(--hdr-text);
+    background: var(--pill-bg);
+    border-color: var(--pill-border);
+  }
+  #site-header :global(.header-pill:hover) {
+    color: var(--hdr-hover);
+    border-color: var(--hdr-hover);
+  }
+
+  /* Modo reveal (inicio): oculto sobre el hero; aparece al llegar a "Qué hacemos" (motion.ts pone .is-scrolled) */
   .site-header-reveal {
-    transition: background-color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+    opacity: 0;
+    transform: translateY(-100%);
+    pointer-events: none;
     visibility: hidden;
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
   }
   .site-header-reveal.is-scrolled,
   .site-header-reveal:focus-within {
-    background-color: rgba(8, 12, 20, 0.6);
-    backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
     visibility: visible;
-    transition-delay: 0s, 0s, 0s, 0s, 0s;
+    transition-delay: 0s;
+    background: rgba(8, 12, 20, 0.88);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   }
-  
+
   :global(html[data-theme="light"]) .site-header-reveal.is-scrolled,
   :global(html[data-theme="light"]) .site-header-reveal:focus-within {
-    background-color: rgba(255, 244, 238, 0.8);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background: rgba(253, 241, 232, 0.94);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-header-reveal { transition: none; }
   }
 
   @media (max-width: 640px) {
@@ -88,4 +144,65 @@ const headerClasses = mode === 'reveal'
       padding: 14px 16px !important;
     }
   }
+
+  .navlink::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: -2px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--bkb-salmon-500);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .navlink:hover::after,
+  .navlink.is-active::after {
+    transform: scaleX(1);
+  }
+  .navlink.is-active {
+    color: var(--hdr-active);
+  }
 </style>
+
+<script>
+  function initActiveNav() {
+    const navLinks = document.querySelectorAll<HTMLAnchorElement>('.navlink[data-navlink]');
+    if (!navLinks.length) return;
+
+    const sections: { id: string; el: Element; link: HTMLAnchorElement }[] = [];
+    navLinks.forEach(link => {
+      const id = link.dataset.navlink;
+      if (!id) return;
+      const el = document.getElementById(id);
+      if (el) sections.push({ id, el, link });
+    });
+    if (!sections.length) return;
+
+    const setActive = (id: string | null) => {
+      navLinks.forEach(link => {
+        link.classList.toggle('is-active', link.dataset.navlink === id);
+      });
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter(e => e.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+      if (visible.length > 0) {
+        const match = sections.find(s => s.el === visible[0].target);
+        if (match) setActive(match.id);
+      }
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] });
+
+    sections.forEach(s => observer.observe(s.el));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initActiveNav);
+  } else {
+    initActiveNav();
+  }
+</script>

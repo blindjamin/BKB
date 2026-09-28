@@ -66,8 +66,11 @@ export function initMotion() {
   // 6.4 Header Scroll (sólo modo reveal)
   const header = document.getElementById('site-header');
   if (header && header.dataset.mode === 'reveal') {
+    // Se muestra al llegar a "Qué hacemos" (#servicios); sobre el hero queda oculto.
+    const trigger = document.getElementById('servicios');
+    const pastHero = () => trigger ? trigger.getBoundingClientRect().top <= 80 : window.scrollY > 40;
     const checkHeader = () => {
-      if (window.scrollY > 40) {
+      if (pastHero()) {
         header.classList.add('is-scrolled');
       } else {
         header.classList.remove('is-scrolled');
@@ -83,7 +86,7 @@ export function initMotion() {
     });
     
     header.addEventListener('focusout', () => {
-      if (window.scrollY <= 40) {
+      if (!pastHero()) {
         // pequeño timeout para permitir que el foco se mueva dentro del header sin cerrarlo
         setTimeout(() => {
           if (!header.contains(document.activeElement)) {

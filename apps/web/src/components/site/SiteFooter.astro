@@ -34,7 +34,9 @@ const serviciosHref = isHome ? '#servicios' : `${getPath('/')}#servicios`;
     <div class="flex flex-col gap-3">
       <span class="text-[13px] font-semibold text-[#F8FAFC]">Contacto</span>
       <span class="text-[13.5px] text-[#8391A7]">{SITE.office}</span>
-      <a href={SITE.phoneHref} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">{SITE.phoneDisplay}</a>
+      {SITE.phones.map(p => (
+        <a href={p.href} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">{p.display}</a>
+      ))}
       <a href={`mailto:${SITE.email}`} class="text-[13.5px] text-[#8391A7] no-underline hover:text-salmon-500 transition-colors focus-bkb rounded-sm inline-block self-start">{SITE.email}</a>
     </div>
     

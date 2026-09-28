@@ -1,7 +1,5 @@
 ---
 import { Image } from 'astro:assets';
-import { PORTAL_URLS } from '../../config/site';
-import { getPath } from '../../utils/paths';
 import faenaHero from '../../assets/landing/faena-hero.jpg';
 ---
 
@@ -17,7 +15,7 @@ import faenaHero from '../../assets/landing/faena-hero.jpg';
     <div class="absolute inset-0 bg-gradient-to-br from-night-900/90 via-night-900/70 to-night-900/50"></div>
   </div>
 
-  <div class="relative z-10 mx-auto w-full px-4 sm:px-10 pt-[96px] pb-[200px] grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-14 items-start" style="max-width: var(--bkb-container);">
+  <div class="relative z-10 mx-auto w-full px-4 sm:px-10 pt-[96px] pb-[200px] grid grid-cols-1 gap-14 items-start" style="max-width: var(--bkb-container);">
 
     <div class="flex flex-col gap-6 pt-5">
       <div class="hero-in inline-flex self-start items-center gap-2 bg-salmon-500/15 border border-salmon-500/40 text-salmon-300 text-[13px] font-semibold tracking-[0.02em] px-4 py-[9px] rounded-pill">
@@ -36,24 +34,6 @@ import faenaHero from '../../assets/landing/faena-hero.jpg';
       </p>
     </div>
 
-    <!-- Portal access card -->
-    <div class="hero-in bg-night-800/75 backdrop-blur-md border border-[rgba(255,255,255,0.16)] rounded-[20px] shadow-[0_30px_60px_rgba(0,0,0,0.6),0_0_40px_rgba(250,90,54,0.12)] p-8 flex flex-col gap-5">
-      <div class="flex items-center gap-3">
-        <img src={getPath('/assets/bkb-logo-final.png')} alt="" aria-hidden="true" width="48" height="48" class="w-12 h-12 shrink-0 object-contain" />
-        <div>
-          <div class="font-display text-[17px] font-bold text-[#F8FAFC]">Portal Digital BKB</div>
-          <div class="text-[12px] text-[#94A3B8]">Gestión Documental</div>
-        </div>
-      </div>
-      
-      <p class="m-0 text-[14px] text-[#94A3B8] leading-[1.5]">
-        Ingresa al portal para acceder a tu documentación.
-      </p>
-
-      <a href={PORTAL_URLS.cliente} class="flex items-center justify-center p-4 rounded-[10px] bg-salmon-500 text-white font-semibold text-[15px] no-underline transition-colors hover:bg-salmon-600 focus-bkb">
-        Soy Cliente &rarr;
-      </a>
-    </div>
     
   </div>
 </section>
