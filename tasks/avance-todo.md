@@ -64,7 +64,7 @@ activo, al menos uno). Usa `obtener_o_invitar`.
 **Archivos:** `documentos/permisos.py`, `documentos/views.py`, `templates/archivos.html`, pruebas.
 
 ### ◆ Checkpoint 1
-- [ ] `test`, `check` y `makemigrations --check` en verde.
+- [x] `test`, `check` y `makemigrations --check` en verde.
 - [ ] En el navegador: una empresa y un proyecto nuevos, con las invitaciones correctas en la consola.
 - [ ] PR `encargados` → `desarrollo`.
 
@@ -315,13 +315,13 @@ y manda `modificacion_recordatorio` (con enlaces, sin adjuntos). Si la cuenta ll
 portal, `docs/03` (§12 queda reemplazada por `docs/11`) y `docs/06` (bitácora).
 
 **Criterios de aceptación:**
-- [ ] `doctl apps spec validate` aprueba el archivo, o queda anotado como pendiente de la tarea 16.
-- [ ] La documentación no menciona la recepción conforme / no conforme como algo vigente.
+- [x] `doctl apps spec validate` aprueba el archivo, o queda anotado como pendiente de la tarea 16.
+- [x] La documentación no menciona la recepción conforme / no conforme como algo vigente.
 
 **Verificación:** revisión de la documentación.
 **Archivos:** `.do/app.yaml`, `apps/portal/README.md`, `docs/03-portal-django.md`, `docs/06-bitacora-avances.md`.
 
 ### ◆ Checkpoint 4 (final)
-- [ ] Los 8 criterios de éxito de la spec quedan demostrados por pruebas.
-- [ ] `test`, `check` y `makemigrations --check` en verde.
+- [x] Los 8 criterios de éxito de la spec quedan demostrados por pruebas.
+- [x] `test`, `check` y `makemigrations --check` en verde.
 - [ ] PR `modificaciones` → `desarrollo`.

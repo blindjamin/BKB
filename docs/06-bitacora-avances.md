@@ -305,3 +305,19 @@ Revisar y fusionar los PR #9 (landing) y #10 (portal). Después: decidir las 3 a
 
 ### Punto de partida
 Revisar la página con el usuario (claro, oscuro, 375 px, 1280 px) y validar los textos de uso con BKB.
+
+---
+
+## Sesión 13 · 29 de Septiembre de 2026 (portal: módulo 4, modificaciones)
+
+### Resumen
+- **Modelo y permisos:** `Modificacion` y `Archivo.modificacion` (migración `0006_modificaciones`). Los adjuntos no aparecen en la lista general ni en los conteos. El cliente no ve borradores.
+- **Crear y adjuntar:** solo un encargado BKB o el jefe crea la modificación y sube adjuntos al borrador, con el flujo de subida actual.
+- **Enviar:** un correo al encargado cliente con copia a ingeniería. Lleva los adjuntos si suman 20 MB o menos (`storage.leer`) y enlaces si pasan de eso; los botones Aprobar y Rechazar usan enlaces firmados de 30 días.
+- **Responder:** desde el enlace, sin sesión y con CSRF, o desde el panel con sesión. Un GET nunca responde; la respuesta es definitiva y avisa a ingeniería.
+- **Recordatorios:** `manage.py enviar_recordatorios` (días 0, 2, 4, 6 y 8; el quinto correo avisa a ingeniería). Job `SCHEDULED` diario en `.do/app.yaml`, pendiente de validar con `doctl`.
+- **Documentación:** README del portal y `docs/03` (§12 queda como historial).
+
+### Punto de partida
+Revisar los correos con `vista_correos` y probar el flujo en el navegador (cliente y personal). Después: abrir el PR `modificaciones` a `desarrollo`, y validar `app.yaml` en la tarea 16.
+
