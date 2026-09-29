@@ -2363,6 +2363,12 @@ h1, h2, h3,
     color: var(--text-muted);
 }
 
+.hito-fila-quitar {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+}
+
 @media (min-width: 640px) {
     .hito-fila {
         grid-template-columns: 1fr 8rem auto;

@@ -44,7 +44,8 @@ def _get_client_ip(request):
 
 def _tarjetas_de_proyecto(usuario, proyectos):
     """Proyectos con conteo de archivos disponibles y última carga, cerrados al final (docs/09 §12.1)."""
-    disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True)
+    disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True,
+                    archivos__modificacion__isnull=True)  # M1
     proyectos = proyectos.annotate(
         archivos_count=Count('archivos', filter=disponibles),
         ultima_carga=Max('archivos__subido_en', filter=disponibles),

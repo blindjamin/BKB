@@ -211,7 +211,7 @@ a ingeniería. Asunto: *"Proyecto {nombre} finalizado y aprobado por {cliente}"*
 **Archivos:** `documentos/views.py`, 2 plantillas `.html` y `.txt`, pruebas.
 
 ### ◆ Checkpoint 3
-- [ ] Correr `vista_correos` y **revisar las muestras con el usuario** antes del módulo 4.
+- [x] Correr `vista_correos` y **revisar las muestras con el usuario** antes del módulo 4.
 - [ ] PR `avisos-proyecto` → `desarrollo`.
 
 ---
@@ -224,8 +224,8 @@ a ingeniería. Asunto: *"Proyecto {nombre} finalizado y aprobado por {cliente}"*
 `permisos.modificaciones_visibles(u, p)`: el personal ve todas; el cliente, solo las enviadas.
 
 **Criterios de aceptación:**
-- [ ] Los adjuntos de una modificación no se cuentan ni se listan en la sección de archivos.
-- [ ] El cliente no ve los borradores.
+- [x] Los adjuntos de una modificación no se cuentan ni se listan en la sección de archivos.
+- [x] El cliente no ve los borradores.
 
 **Verificación:** `test`, `makemigrations --check` (`test_modificaciones.py`).
 **Archivos:** `documentos/models.py`, migración `0007`, `documentos/permisos.py`, `documentos/admin.py`, pruebas.

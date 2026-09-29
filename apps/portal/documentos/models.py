@@ -94,6 +94,38 @@ class Carpeta(models.Model):
         return f'{self.proyecto.nombre} - {self.nombre}'
 
 
+class EstadoModificacion(models.TextChoices):
+    PENDIENTE = 'pendiente', 'Pendiente'
+    APROBADA = 'aprobada', 'Aprobada'
+    RECHAZADA = 'rechazada', 'Rechazada'
+
+
+class Modificacion(models.Model):  # M1, M9: sin límite por proyecto
+    id = _uuid_pk()
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='modificaciones')
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    creada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='modificaciones_creadas')
+    creada_en = models.DateTimeField(auto_now_add=True)
+    enviada_en = models.DateTimeField(null=True, blank=True)  # M1: null = borrador
+    estado = models.CharField(max_length=10, choices=EstadoModificacion.choices, default=EstadoModificacion.PENDIENTE)
+    respondida_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+                                       related_name='modificaciones_respondidas')
+    respondida_en = models.DateTimeField(null=True, blank=True)
+    motivo_rechazo = models.TextField(blank=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    correos_enviados = models.PositiveSmallIntegerField(default=0)  # M6
+    ultimo_correo_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'modificación'
+        verbose_name_plural = 'modificaciones'
+        ordering = ['-creada_en']
+
+    def __str__(self):
+        return f'{self.proyecto.nombre} - {self.titulo}'
+
+
 class Archivo(models.Model):
     """Un archivo del Space. Nunca se borra de verdad: se marca con `eliminado_en`."""
 
@@ -111,6 +143,7 @@ class Archivo(models.Model):
     eliminado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='archivos_eliminados'
     )
+    modificacion = models.ForeignKey(Modificacion, on_delete=models.SET_NULL, null=True, blank=True, related_name='adjuntos')  # M1
 
     class Meta:
         ordering = ['-subido_en']

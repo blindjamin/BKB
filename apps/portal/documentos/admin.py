@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import Archivo, DescargaLog, Empresa, Hito, Proyecto, RechazoRevision
+from .models import Archivo, DescargaLog, Empresa, Hito, Modificacion, Proyecto, RechazoRevision
 
 
 @admin.register(Empresa)
@@ -98,3 +98,11 @@ class RechazoRevisionAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Modificacion)
+class ModificacionAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'proyecto', 'estado', 'enviada_en', 'respondida_por')
+    list_filter = ('estado',)
+    readonly_fields = ('enviada_en', 'estado', 'respondida_por', 'respondida_en', 'motivo_rechazo', 'ip',
+                       'correos_enviados', 'ultimo_correo_en')  # M7: la respuesta es definitiva
