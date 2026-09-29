@@ -9,7 +9,7 @@
 - **Framework:** Astro 5, salida estática (`output: 'static'`), sin servidor.
 - **Estilos:** Tailwind CSS v4 (`@tailwindcss/vite`) más `@bkb/tokens`, mapeados a utilidades en `src/styles/global.css`. Ver `01-tokens-y-sistema-diseno.md`.
 - **Imágenes:** en `src/assets/` (`brand/`, `clients/`, `icons/`, `landing/`), optimizadas con `astro:assets`.
-- **JavaScript:** solo dos scripts pequeños y vanilla: tema (`src/scripts/theme.ts`) y movimiento (`src/scripts/motion.ts`). El contenido se ve completo sin JS y con `prefers-reduced-motion`.
+- **JavaScript:** vanilla y mínimo: tema (`src/scripts/theme.ts`) y movimiento (`src/scripts/motion.ts`), más scripts chicos por componente o página (carrusel, aviso, header y la selección de `/arriendo`). El contenido se ve completo sin JS y con `prefers-reduced-motion`.
 - **Hosting:** previsualización en GitHub Pages con base `/BKB`. Todo enlace interno y todo asset pasa por `getPath()` (`src/utils/paths.ts`).
 
 ---
@@ -18,6 +18,7 @@
 | Ruta | Archivo | Propósito |
 |---|---|---|
 | `/` | `src/pages/index.astro` | Landing de una página con anclas: `#mercados`, `#servicios`, `#obras`, `#cotizar` |
+| `/arriendo` | `src/pages/arriendo.astro` | Arriendo de equipos (siempre con técnico BKB). Se eligen varios y se cotizan en un solo mensaje de WhatsApp |
 | `/trabaja-con-nosotros` | `src/pages/trabaja-con-nosotros.astro` | Postulaciones, con consentimiento de la Ley 21.719 |
 | `/privacidad` | `src/pages/privacidad.astro` | Política de datos personales |
 | `/terminos` | `src/pages/terminos.astro` | Términos y condiciones |
@@ -31,6 +32,7 @@
 ```
 config/site.ts         Teléfonos, correo, oficina y dirección, URLs del portal y endpoint del formulario
 data/landing.ts        Datos de las secciones (servicios, mercados, testimonios, obras, clientes)
+data/arriendo.ts       Equipos en arriendo: grupos, nombre, modelo y uso
 layouts/Layout.astro   Shell: metadata, Schema.org, script anti-parpadeo del tema, prop headerMode
 components/site/       SiteHeader, MobileNav, ThemeToggle, SiteFooter, EmergencyNotice, WhatsAppButton
 components/landing/    Hero, ClientsMarquee, Services, Markets, Testimonials, Portfolio, QuoteSection
@@ -44,7 +46,7 @@ styles/global.css      Tailwind + tokens + keyframes
 - **Header:** viene de la rama de Lisandro. Tiene el link de la sección activa, el botón **"Soy cliente →"** (al login del portal) y "Cotizar Obra". El menú del celular también dice "Soy cliente".
 - **Aviso de emergencia (`EmergencyNotice.astro`):** tarjeta flotante abajo a la izquierda con el botón para llamar al teléfono principal. Aparece al pasar el hero y, si se cierra, no vuelve en la sesión (`sessionStorage['bkb-emergency-closed']`).
 - **WhatsApp (`WhatsAppButton.astro`):** botón flotante abajo a la derecha que abre un chat con el teléfono principal.
-- **Teléfonos:** `SITE.phones` en `config/site.ts` tiene los dos confirmados, +56 9 8975 3095 (principal) y +56 9 6191 1593. `SITE.phoneDisplay` y `SITE.phoneHref` son el principal. La tarjeta de contacto y el pie muestran los dos.
+- **Teléfonos:** `SITE.phones` en `config/site.ts` tiene los dos confirmados, +56 9 6191 1593 (principal, llamadas y WhatsApp) y +56 9 6662 6540 (secundario). El +56 9 8975 3095 se eliminó el 2026-09-28. `SITE.phoneDisplay` y `SITE.phoneHref` son el principal. La tarjeta de contacto y el pie muestran los dos.
 - **Contacto (`QuoteSection.astro`):** formulario más una tarjeta de la oficina central (El Parque 110, La Calera) con teléfonos, correo y mapa. El mapa de Google se carga solo al hacer clic en "Ver mapa", para no cargar cookies de Google sin que la persona lo pida.
 - El tema se guarda en `localStorage['bkb-theme']` y un script `is:inline` lo aplica antes de pintar, para evitar el parpadeo. La landing es oscura por defecto.
 - `config/site.ts` lee `PUBLIC_PORTAL_URL` (por defecto `https://portal.empresabkb.cl`) y `PUBLIC_QUOTE_ENDPOINT`. La plantilla está en `apps/web/.env.example`. En local, `apps/web/.env` con `PUBLIC_PORTAL_URL=http://localhost:8000` hace que los botones lleven al portal local.
@@ -53,6 +55,7 @@ styles/global.css      Tailwind + tokens + keyframes
 - Los enlaces al portal salen de `PORTAL_URLS`; no escribir `https://portal.empresabkb.cl` a mano.
 - **Hero y carrusel de clientes:** `index.astro` los envuelve en un `div.relative`. El hero mide `100svh` y `ClientsMarquee` va `absolute bottom-0` encima, sin fondo. El hero deja `pb-[200px]` libres para que el contenido no quede tapado por la franja. El hero ya no tiene la tarjeta de acceso al portal: solo la información y el carrusel.
 - **Servicios (`Services.astro`):** carrusel manual e infinito, con tarjetas de foto de fondo y texto centrado. El script clona las tarjetas a cada lado (`[copia][originales][copia]`) y, cuando el scroll se detiene (120 ms), salta un ancho de set para volver al tramo original. El `reveal` va en el contenedor y no en las tarjetas, porque el `IntersectionObserver` no ve las tarjetas recortadas por el scroll horizontal.
+- **Arriendo (`/arriendo`):** una tarjeta `<details>` por equipo. La selección vive en memoria (no se guarda) y una barra fija abajo arma el mensaje de WhatsApp; mientras está visible, `has-cotizacion` en `<html>` oculta `.whatsapp-fab` y `.emergency-notice`. Los textos de uso tienen `TODO: validar con BKB`. La tarjeta de "Qué hacemos" enlaza con "Ver equipos →" y los clones del carrusel van con `inert`.
 - **Logo:** `public/assets/bkb-logo-final.png` (PNG circular con fondo transparente), referenciado con `getPath('/assets/bkb-logo-final.png')`. Mide 52 px en el header y 56 px en el footer. El archivo de `src/assets/brand/` no se usa.
 - **Logos de clientes:** se les recortó el margen blanco para que se vean del mismo tamaño. Los originales están en `src/assets/clients/originals/` y en el historial de git.
 
@@ -76,4 +79,5 @@ styles/global.css      Tailwind + tokens + keyframes
 - **Testimonios provisorios:** el texto de `testimonials` en `data/landing.ts` es inventado (marcado con `TODO`). Reemplazar por reseñas reales antes de publicar.
 - "Soy cliente" no carga en la landing publicada hasta que el portal esté en `portal.empresabkb.cl` (Tarea 16 del portal).
 - Reemplazar por fotos reales de cada servicio las fotos de faena repetidas de las tarjetas de "Qué hacemos" (marcadas con `TODO` en `data/landing.ts`).
+- Validar con BKB los textos de uso de `data/arriendo.ts`.
 - La lista de servicios del footer aún menciona "Obras Civiles" y "Mantención 24/7".
