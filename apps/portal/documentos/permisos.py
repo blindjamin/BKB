@@ -79,9 +79,7 @@ def ve_archivos(usuario, proyecto):
 
 
 def archivos_visibles_para(usuario):
-    """Archivos disponibles y no eliminados de todos los proyectos visibles para el usuario.
-
-    """
+    """Archivos disponibles y no eliminados de todos los proyectos visibles para el usuario."""
     proyectos = proyectos_visibles(usuario)
     if not _es_personal(usuario):
         proyectos = proyectos.filter(finalizado_en__isnull=False)  # A8

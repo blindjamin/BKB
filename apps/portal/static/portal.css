@@ -913,20 +913,9 @@ fieldset.form-group-fieldset legend.form-label {
     margin: 0;
 }
 
-.aviso-mensaje {
-    margin: 0.5rem 0 0;
-}
-
 .hito.is-actual {
     color: var(--text-main);
     font-weight: 600;
-}
-
-.aviso-acciones {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin: 1rem 0 0;
 }
 
 /* Gestión de usuarios (M4): Filtros combinables */
@@ -2192,27 +2181,6 @@ fieldset.form-group-fieldset legend.form-label {
 
 .hito.is-actual .hito-icono {
     color: var(--accent-text);
-}
-
-.aviso-acciones .btn-primary {
-    width: auto;
-    min-height: 48px;
-    padding: 0 var(--space-6);
-}
-
-.aviso-ayuda {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-    margin: var(--space-4) 0 0;
-    color: var(--text-muted);
-    font-size: var(--bkb-text-body-sm);
-}
-
-.aviso-ayuda a {
-    color: var(--accent-text);
-    font-weight: 600;
 }
 
 /* Cola de subida (paso C · DS-5) */

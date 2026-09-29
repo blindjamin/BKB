@@ -151,6 +151,8 @@ class EditorDeHitosTests(Base):
         self.assertEqual(self.post(self.filas()).status_code, 403)
         self.client.force_login(self.cliente)
         self.assertEqual(self.client.get(self.url()).status_code, 403)
+        self.client.force_login(self.ajeno)
+        self.assertEqual(self.client.get(self.url()).status_code, 404)
         self.client.force_login(self.jefe)
         self.assertEqual(self.client.get(self.url()).status_code, 200)
         self.assertEqual(self.post(self.filas()).status_code, 302)
