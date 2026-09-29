@@ -1,12 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.utils import timezone
 
 from accounts.models import Rol
 from documentos.forms import EmpresaForm, ProyectoForm
 from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
-from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Proyecto, RespuestaRecepcion
+from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Proyecto
+from documentos.models import HITOS_ESTANDAR
 
 Usuario = get_user_model()
 
@@ -166,7 +166,7 @@ class VistasEmpresasYProyectosTests(TestCase):
             'empresa': str(self.empresa_a.pk),
             'nombre': 'Tableros Principales',
             'estado': 'activo',
-            'hitos_texto': "1. Replanteo en faena\n2. Cableado y montaje\n3. Pruebas y recepcion",
+            'fecha_inicio': '2026-02-01', 'fecha_termino': '2026-08-31',
             'encargado_nombre': 'Encargado',
             'encargado_email': self.cliente.email,
             'encargados_bkb': [self.personal.pk],
@@ -177,15 +177,9 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertEqual(proyecto.empresa, self.empresa_a)
         self.assertEqual(post_resp.url, reverse('documentos:detalle_proyecto', args=[proyecto.pk]))
 
-        # Verifica creación de hitos en orden
-        hitos = list(proyecto.hitos.order_by('orden'))
-        self.assertEqual(len(hitos), 3)
-        self.assertEqual(hitos[0].nombre, '1. Replanteo en faena')
-        self.assertEqual(hitos[0].orden, 1)
-        self.assertEqual(hitos[1].nombre, '2. Cableado y montaje')
-        self.assertEqual(hitos[1].orden, 2)
-        self.assertEqual(hitos[2].nombre, '3. Pruebas y recepcion')
-        self.assertEqual(hitos[2].orden, 3)
+        # A1: los 7 hitos estándar
+        self.assertEqual([h.nombre for h in proyecto.hitos.all()], HITOS_ESTANDAR)
+        self.assertEqual(str(proyecto.fecha_inicio), '2026-02-01')
 
         self.assertEqual(proyecto.encargado, self.cliente)  # E2
 
@@ -197,10 +191,6 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertEqual(self.client.post(url_crear, {'nombre': 'Proyecto Prohibido'}).status_code, 403)
 
     def test_editar_proyecto_personal_modifica_hitos_y_clientes(self):
-        # Crear hitos previos en proy_a1
-        h1 = Hito.objects.create(proyecto=self.proy_a1, orden=1, nombre='Hito A1')
-        h2 = Hito.objects.create(proyecto=self.proy_a1, orden=2, nombre='Hito A2')
-
         self.client.force_login(self.personal)
         url_editar = reverse('documentos:editar_proyecto', args=[self.proy_a1.pk])
 
@@ -212,7 +202,7 @@ class VistasEmpresasYProyectosTests(TestCase):
             'empresa': str(self.empresa_a.pk),
             'nombre': 'Proyecto Alfa Modificado',
             'estado': 'cerrado',
-            'hitos_texto': "Hito A1 Modificado\nHito A2 Modificado\nHito A3 Nuevo",
+            'fecha_inicio': '2026-03-01', 'fecha_termino': '2026-09-30',
             'encargado_nombre': 'Encargado',
             'encargado_email': self.cliente2.email,
             'encargados_bkb': [self.personal.pk],
@@ -223,12 +213,7 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertEqual(self.proy_a1.nombre, 'Proyecto Alfa Modificado')
         self.assertEqual(self.proy_a1.estado, EstadoProyecto.CERRADO)
 
-        # Verifica hitos
-        hitos = list(self.proy_a1.hitos.order_by('orden'))
-        self.assertEqual(len(hitos), 3)
-        self.assertEqual(hitos[0].nombre, 'Hito A1 Modificado')
-        self.assertEqual(hitos[2].nombre, 'Hito A3 Nuevo')
-
+        self.assertEqual(str(self.proy_a1.fecha_termino), '2026-09-30')
         self.assertEqual(self.proy_a1.encargado, self.cliente2)  # E2
 
     def test_editar_proyecto_cliente_recibe_403(self):
@@ -245,84 +230,14 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertIn('nombre', f_empresa.errors)
         self.assertIn('encargado_email', f_empresa.errors)
 
-        # ProyectoForm exige empresa, nombre y al menos un hito
-        f_proyecto = ProyectoForm(data={'empresa': '', 'nombre': '', 'hitos_texto': ''})
+        # ProyectoForm exige empresa, nombre y fechas
+        f_proyecto = ProyectoForm(data={'empresa': '', 'nombre': '', 'fecha_inicio': ''})
         self.assertFalse(f_proyecto.is_valid())
         self.assertIn('empresa', f_proyecto.errors)
         self.assertIn('nombre', f_proyecto.errors)
-        self.assertIn('hitos_texto', f_proyecto.errors)
+        self.assertIn('fecha_inicio', f_proyecto.errors)
         self.assertIn('encargado_email', f_proyecto.errors)
         self.assertIn('encargados_bkb', f_proyecto.errors)
-
-    def test_editar_proyecto_no_permite_eliminar_hitos_cumplidos(self):
-        h1 = Hito.objects.create(
-            proyecto=self.proy_a1, orden=1, nombre='Hito Cumplido',
-            cumplido_en=timezone.now(), cumplido_por=self.personal
-        )
-        h2 = Hito.objects.create(proyecto=self.proy_a1, orden=2, nombre='Hito Pendiente')
-
-        # Intentar guardar dejando 0 hitos
-        form = ProyectoForm(
-            instance=self.proy_a1,
-            data={
-                'empresa': str(self.empresa_a.pk),
-                'nombre': self.proy_a1.nombre,
-                'estado': self.proy_a1.estado,
-                'hitos_texto': '',
-                'encargado_nombre': 'Encargado',
-                'encargado_email': self.cliente.email,
-                'encargados_bkb': [self.personal.pk],
-            }
-        )
-        self.assertFalse(form.is_valid())
-        self.assertIn('hitos_texto', form.errors)
-
-    def _form_hitos(self, hitos_texto):
-        return ProyectoForm(
-            instance=self.proy_a1,
-            data={
-                'empresa': str(self.empresa_a.pk),
-                'nombre': self.proy_a1.nombre,
-                'estado': self.proy_a1.estado,
-                'hitos_texto': hitos_texto,
-                'encargado_nombre': 'Encargado',
-                'encargado_email': self.cliente.email,
-                'encargados_bkb': [self.personal.pk],
-            }
-        )
-
-    def _hitos_uno_cumplido(self):
-        Hito.objects.create(
-            proyecto=self.proy_a1, orden=1, nombre='Hito Cumplido',
-            cumplido_en=timezone.now(), cumplido_por=self.personal
-        )
-        Hito.objects.create(proyecto=self.proy_a1, orden=2, nombre='Hito Pendiente')
-
-    def test_editar_proyecto_no_permite_renombrar_ni_desplazar_hitos_cumplidos(self):
-        self._hitos_uno_cumplido()
-        for texto in ('Hito Renombrado\nHito Pendiente', 'Hito Nuevo\nHito Cumplido\nHito Pendiente'):
-            with self.subTest(texto=texto):
-                form = self._form_hitos(texto)
-                self.assertFalse(form.is_valid())
-                self.assertIn('hitos_texto', form.errors)
-
-    def test_editar_proyecto_permite_cambiar_hitos_pendientes(self):
-        self._hitos_uno_cumplido()
-        form = self._form_hitos('Hito Cumplido\nPendiente Renombrado\nHito Extra')
-        self.assertTrue(form.is_valid(), form.errors)
-
-    def test_editar_proyecto_recibido_no_permite_agregar_hitos(self):
-        Hito.objects.create(
-            proyecto=self.proy_a1, orden=1, nombre='Hito Cumplido',
-            cumplido_en=timezone.now(), cumplido_por=self.personal
-        )
-        RespuestaRecepcion.objects.create(
-            proyecto=self.proy_a1, usuario=self.cliente, nombre_revisor='Revisor', conforme=True
-        )
-        form = self._form_hitos('Hito Cumplido\nHito Nuevo')
-        self.assertFalse(form.is_valid())
-        self.assertIn('hitos_texto', form.errors)
-        self.assertTrue(self._form_hitos('Hito Cumplido').is_valid())
 
     def test_detalle_empresa_anotaciones_archivos_y_metadatos_ds3(self):
         # Crear archivo disponible en proy_a1
@@ -435,7 +350,8 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertContains(get_resp, 'for="id_empresa"')
         self.assertContains(get_resp, 'for="id_nombre"')
         self.assertContains(get_resp, 'for="id_estado"')
-        self.assertContains(get_resp, 'for="id_hitos_texto"')
+        self.assertContains(get_resp, 'for="id_fecha_inicio"')
+        self.assertContains(get_resp, 'type="date"')
         self.assertContains(get_resp, 'for="id_encargado_nombre"')
         self.assertContains(get_resp, 'for="id_encargado_email"')
         self.assertContains(get_resp, 'class="form-help"')
@@ -449,7 +365,7 @@ class VistasEmpresasYProyectosTests(TestCase):
             'empresa': str(self.empresa_a.pk),
             'nombre': 'Proyecto Incompleto',
             'estado': 'activo',
-            'hitos_texto': '',
+            'fecha_inicio': '',
         })
         self.assertEqual(post_resp.status_code, 200)
         self.assertContains(post_resp, 'class="field-error"')
@@ -457,19 +373,15 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertContains(post_resp, '#alerta')
         self.assertContains(post_resp, 'Este campo es obligatorio.')
 
-        # Error de validación al intentar alterar hitos cumplidos
-        Hito.objects.create(
-            proyecto=self.proy_a1, orden=1, nombre='Hito Inicial Cumplido',
-            cumplido_en=timezone.now(), cumplido_por=self.personal
-        )
+        # A3: término anterior al inicio
         url_editar = reverse('documentos:editar_proyecto', args=[self.proy_a1.pk])
         resp_editar_err = self.client.post(url_editar, {
             'empresa': str(self.empresa_a.pk),
             'nombre': self.proy_a1.nombre,
             'estado': self.proy_a1.estado,
-            'hitos_texto': 'Hito Modificado Ilegal',
+            'fecha_inicio': '2026-05-01', 'fecha_termino': '2026-04-01',
         })
         self.assertEqual(resp_editar_err.status_code, 200)
         self.assertContains(resp_editar_err, 'class="field-error"')
         self.assertContains(resp_editar_err, '#alerta')
-        self.assertContains(resp_editar_err, 'Los hitos ya cumplidos no se pueden editar, quitar ni reordenar.')
+        self.assertContains(resp_editar_err, 'El término no puede ser anterior al inicio.')

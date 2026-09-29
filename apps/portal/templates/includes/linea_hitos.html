@@ -1,0 +1,21 @@
+{% load static %}
+{# A7: la línea de hitos que ven todos; el primer hito pendiente lleva is-actual #}
+{% if hitos %}
+    <ol class="hitos-lista">
+        {% for hito in hitos %}
+            <li class="hito{% if hito.cumplido %} is-cumplido{% elif hito.es_actual %} is-actual{% endif %}">
+                <svg class="icono hito-icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#{% if hito.cumplido %}cumplido{% elif hito.es_actual %}flecha{% else %}pendiente{% endif %}"></use></svg>
+                <span class="hito-nombre">{{ hito.nombre }}</span>
+                {% if hito.cumplido %}
+                    <span class="hito-detalle">{{ hito.cumplido_en|date:"d M Y, H:i" }} · {{ hito.cumplido_por.nombre|default:hito.cumplido_por.email }}</span>
+                {% elif hito.es_revision %}
+                    <span class="hito-detalle">La responde el cliente</span>
+                {% else %}
+                    <span class="hito-detalle">Pendiente</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+{% else %}
+    <p class="view-subtitle">Este proyecto no tiene hitos.</p>
+{% endif %}

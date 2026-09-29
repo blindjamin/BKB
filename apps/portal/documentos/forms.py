@@ -1,10 +1,10 @@
 from django import forms
+from django.db.models import F
 from django.contrib.auth import get_user_model
 
 from accounts.models import Rol
 from .encargados import validar_encargado
-from .models import Empresa, EstadoProyecto, Hito, Proyecto
-from .permisos import EstadoFlujoProyecto, estado_proyecto
+from .models import Empresa, Hito, Proyecto
 
 Usuario = get_user_model()
 
@@ -52,25 +52,22 @@ class EmpresaForm(CamposEncargado, forms.ModelForm):
 
 
 class ProyectoForm(CamposEncargado, forms.ModelForm):
-    hitos_texto = forms.CharField(
-        widget=forms.Textarea(attrs={
-            'rows': 5,
-            'placeholder': "1. Levantamiento en terreno\n2. Fabricación de tableros y montaje\n3. Pruebas y recepción técnica",
-        }),
-        required=True,
-        label='Hitos del proyecto',
-        help_text='Ingresa un hito por línea en orden cronológico. Todo proyecto debe tener al menos un hito.',
-    )
-
     class Meta:
         model = Proyecto
-        fields = ['empresa', 'nombre', 'estado', 'encargados_bkb']
+        fields = ['empresa', 'nombre', 'estado', 'fecha_inicio', 'fecha_termino', 'encargados_bkb']
         labels = {
             'empresa': 'Empresa / Cliente',
             'nombre': 'Nombre del proyecto',
             'estado': 'Estado',
+            'fecha_inicio': 'Fecha de inicio',
+            'fecha_termino': 'Fecha de término',
         }
-        widgets = {'encargados_bkb': forms.CheckboxSelectMultiple}
+        widgets = {
+            'encargados_bkb': forms.CheckboxSelectMultiple,
+            # format: sin él, el locale es-cl escribe dd-mm-aaaa y el campo sale vacío al editar
+            'fecha_inicio': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'fecha_termino': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -81,55 +78,65 @@ class ProyectoForm(CamposEncargado, forms.ModelForm):
             self.initial.setdefault('encargado_nombre', self.instance.encargado.nombre)
             self.initial.setdefault('encargado_email', self.instance.encargado.email)
 
-        if self.instance and self.instance.pk:
-            hitos = self.instance.hitos.order_by('orden')
-            if hitos.exists():
-                self.initial['hitos_texto'] = '\n'.join(h.nombre for h in hitos)
-
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre', '').strip()
         if not nombre:
             raise forms.ValidationError('El nombre del proyecto es obligatorio.')
         return nombre
 
-    def clean_hitos_texto(self):
-        raw = self.cleaned_data.get('hitos_texto', '')
-        lines = [line.strip() for line in raw.splitlines() if line.strip()]
-        if not lines:
-            raise forms.ValidationError('Todo proyecto debe contar con al menos un hito.')
+    def clean(self):
+        datos = super().clean()
+        inicio, termino = datos.get('fecha_inicio'), datos.get('fecha_termino')
+        if inicio and termino and termino < inicio:
+            self.add_error('fecha_termino', 'El término no puede ser anterior al inicio.')  # A3
+        return datos
 
-        if self.instance and self.instance.pk:
-            hitos = self.instance.hitos.order_by('orden')
-            cumplidos = [h.nombre for h in hitos.filter(cumplido_en__isnull=False)]
-            if lines[:len(cumplidos)] != cumplidos:
-                raise forms.ValidationError('Los hitos ya cumplidos no se pueden editar, quitar ni reordenar.')
-            if estado_proyecto(self.instance) == EstadoFlujoProyecto.RECIBIDO and lines != [h.nombre for h in hitos]:
-                raise forms.ValidationError('El proyecto ya fue recibido por el cliente; sus hitos no se pueden cambiar.')
-        return lines
 
-    def save(self, commit=True):
-        proyecto = super().save(commit=commit)
-        if not commit:
-            return proyecto
+class HitoForm(forms.ModelForm):
+    # posicion no es campo del modelo: así no choca con unique (proyecto, orden) al reordenar
+    posicion = forms.IntegerField(required=False, min_value=1, label='Posición')
 
-        # Sincronizar hitos
-        lines = self.cleaned_data.get('hitos_texto', [])
-        existentes = list(proyecto.hitos.order_by('orden'))
+    class Meta:
+        model = Hito
+        fields = ['nombre']
 
-        for i, nombre_hito in enumerate(lines):
-            orden = i + 1
-            if i < len(existentes):
-                hito = existentes[i]
-                if hito.cumplido_en is None:
-                    hito.nombre = nombre_hito
-                    hito.orden = orden
-                    hito.save()
-            else:
-                Hito.objects.create(proyecto=proyecto, orden=orden, nombre=nombre_hito)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance._state.adding:  # no .pk: el UUID ya trae valor
+            self.fields['posicion'].initial = self.instance.orden
 
-        if len(existentes) > len(lines):
-            for hito in existentes[len(lines):]:
-                if hito.cumplido_en is None:
-                    hito.delete()
 
-        return proyecto
+class BaseHitoFormSet(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        vivos = []
+        for i, form in enumerate(self.forms):
+            if not form.cleaned_data:  # fila extra vacía
+                continue
+            if form.cleaned_data.get('DELETE'):
+                if form.instance.cumplido:
+                    raise forms.ValidationError('Un hito cumplido no se puede quitar.')  # A2
+                continue
+            vivos.append((form.cleaned_data.get('posicion') or 10**4, i, form))
+        self.ordenados = [f for *_, f in sorted(vivos, key=lambda t: t[:2])]
+        cumplidos = [f.instance.cumplido for f in self.ordenados]
+        if cumplidos != sorted(cumplidos, reverse=True):  # A4: los cumplidos van primero
+            raise forms.ValidationError('Los hitos cumplidos tienen que quedar antes que los pendientes.')
+
+    def guardar(self):
+        proyecto = self.instance
+        proyecto.hitos.update(orden=F('orden') + 1000)  # evita choques de (proyecto, orden) al reordenar
+        for form in self.deleted_forms:
+            if not form.instance._state.adding:
+                form.instance.delete()
+        for n, form in enumerate(self.ordenados, 1):
+            hito = form.save(commit=False)
+            hito.proyecto, hito.orden = proyecto, n
+            hito.save()
+        proyecto.hitos.filter(es_revision=True).update(orden=len(self.ordenados) + 1)  # A2: Revisión al final
+
+
+HitoFormSet = forms.inlineformset_factory(
+    Proyecto, Hito, form=HitoForm, formset=BaseHitoFormSet, extra=1, can_delete=True)

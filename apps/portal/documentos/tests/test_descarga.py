@@ -3,7 +3,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 from accounts.models import Usuario, Rol
-from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
 from documentos.models import Empresa, Proyecto, EstadoProyecto, Archivo, EstadoArchivo, DescargaLog, Hito
 
 class DescargaTests(TestCase):
@@ -20,6 +20,7 @@ class DescargaTests(TestCase):
         )
         
         encargar(self.proyecto, self.cliente)
+        finalizar(self.proyecto)  # A8: el cliente ve archivos solo con el proyecto finalizado
         
         self.doc_valido = Archivo.objects.create(
             proyecto=self.proyecto,
@@ -88,12 +89,10 @@ class DescargaTests(TestCase):
         self.assertEqual(DescargaLog.objects.count(), 0)
 
     @patch('documentos.views.url_descarga')
-    def test_descarga_en_esperando_recepcion_bloquea_cliente_y_permite_personal(self, mock_url_descarga):
+    def test_descarga_sin_finalizar_bloquea_cliente_y_permite_personal(self, mock_url_descarga):
         mock_url_descarga.return_value = 'http://test-space.com/descarga.pdf'
-        Hito.objects.create(
-            proyecto=self.proyecto, orden=1, nombre='Hito Completo',
-            cumplido_en=timezone.now(), cumplido_por=self.personal
-        )
+        self.proyecto.finalizado_en = None  # A8: sin finalizar
+        self.proyecto.save(update_fields=['finalizado_en'])
         url_descarga = reverse('documentos:descargar_archivo', args=[self.doc_valido.pk])
 
         # Cliente recibe 404 y no se registra log

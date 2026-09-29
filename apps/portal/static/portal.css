@@ -913,58 +913,9 @@ fieldset.form-group-fieldset legend.form-label {
     margin: 0;
 }
 
-/* Aviso de hitos al cliente (Tarea 25) */
-.aviso-hitos {
-    width: calc(100% - 2rem);
-    max-width: 36rem;
-    padding: 1.5rem;
-    background-color: var(--card-bg);
-    color: var(--text-main);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    box-sizing: border-box;
-}
-
-/* Sin JS el diálogo queda abierto sin modal: se muestra en su lugar, arriba de la página */
-.aviso-hitos:not(:modal) {
-    position: static;
-    width: auto;
-    max-width: none;
-    margin: 0 0 1.5rem;
-}
-
-.aviso-hitos::backdrop {
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.aviso-mensaje {
-    margin: 0.5rem 0 0;
-}
-
 .hito.is-actual {
     color: var(--text-main);
     font-weight: 600;
-}
-
-.aviso-acciones {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin: 1rem 0 0;
-}
-
-.form-recepcion {
-    margin: 1rem 0 0;
-}
-
-.form-recepcion .checkbox-item {
-    margin-top: 0.75rem;
-}
-
-/* Anula el padding de .form-group input: la casilla conserva el 1.1rem de .checkbox-item */
-.form-recepcion .checkbox-item input {
-    padding: 0;
-    flex: none;
 }
 
 /* Gestión de usuarios (M4): Filtros combinables */
@@ -2065,13 +2016,7 @@ fieldset.form-group-fieldset legend.form-label {
     border-color: var(--bkb-sec-info-border);
 }
 
-.pastilla-flujo-esperando_recepcion {
-    color: var(--bkb-sec-warning-text);
-    background-color: var(--bkb-sec-warning-bg);
-    border-color: var(--bkb-sec-warning-border);
-}
-
-.pastilla-flujo-recibido {
+.pastilla-flujo-finalizado {
     color: var(--bkb-sec-ok-text);
     background-color: var(--bkb-sec-ok-bg);
     border-color: var(--bkb-sec-ok-border);
@@ -2234,38 +2179,8 @@ fieldset.form-group-fieldset legend.form-label {
     margin: 0 0 var(--space-3);
 }
 
-/* Aviso al cliente (paso C) */
-.aviso-hitos .hito {
-    justify-content: flex-start;
-}
-
-.aviso-hitos .hito .badge {
-    margin-left: auto;
-}
-
 .hito.is-actual .hito-icono {
     color: var(--accent-text);
-}
-
-.aviso-acciones .btn-primary {
-    width: auto;
-    min-height: 48px;
-    padding: 0 var(--space-6);
-}
-
-.aviso-ayuda {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-    margin: var(--space-4) 0 0;
-    color: var(--text-muted);
-    font-size: var(--bkb-text-body-sm);
-}
-
-.aviso-ayuda a {
-    color: var(--accent-text);
-    font-weight: 600;
 }
 
 /* Cola de subida (paso C · DS-5) */
@@ -2347,10 +2262,6 @@ fieldset.form-group-fieldset legend.form-label {
     color: var(--bkb-sec-info-text);
     background-color: var(--bkb-sec-info-bg);
     border-color: var(--bkb-sec-info-border);
-}
-
-.form-recepcion .aviso {
-    margin: 0 0 var(--space-3);
 }
 
 /* Diálogo de confirmación único */
@@ -2484,5 +2395,104 @@ h1, h2, h3,
     *, *::before, *::after {
         transition: none !important;
         animation: none !important;
+    }
+}
+
+/* Editor de hitos (A2) */
+.hitos-editor {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.hito-fila {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    align-items: end;
+}
+
+.hito-fila-fija {
+    color: var(--text-muted);
+}
+
+@media (min-width: 640px) {
+    .hito-fila {
+        grid-template-columns: 1fr 8rem auto;
+    }
+}
+
+/* Avance del proyecto para el cliente (A7) y datos del proyecto */
+.proyecto-datos,
+.avance-fechas {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem 1.5rem;
+    margin: 1rem 0 0;
+}
+
+.proyecto-datos div,
+.avance-fechas div {
+    display: flex;
+    flex-direction: column;
+}
+
+.proyecto-datos dt,
+.avance-fechas dt {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.proyecto-datos dd,
+.avance-fechas dd {
+    margin: 0;
+    color: var(--text-main);
+    overflow-wrap: anywhere;
+}
+
+.avance-fechas {
+    margin: 1.5rem 0;
+}
+
+.avance-fechas dd {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.avance-encargado {
+    margin: 0 0 1.5rem;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.revision-final form + form {
+    margin-top: 1.25rem;
+}
+
+.revision-rechazo textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0.75rem;
+}
+
+.rechazos-lista {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+}
+
+.rechazos-lista p {
+    margin: 0.25rem 0 0;
+    color: var(--text-main);
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 640px) {
+    .avance-fechas {
+        grid-template-columns: repeat(2, 1fr);
     }
 }

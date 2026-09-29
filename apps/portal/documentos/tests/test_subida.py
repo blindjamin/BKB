@@ -3,7 +3,7 @@ from unittest.mock import patch
 from django.test import TestCase, Client
 from django.urls import reverse
 from accounts.models import Usuario, Rol
-from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
 from documentos.models import Empresa, Proyecto, Archivo, EstadoProyecto, EstadoArchivo
 
 class SubidaTests(TestCase):
@@ -17,6 +17,7 @@ class SubidaTests(TestCase):
         self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Test', estado=EstadoProyecto.ACTIVO
         )
         encargar(self.proyecto, self.cliente)
+        finalizar(self.proyecto)  # A8
         
         self.url_subir = reverse('documentos:iniciar_subida', args=[self.proyecto.pk])
 

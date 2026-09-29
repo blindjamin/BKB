@@ -12,12 +12,6 @@ from accounts.models import Rol
 from .models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Proyecto
 
 
-class EstadoFlujoProyecto:
-    EN_CURSO = 'en_curso'
-    ESPERANDO_RECEPCION = 'esperando_recepcion'
-    RECIBIDO = 'recibido'
-
-
 def _activo(usuario):
     # Un anónimo o un usuario desactivado no accede a nada, aunque la vista olvide exigir sesión.
     return usuario.is_authenticated and usuario.is_active
@@ -29,23 +23,6 @@ def _es_personal(usuario):
 
 def es_jefe(usuario):
     return _activo(usuario) and usuario.rol == Rol.JEFE
-
-
-def estado_proyecto(proyecto):
-    """Calcula el estado del flujo de hitos y recepción para un proyecto (§12.2).
-
-    - 'recibido': si existe al menos una RespuestaRecepcion con conforme=True.
-    - 'en_curso': si no tiene hitos o queda al menos un hito sin cumplir (cumplido_en is None).
-    - 'esperando_recepcion': si todos los hitos están cumplidos y no hay respuesta conforme.
-    """
-    if proyecto.respuestas_recepcion.filter(conforme=True).exists():
-        return EstadoFlujoProyecto.RECIBIDO
-
-    hitos = proyecto.hitos.all()
-    if not hitos.exists() or hitos.filter(cumplido_en__isnull=True).exists():
-        return EstadoFlujoProyecto.EN_CURSO
-
-    return EstadoFlujoProyecto.ESPERANDO_RECEPCION
 
 
 def _a_cargo(usuario):  # E1, E6
@@ -96,17 +73,16 @@ def puede_gestionar_estructura(usuario):
     return _es_personal(usuario)
 
 
-def archivos_visibles_para(usuario):
-    """Archivos disponibles y no eliminados de todos los proyectos visibles para el usuario.
+def ve_archivos(usuario, proyecto):
+    """A8: el personal siempre; el cliente, solo cuando el proyecto está finalizado."""
+    return _es_personal(usuario) or proyecto.finalizado
 
-    Para clientes, excluye proyectos en estado 'esperando_recepcion' (bloqueo total).
-    """
+
+def archivos_visibles_para(usuario):
+    """Archivos disponibles y no eliminados de todos los proyectos visibles para el usuario."""
     proyectos = proyectos_visibles(usuario)
     if not _es_personal(usuario):
-        bloqueados_ids = [
-            p.pk for p in proyectos if estado_proyecto(p) == EstadoFlujoProyecto.ESPERANDO_RECEPCION
-        ]
-        proyectos = proyectos.exclude(pk__in=bloqueados_ids)
+        proyectos = proyectos.filter(finalizado_en__isnull=False)  # A8
     return Archivo.objects.filter(
         proyecto__in=proyectos,
         estado=EstadoArchivo.DISPONIBLE,
@@ -115,9 +91,7 @@ def archivos_visibles_para(usuario):
 
 
 def archivos_visibles(usuario, proyecto):
-    if not proyectos_visibles(usuario).filter(pk=proyecto.pk).exists():
-        return Archivo.objects.none()
-    if not _es_personal(usuario) and estado_proyecto(proyecto) == EstadoFlujoProyecto.ESPERANDO_RECEPCION:
+    if not proyectos_visibles(usuario).filter(pk=proyecto.pk).exists() or not ve_archivos(usuario, proyecto):  # A8
         return Archivo.objects.none()
     return proyecto.archivos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True)
 
@@ -133,20 +107,12 @@ def puede_borrar(usuario, archivo):
     )
 
 
-def puede_gestionar_hitos(usuario):
-    """Solo el personal y el jefe pueden avanzar o retroceder hitos."""
-    return _es_personal(usuario)
-
-
 def puede_editar_proyecto(usuario, proyecto):
     """E3: el jefe o un encargado BKB del proyecto; el resto del personal solo mira."""
     return es_jefe(usuario) or (_es_personal(usuario) and proyecto.encargados_bkb.filter(pk=usuario.pk).exists())
 
 
-def puede_responder_recepcion(usuario, proyecto):
-    """Solo un cliente a cargo y cuando el proyecto está esperando recepción."""
-    if not _activo(usuario) or usuario.rol != Rol.CLIENTE:
-        return False
-    if not proyectos_visibles(usuario).filter(pk=proyecto.pk).exists():  # E1
-        return False
-    return estado_proyecto(proyecto) == EstadoFlujoProyecto.ESPERANDO_RECEPCION
+def puede_responder_cliente(usuario, proyecto):
+    """A5, M5: el encargado del proyecto o el de su empresa (cliente activo)."""
+    return (_activo(usuario) and usuario.rol == Rol.CLIENTE
+            and usuario.pk in (proyecto.encargado_id, proyecto.empresa.encargado_id))

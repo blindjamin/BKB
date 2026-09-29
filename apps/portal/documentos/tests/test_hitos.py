@@ -6,8 +6,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import Rol
-from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
-from documentos.models import Empresa, EstadoProyecto, Hito, Proyecto, RespuestaRecepcion
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
+from documentos.models import Empresa, EstadoProyecto, Hito, Proyecto, RechazoRevision
 
 Usuario = get_user_model()
 
@@ -80,11 +80,6 @@ class AvanzarHitoTests(HitosTests):
 
 
 class RetrocederHitoTests(HitosTests):
-    def _responder(self, conforme):
-        RespuestaRecepcion.objects.create(
-            proyecto=self.proyecto, usuario=self.cliente, nombre_revisor='Revisor', conforme=conforme
-        )
-
     def test_retrocede_solo_el_ultimo_cumplido(self):
         for usuario in (self.personal, self.jefe):
             with self.subTest(usuario=usuario.email):
@@ -101,19 +96,19 @@ class RetrocederHitoTests(HitosTests):
         self.assertEqual(self._post('retroceder').status_code, 302)
         self.assertEqual(self._cumplidos(), [])
 
-    def test_no_retrocede_tras_recepcion_conforme(self):
+    def test_no_retrocede_si_finalizado(self):  # A6
         self._marcar(1, 2, 3)
-        self._responder(conforme=True)
+        finalizar(self.proyecto)
         self.client.force_login(self.personal)
         self.assertEqual(self._post('retroceder').status_code, 302)
         self.assertEqual(self._cumplidos(), [1, 2, 3])
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
         self.assertContains(response, 'role="alert"')
-        self.assertContains(response, 'El cliente ya confirmó la recepción')
+        self.assertContains(response, 'El proyecto está finalizado: los hitos no se pueden deshacer.')
 
-    def test_retrocede_tras_recepcion_no_conforme(self):
+    def test_retrocede_tras_rechazo(self):  # A6
         self._marcar(1, 2, 3)
-        self._responder(conforme=False)
+        RechazoRevision.objects.create(proyecto=self.proyecto, usuario=self.cliente, motivo='Falta un tablero')
         self.client.force_login(self.personal)
         self._post('retroceder')
         self.assertEqual(self._cumplidos(), [1, 2])
@@ -162,10 +157,8 @@ class PanelHitosTests(HitosTests):
         self.assertNotContains(response, avanzar)
         self.assertContains(response, retroceder)
 
-    def test_proyecto_recibido_no_muestra_retroceder(self):
+    def test_proyecto_finalizado_no_muestra_retroceder(self):
         self._marcar(1, 2, 3)
-        RespuestaRecepcion.objects.create(
-            proyecto=self.proyecto, usuario=self.cliente, nombre_revisor='Revisor', conforme=True
-        )
+        finalizar(self.proyecto)
         self.client.force_login(self.jefe)
         self.assertNotContains(self._ver(), self._urls()[1])

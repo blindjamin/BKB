@@ -22,6 +22,9 @@ class Empresa(models.Model):
         return self.nombre
 
 
+HITOS_ESTANDAR = ['Compras', 'Armado', 'Cableado', 'Pruebas', 'Envío', 'Recepción', 'Revisión']  # A1
+
+
 class EstadoProyecto(models.TextChoices):
     ACTIVO = 'activo', 'Activo'
     CERRADO = 'cerrado', 'Cerrado'
@@ -37,12 +40,34 @@ class Proyecto(models.Model):
     encargados_bkb = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='proyectos_bkb',
                                             limit_choices_to={'rol__in': ['personal', 'jefe']},
                                             verbose_name='encargados BKB')  # E3
+    fecha_inicio = models.DateField()  # A3
+    fecha_termino = models.DateField()
+    finalizado_en = models.DateTimeField(null=True, blank=True)  # A5: se llena al aceptar la Revisión
 
     class Meta:
         ordering = ['nombre']
 
     def __str__(self):
         return f'{self.nombre} ({self.empresa})'
+
+    @property
+    def finalizado(self):
+        return self.finalizado_en is not None
+
+    def crear_hitos_estandar(self):  # A1
+        Hito.objects.bulk_create([
+            Hito(proyecto=self, orden=n, nombre=nombre, es_revision=n == len(HITOS_ESTANDAR))
+            for n, nombre in enumerate(HITOS_ESTANDAR, 1)])
+
+    def revision_por_responder(self):
+        """A5: la Revisión, si todos los hitos anteriores están cumplidos y el proyecto no está finalizado."""
+        if self.finalizado:
+            return None
+        hitos = list(self.hitos.all())
+        revision = next((h for h in hitos if h.es_revision), None)
+        if revision and all(h.cumplido for h in hitos if not h.es_revision):
+            return revision
+        return None
 
 
 class EstadoArchivo(models.TextChoices):
@@ -118,12 +143,15 @@ class Hito(models.Model):
     cumplido_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='hitos_cumplidos'
     )
+    es_revision = models.BooleanField(default=False)  # A2: una por proyecto, siempre la última
 
     class Meta:
         verbose_name = 'hito'
         verbose_name_plural = 'hitos'
         ordering = ['orden']
         unique_together = [('proyecto', 'orden')]
+        constraints = [models.UniqueConstraint(
+            fields=['proyecto'], condition=models.Q(es_revision=True), name='una_revision_por_proyecto')]
 
     @property
     def cumplido(self):
@@ -133,22 +161,17 @@ class Hito(models.Model):
         return f'{self.proyecto.nombre} - {self.orden}. {self.nombre}'
 
 
-class RespuestaRecepcion(models.Model):
+class RechazoRevision(models.Model):  # A5: los rechazos no se borran
     id = _uuid_pk()
-    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='respuestas_recepcion')
-    usuario = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='respuestas_recepcion'
-    )
-    nombre_revisor = models.CharField(max_length=200)
-    conforme = models.BooleanField()
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='rechazos_revision')
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='rechazos_revision')
+    motivo = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
-    ip = models.GenericIPAddressField(null=True, blank=True)
 
     class Meta:
-        verbose_name = 'respuesta de recepción'
-        verbose_name_plural = 'respuestas de recepción'
+        verbose_name = 'rechazo de la Revisión'
+        verbose_name_plural = 'rechazos de la Revisión'
         ordering = ['-fecha']
 
     def __str__(self):
-        resultado = 'Conforme' if self.conforme else 'No conforme'
-        return f'{self.proyecto.nombre} - {resultado} ({self.nombre_revisor})'
+        return f'{self.proyecto.nombre} - rechazo ({self.usuario})'
