@@ -22,8 +22,8 @@ class PaginasDeErrorTests(TestCase):
     def _es_pagina_de_error(self, response, plantilla, texto):
         self.assertTemplateUsed(response, plantilla)
         self.assertContains(response, texto, status_code=response.status_code)
-        self.assertContains(response, 'tel:+56989753095', status_code=response.status_code)
         self.assertContains(response, 'tel:+56961911593', status_code=response.status_code)
+        self.assertContains(response, 'tel:+56966626540', status_code=response.status_code)
 
     def test_403_usa_su_plantilla(self):
         self.client.force_login(self.cliente)
@@ -52,7 +52,7 @@ class PaginasDeErrorTests(TestCase):
         response = server_error(RequestFactory().get('/'))
         self.assertEqual(response.status_code, 500)
         html = response.content.decode()
-        for texto in ('Algo falló', 'tel:+56989753095', 'tel:+56961911593'):
+        for texto in ('Algo falló', 'tel:+56961911593', 'tel:+56966626540'):
             self.assertIn(texto, html)
 
 

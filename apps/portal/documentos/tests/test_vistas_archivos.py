@@ -313,7 +313,7 @@ class AvisoHitosTests(TestCase):
 
         self._esperando()
         response = self._ver(self.cliente)
-        for texto in ('tel:+56989753095', 'tel:+56961911593', 'data-bloqueante',
+        for texto in ('tel:+56961911593', 'tel:+56966626540', 'data-bloqueante',
                       'name="nombre_revisor"', 'name="revisado"', 'name="resultado"'):
             self.assertContains(response, texto)
 

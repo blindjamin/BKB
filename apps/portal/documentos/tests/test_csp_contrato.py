@@ -227,7 +227,7 @@ class BaseComunTests(TestCase):
     def test_salto_al_contenido_y_telefonos_de_ayuda(self):
         self.client.force_login(self.personal)
         response = self.client.get(self.inicio)
-        for texto in ('href="#contenido"', 'id="contenido"', 'tel:+56989753095', 'tel:+56961911593', 'role="status"'):
+        for texto in ('href="#contenido"', 'id="contenido"', 'tel:+56961911593', 'tel:+56966626540', 'role="status"'):
             self.assertContains(response, texto)
         self.assertNotContains(response, '8249 1403')
         self.assertNotContains(response, '82491403')

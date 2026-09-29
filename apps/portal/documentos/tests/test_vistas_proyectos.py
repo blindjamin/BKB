@@ -61,10 +61,10 @@ class VistasProyectosTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'No tienes proyectos asignados actualmente.')
-        self.assertContains(response, 'tel:+56989753095')
-        self.assertContains(response, '+56 9 8975 3095')
         self.assertContains(response, 'tel:+56961911593')
         self.assertContains(response, '+56 9 6191 1593')
+        self.assertContains(response, 'tel:+56966626540')
+        self.assertContains(response, '+56 9 6662 6540')
         self.assertNotContains(response, '8249 1403')
         self.assertNotContains(response, '82491403')
 
