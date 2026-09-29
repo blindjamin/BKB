@@ -133,13 +133,13 @@ class ProyectoEncargadosTests(TestCase):
         self.assertEqual(r.status_code, 302)
         proyecto = Proyecto.objects.get(nombre='Proy')
         self.assertEqual(proyecto.encargado, self.empresa.encargado)
-        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual([m.subject for m in mail.outbox], ['Inicio del proyecto Proy'])
         self.assertEqual(list(proyecto.encargados_bkb.all()), [self.personal])
 
     def test_persona_nueva_recibe_invitacion(self):  # E4
         self.client.post(self.url, self._datos(encargado_email='otra@cli.cl', encargado_nombre='Otra'))
         self.assertEqual(Proyecto.objects.get(nombre='Proy').encargado.email, 'otra@cli.cl')
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual([m.subject for m in mail.outbox], ['Invitación al Portal BKB', 'Inicio del proyecto Proy'])
 
     def test_sin_encargados_bkb_se_rechaza(self):  # E3
         r = self.client.post(self.url, self._datos(encargados_bkb=[]))

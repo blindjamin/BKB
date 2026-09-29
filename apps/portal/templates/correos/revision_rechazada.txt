@@ -1,0 +1,7 @@
+{% autoescape off %}{{ rechazo.usuario.nombre|default:rechazo.usuario.email }} rechazó la Revisión del proyecto {{ proyecto.nombre }} de {{ proyecto.empresa.nombre }} el {{ rechazo.fecha|date:"d-m-Y H:i" }}.
+
+Motivo:
+{{ rechazo.motivo }}
+
+Ver proyecto: {{ url }}
+{% endautoescape %}
