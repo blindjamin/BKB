@@ -13,7 +13,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
 
 from .encargados import obtener_o_invitar
-from .forms import EmpresaForm, ProyectoForm
+from .forms import EmpresaForm, HitoFormSet, ProyectoForm
 from .permisos import (
     _es_personal,
     proyectos_visibles,
@@ -172,6 +172,27 @@ def editar_proyecto(request, pk):
         'accion': 'Guardar Cambios',
         'encargados_empresa': _encargados_por_empresa(),
     })
+
+
+@login_required
+def editar_hitos(request, pk):
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not puede_editar_proyecto(request.user, proyecto):
+        raise PermissionDenied("Solo los encargados BKB del proyecto pueden editar sus hitos.")  # E3
+    url = reverse('documentos:detalle_proyecto', args=[proyecto.pk])
+    if proyecto.finalizado:
+        messages.error(request, 'El proyecto está finalizado; sus hitos no se pueden cambiar.')
+        return redirect(url)
+
+    # Sin la Revisión en el queryset, un POST con su id no es válido: no se puede quitar ni mover (A2)
+    formset = HitoFormSet(request.POST or None, instance=proyecto, queryset=proyecto.hitos.filter(es_revision=False))
+    if request.method == 'POST' and formset.is_valid():
+        with transaction.atomic():
+            Proyecto.objects.select_for_update().get(pk=proyecto.pk)
+            formset.guardar()
+        messages.success(request, 'Hitos actualizados.')
+        return redirect(url)
+    return render(request, 'hitos_form.html', {'proyecto': proyecto, 'formset': formset})
 
 
 @login_required

@@ -1,4 +1,5 @@
 from django import forms
+from django.db.models import F
 from django.contrib.auth import get_user_model
 
 from accounts.models import Rol
@@ -89,3 +90,53 @@ class ProyectoForm(CamposEncargado, forms.ModelForm):
         if inicio and termino and termino < inicio:
             self.add_error('fecha_termino', 'El término no puede ser anterior al inicio.')  # A3
         return datos
+
+
+class HitoForm(forms.ModelForm):
+    # posicion no es campo del modelo: así no choca con unique (proyecto, orden) al reordenar
+    posicion = forms.IntegerField(required=False, min_value=1, label='Posición')
+
+    class Meta:
+        model = Hito
+        fields = ['nombre']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance._state.adding:  # no .pk: el UUID ya trae valor
+            self.fields['posicion'].initial = self.instance.orden
+
+
+class BaseHitoFormSet(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        vivos = []
+        for i, form in enumerate(self.forms):
+            if not form.cleaned_data:  # fila extra vacía
+                continue
+            if form.cleaned_data.get('DELETE'):
+                if form.instance.cumplido:
+                    raise forms.ValidationError('Un hito cumplido no se puede quitar.')  # A2
+                continue
+            vivos.append((form.cleaned_data.get('posicion') or 10**4, i, form))
+        self.ordenados = [f for *_, f in sorted(vivos, key=lambda t: t[:2])]
+        cumplidos = [f.instance.cumplido for f in self.ordenados]
+        if cumplidos != sorted(cumplidos, reverse=True):  # A4: los cumplidos van primero
+            raise forms.ValidationError('Los hitos cumplidos tienen que quedar antes que los pendientes.')
+
+    def guardar(self):
+        proyecto = self.instance
+        proyecto.hitos.update(orden=F('orden') + 1000)  # evita choques de (proyecto, orden) al reordenar
+        for form in self.deleted_forms:
+            if not form.instance._state.adding:
+                form.instance.delete()
+        for n, form in enumerate(self.ordenados, 1):
+            hito = form.save(commit=False)
+            hito.proyecto, hito.orden = proyecto, n
+            hito.save()
+        proyecto.hitos.filter(es_revision=True).update(orden=len(self.ordenados) + 1)  # A2: Revisión al final
+
+
+HitoFormSet = forms.inlineformset_factory(
+    Proyecto, Hito, form=HitoForm, formset=BaseHitoFormSet, extra=1, can_delete=True)

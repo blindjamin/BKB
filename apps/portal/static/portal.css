@@ -2486,3 +2486,29 @@ h1, h2, h3,
         animation: none !important;
     }
 }
+
+/* Editor de hitos (A2) */
+.hitos-editor {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.hito-fila {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    align-items: end;
+}
+
+.hito-fila-fija {
+    color: var(--text-muted);
+}
+
+@media (min-width: 640px) {
+    .hito-fila {
+        grid-template-columns: 1fr 8rem auto;
+    }
+}

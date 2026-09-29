@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from accounts.models import Rol
 from documentos.models import HITOS_ESTANDAR, Proyecto
-from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
 
 Usuario = get_user_model()
 
@@ -69,3 +69,98 @@ class FechasEHitosEstandarTests(Base):
         r = self.client.post(reverse('documentos:crear_proyecto'), self.datos(fecha_inicio='', fecha_termino=''))
         self.assertEqual(r.status_code, 200)
         self.assertFalse(Proyecto.objects.filter(nombre='Nuevo').exists())
+
+
+class EditorDeHitosTests(Base):
+    def url(self):
+        return reverse('documentos:editar_hitos', args=[self.proyecto.pk])
+
+    def post(self, filas, proyecto=None):
+        """filas: lista de dicts con id, nombre, posicion, borrar. El prefijo del formset es `hitos`."""
+        datos = {'hitos-TOTAL_FORMS': len(filas), 'hitos-INITIAL_FORMS': sum(1 for f in filas if f.get('id')),
+                 'hitos-MIN_NUM_FORMS': 0, 'hitos-MAX_NUM_FORMS': 1000}
+        for n, f in enumerate(filas):
+            datos[f'hitos-{n}-id'] = f.get('id', '')
+            datos[f'hitos-{n}-proyecto'] = self.proyecto.pk
+            datos[f'hitos-{n}-nombre'] = f['nombre']
+            datos[f'hitos-{n}-posicion'] = f.get('posicion', n + 1)
+            if f.get('borrar'):
+                datos[f'hitos-{n}-DELETE'] = 'on'
+        url = reverse('documentos:editar_hitos', args=[(proyecto or self.proyecto).pk])
+        return self.client.post(url, datos)
+
+    def filas(self):
+        """Filas actuales sin la Revisión."""
+        return [{'id': h.pk, 'nombre': h.nombre, 'posicion': h.orden}
+                for h in self.proyecto.hitos.filter(es_revision=False)]
+
+    def nombres(self):
+        return list(self.proyecto.hitos.values_list('nombre', flat=True))
+
+    def test_renombrar_y_reordenar_intercambiando_dos_posiciones(self):  # A2
+        self.client.force_login(self.personal)
+        filas = self.filas()
+        filas[0]['nombre'] = 'Compras 2'
+        filas[0]['posicion'], filas[1]['posicion'] = 2, 1
+        self.assertEqual(self.post(filas).status_code, 302)
+        self.assertEqual(self.nombres()[:2], ['Armado', 'Compras 2'])
+        self.assertEqual(list(self.proyecto.hitos.values_list('orden', flat=True)), list(range(1, 8)))
+
+    def test_agregar_y_quitar_pendiente_deja_la_revision_ultima(self):  # A2
+        self.client.force_login(self.personal)
+        filas = self.filas()
+        filas[1]['borrar'] = True
+        filas.append({'nombre': 'Extra', 'posicion': 3})
+        self.assertEqual(self.post(filas).status_code, 302)
+        nombres = self.nombres()
+        self.assertNotIn('Armado', nombres)
+        self.assertIn('Extra', nombres)
+        ultimo = self.proyecto.hitos.last()
+        self.assertEqual((ultimo.nombre, ultimo.es_revision), ('Revisión', True))
+        self.assertEqual(self.proyecto.hitos.filter(es_revision=True).count(), 1)
+
+    def test_post_con_el_id_de_la_revision_no_la_borra(self):  # A2
+        self.client.force_login(self.personal)
+        revision = self.proyecto.hitos.get(es_revision=True)
+        filas = self.filas() + [{'id': revision.pk, 'nombre': 'Revisión', 'borrar': True}]
+        self.post(filas)
+        self.assertTrue(self.proyecto.hitos.filter(pk=revision.pk).exists())
+
+    def test_quitar_un_hito_cumplido_da_error(self):  # A2
+        self.client.force_login(self.personal)
+        self.cumplir(1)
+        filas = self.filas()
+        filas[0]['borrar'] = True
+        r = self.post(filas)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'Un hito cumplido no se puede quitar.')
+        self.assertEqual(self.proyecto.hitos.count(), 7)
+
+    def test_cumplido_despues_de_un_pendiente_da_error(self):  # A2, A4
+        self.client.force_login(self.personal)
+        self.cumplir(1)
+        filas = self.filas()
+        filas[0]['posicion'] = 3
+        r = self.post(filas)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'Los hitos cumplidos tienen que quedar antes que los pendientes.')
+
+    def test_permisos_del_editor(self):  # E3
+        self.client.force_login(self.otro_personal)
+        self.assertEqual(self.client.get(self.url()).status_code, 403)
+        self.assertEqual(self.post(self.filas()).status_code, 403)
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.client.get(self.url()).status_code, 403)
+        self.client.force_login(self.jefe)
+        self.assertEqual(self.client.get(self.url()).status_code, 200)
+        self.assertEqual(self.post(self.filas()).status_code, 302)
+
+    def test_proyecto_finalizado_no_cambia(self):  # A2, A6
+        finalizar(self.proyecto)
+        self.client.force_login(self.personal)
+        filas = self.filas()
+        filas[0]['nombre'] = 'Otro'
+        r = self.post(filas)
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(self.nombres(), HITOS_ESTANDAR)
+        self.assertRedirects(self.client.get(self.url()), reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))

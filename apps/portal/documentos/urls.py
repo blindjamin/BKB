@@ -11,6 +11,7 @@ urlpatterns = [
     path('proyectos/nuevo/', views.crear_proyecto, name='crear_proyecto'),
     path('proyectos/<uuid:pk>/', views.detalle_proyecto, name='detalle_proyecto'),
     path('proyectos/<uuid:pk>/editar/', views.editar_proyecto, name='editar_proyecto'),
+    path('proyectos/<uuid:pk>/hitos/', views.editar_hitos, name='editar_hitos'),
     path('proyectos/<uuid:pk>/carpetas/nueva/', views.crear_carpeta, name='crear_carpeta'),
     path('proyectos/<uuid:pk>/hitos/avanzar/', views.avanzar_hito, name='avanzar_hito'),
     path('proyectos/<uuid:pk>/hitos/retroceder/', views.retroceder_hito, name='retroceder_hito'),
