@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ m.titulo }} - {{ m.proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="archivos-container">
+    <nav class="breadcrumbs">
+        <a href="{% url 'documentos:detalle_proyecto' m.proyecto.pk %}#modificaciones" class="btn-volver">&larr; {{ m.proyecto.nombre }}</a>
+    </nav>
+    <h1 class="archivos-title">{{ m.titulo }}</h1>
+    <div class="archivos-meta">
+        {% if m.enviada_en %}<span class="pastilla-flujo pastilla-flujo-{{ m.estado }}">{{ m.get_estado_display }}</span>{% else %}<span class="pastilla">Borrador</span>{% endif %}
+        {% if m.enviada_en %}<span>Enviada el {{ m.enviada_en|date:"d-m-Y" }}</span>{% endif %}
+    </div>
+
+    <p class="modificacion-descripcion">{{ m.descripcion|linebreaksbr }}</p>
+
+    {% if m.respondida_en %}
+    <p class="view-subtitle">
+        {{ m.get_estado_display }} por {{ m.respondida_por.nombre|default:m.respondida_por.email }} el {{ m.respondida_en|date:"d-m-Y" }}.
+        {% if m.motivo_rechazo %}Motivo: {{ m.motivo_rechazo|linebreaksbr }}{% endif %}
+    </p>
+    {% endif %}
+
+    {% if not m.enviada_en and puede_editar %}
+    <div class="proyecto-acciones">
+        <input type="file" id="archivo-input" class="archivo-input-hidden" multiple accept="{{ extensiones|join:',' }}" data-url-subir="{% url 'documentos:iniciar_subida' m.proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}" data-modificacion-id="{{ m.pk }}" data-max-mb="{{ max_upload_mb }}" data-extensiones="{{ extensiones|join:',' }}">
+        <button type="button" class="btn-primary" data-abrir="archivo-input">
+            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#subir"></use></svg>
+            Subir adjuntos
+        </button>
+    </div>
+    <section id="cola-subida" class="cola-subida" aria-live="polite" aria-label="Archivos en subida" hidden>
+        <ul id="cola-lista" class="cola-lista"></ul>
+        <button type="button" id="ver-nuevos" class="btn-secondary" hidden>Ver archivos nuevos</button>
+    </section>
+    {% endif %}
+
+    <section class="hitos">
+        <h2 class="seccion-title">Adjuntos</h2>
+        {% if adjuntos %}
+        <div class="archivos-lista">
+            {% for archivo in adjuntos %}
+                {% include "includes/archivo_item.html" with archivo=archivo puede_borrar=archivo.puede_borrar %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="view-subtitle">Sin adjuntos.</p>
+        {% endif %}
+    </section>
+
+    {% if not m.enviada_en and puede_editar %}
+    <form method="post" action="{% url 'documentos:enviar_modificacion' m.pk %}" data-confirmar="Se enviará un correo a {{ m.proyecto.encargado.email }}. Después ya no podrás cambiar los adjuntos.">
+        {% csrf_token %}
+        <button type="submit" class="btn-primary">Enviar al cliente</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if not m.enviada_en and puede_editar %}
+<script src="{% static 'subir.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endif %}
+{% endblock %}

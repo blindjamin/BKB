@@ -10,7 +10,7 @@ import { SITE } from '../../config/site';
   hidden
 >
   <div class="en-card relative overflow-hidden rounded-[18px] border">
-    <!-- Franja superior de acento -->
+    <!-- Franja superior de acento: se acorta como cuenta regresiva y al terminar cierra el aviso -->
     <div class="en-stripe absolute inset-x-0 top-0 h-[3px]" aria-hidden="true"></div>
 
     <button
@@ -70,6 +70,15 @@ import { SITE } from '../../config/site';
   .emergency-notice.is-open {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+  /* Cuenta regresiva de 15 s; se pausa mientras el mouse o el foco están en el aviso */
+  .emergency-notice.is-open .en-stripe {
+    transform-origin: left;
+    animation: en-cuenta 15s linear forwards;
+  }
+  .emergency-notice:hover .en-stripe,
+  .emergency-notice:focus-within .en-stripe {
+    animation-play-state: paused;
   }
 
   /* ---------- Tema oscuro (por defecto) ----------
@@ -140,6 +149,9 @@ import { SITE } from '../../config/site';
     70%  { transform: scale(1.35); opacity: 0; }
     100% { transform: scale(1.35); opacity: 0; }
   }
+  @keyframes en-cuenta {
+    to { transform: scaleX(0); }
+  }
   @keyframes en-blink {
     0%, 100% { opacity: 1; }
     50%      { opacity: 0.45; }
@@ -161,7 +173,8 @@ import { SITE } from '../../config/site';
 </style>
 
 <script>
-  // Aparece al pasar el hero (al llegar a "Qué hacemos"); si se cierra, no vuelve durante la sesión.
+  // Aparece al pasar el hero (al llegar a "Qué hacemos"); se cierra solo al terminar la cuenta
+  // regresiva de la franja o con la X, y no vuelve durante la sesión.
   const KEY = 'bkb-emergency-closed';
 
   function initEmergencyNotice() {
@@ -182,11 +195,13 @@ import { SITE } from '../../config/site';
     window.addEventListener('scroll', show, { passive: true });
     show();
 
-    notice.querySelector('[data-emergency-close]')?.addEventListener('click', () => {
+    const close = () => {
       notice.classList.remove('is-open');
       try { sessionStorage.setItem(KEY, '1'); } catch {}
       setTimeout(() => { notice.hidden = true; }, 400);
-    });
+    };
+    notice.querySelector('[data-emergency-close]')?.addEventListener('click', close);
+    notice.querySelector('.en-stripe')?.addEventListener('animationend', close);
   }
 
   if (document.readyState === 'loading') {

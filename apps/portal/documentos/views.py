@@ -3,7 +3,7 @@ import uuid
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Prefetch, Q
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseBadRequest, Http404
 from django.shortcuts import render, get_object_or_404, redirect
@@ -24,13 +24,17 @@ from .permisos import (
     puede_gestionar_estructura,
     archivos_visibles,
     archivos_visibles_para,
+    firmar_enlace,
+    modificaciones_visibles,
     puede_subir,
     puede_borrar,
     puede_editar_proyecto,
     puede_responder_cliente,
     ve_archivos,
 )
-from .models import Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RechazoRevision
+from .models import (
+    Archivo, Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoModificacion, EstadoProyecto, Proyecto,
+    RechazoRevision)
 from .storage import url_descarga
 from .subidas import EXTENSIONES_PERMITIDAS
 
@@ -42,9 +46,16 @@ def _get_client_ip(request):
     return request.META.get('REMOTE_ADDR')
 
 
+def _preparar_archivo(usuario, archivo):
+    archivo.puede_borrar = puede_borrar(usuario, archivo)
+    archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
+    return archivo
+
+
 def _tarjetas_de_proyecto(usuario, proyectos):
     """Proyectos con conteo de archivos disponibles y última carga, cerrados al final (docs/09 §12.1)."""
-    disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True)
+    disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True,
+                    archivos__modificacion__isnull=True)  # M1
     proyectos = proyectos.annotate(
         archivos_count=Count('archivos', filter=disponibles),
         ultima_carga=Max('archivos__subido_en', filter=disponibles),
@@ -202,6 +213,16 @@ def _hitos_con_actual(proyecto):
     return hitos
 
 
+def _modificaciones(usuario, proyecto):  # M8
+    ms = list(modificaciones_visibles(usuario).filter(proyecto=proyecto).select_related('respondida_por')
+              .prefetch_related(Prefetch('adjuntos', queryset=Archivo.objects.filter(
+                  estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True), to_attr='adjuntos_visibles')))
+    responde = puede_responder_cliente(usuario, proyecto)
+    for m in ms:
+        m.enlace = firmar_enlace(m, usuario) if responde and m.estado == EstadoModificacion.PENDIENTE else None  # M5
+    return ms
+
+
 @login_required
 def detalle_proyecto(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
@@ -211,6 +232,7 @@ def detalle_proyecto(request, pk):
             'hitos': _hitos_con_actual(proyecto),
             'revision': proyecto.revision_por_responder() if puede_responder_cliente(request.user, proyecto) else None,
             'rechazos': proyecto.rechazos_revision.select_related('usuario'),
+            'modificaciones': _modificaciones(request.user, proyecto),
         })
 
     carpeta_activa = None
@@ -225,8 +247,7 @@ def detalle_proyecto(request, pk):
     # carpeta_activa=None filtra carpeta IS NULL: los archivos de la raíz
     todos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
     for archivo in todos:
-        archivo.puede_borrar = puede_borrar(request.user, archivo)
-        archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
+        _preparar_archivo(request.user, archivo)
 
     fotos = [a for a in todos if a.tipo.startswith('image/')]
     documentos = [a for a in todos if not a.tipo.startswith('image/')]
@@ -265,6 +286,7 @@ def detalle_proyecto(request, pk):
         'max_upload_mb': settings.MAX_UPLOAD_MB,
         'extensiones': sorted(EXTENSIONES_PERMITIDAS),
         'puede_gestionar': puede_gestionar_estructura(request.user),
+        'modificaciones': _modificaciones(request.user, proyecto),
     }
     return render(request, 'archivos.html', context)
 
@@ -406,4 +428,6 @@ def eliminar_archivo(request, pk):
     archivo.save()
     messages.success(request, f'Se eliminó «{archivo.nombre_original}».')
 
+    if archivo.modificacion_id:  # M1: vuelve al borrador
+        return redirect('documentos:detalle_modificacion', pk=archivo.modificacion_id)
     return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)

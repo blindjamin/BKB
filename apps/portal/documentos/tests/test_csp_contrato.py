@@ -8,8 +8,9 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from accounts.models import Rol, Usuario
+from documentos.permisos import firmar_enlace
 from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
-from documentos.models import Archivo, Carpeta, Empresa, Hito, EstadoArchivo, EstadoProyecto, Proyecto
+from documentos.models import Modificacion, Archivo, Carpeta, Empresa, Hito, EstadoArchivo, EstadoProyecto, Proyecto
 
 
 class ContratoCSPTests(TestCase):
@@ -216,6 +217,26 @@ class ContratoCSPTests(TestCase):
 
         resp_err_proyecto = self.client.post(reverse('documentos:crear_proyecto'), {'nombre': '', 'fecha_inicio': ''})
         self._verificar_contrato_csp_y_html(resp_err_proyecto)
+
+    def test_paginas_de_modificaciones_cumplen_contrato(self):  # T16, T18, T20
+        m = Modificacion.objects.create(proyecto=self.proyecto, titulo='Cambio', descripcion='Detalle uno',
+                                        creada_por=self.personal)
+        self.client.force_login(self.personal)
+        for nombre, args in [('crear_modificacion', [self.proyecto.pk]), ('detalle_modificacion', [m.pk])]:
+            with self.subTest(pagina=nombre):
+                self._verificar_contrato_csp_y_html(self.client.get(reverse(f'documentos:{nombre}', args=args)))
+        m.enviada_en = timezone.now()
+        m.save()
+        self._verificar_contrato_csp_y_html(
+            self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])))
+        self.client.logout()
+        url = reverse('documentos:responder_modificacion', args=[firmar_enlace(m, self.cliente)])
+        self._verificar_contrato_csp_y_html(self.client.get(url))  # sin sesión
+        self.client.post(url, {'respuesta': 'aprobar'})
+        self._verificar_contrato_csp_y_html(self.client.get(url))  # ya respondida
+        self.client.force_login(self.cliente)
+        self._verificar_contrato_csp_y_html(
+            self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])))  # avance con modificación
 
 
 class BaseComunTests(TestCase):

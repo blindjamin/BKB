@@ -1,0 +1,19 @@
+{% extends 'correos/base.html' %}
+{% block contenido %}
+{% if recordatorio %}<p><strong>Recordatorio:</strong> esta modificación sigue esperando tu respuesta.</p>{% endif %}
+<p>BKB propone una modificación al proyecto <strong>{{ proyecto.nombre }}</strong> de {{ proyecto.empresa.nombre }}.</p>
+<p><strong>{{ m.titulo }}</strong></p>
+<p>{{ m.descripcion|linebreaksbr }}</p>
+{% if adjuntos %}
+  {% if adjuntados %}
+<p>Adjuntamos {{ adjuntos|length }} archivo{{ adjuntos|length|pluralize }}.</p>
+  {% else %}
+<p>Archivos: {% for a in adjuntos %}{{ a.nombre_original }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+<p><a href="{{ url_pagina }}" style="color:#C2410C;font-weight:bold">Ver y descargar los adjuntos</a></p>
+  {% endif %}
+{% endif %}
+<p style="margin:24px 0 0">
+  <a href="{{ url_aprobar }}" style="display:inline-block;background:#C2410C;color:#ffffff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Aprobar</a>
+  <a href="{{ url_rechazar }}" style="display:inline-block;background:#7D6F64;color:#ffffff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin-left:8px">Rechazar</a>
+</p>
+{% endblock %}

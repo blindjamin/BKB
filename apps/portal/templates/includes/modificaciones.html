@@ -1,0 +1,36 @@
+<section class="hitos" id="modificaciones">
+    <h2 class="seccion-title">Modificaciones</h2>
+    {% if puede_editar %}
+    <a href="{% url 'documentos:crear_modificacion' proyecto.pk %}" class="btn-link">Añadir modificación</a>
+    {% endif %}
+    <div class="modificaciones-lista">
+        {% for m in modificaciones %}
+        <article class="modificacion">
+            <h3>{{ m.titulo }}</h3>
+            {% if m.enviada_en %}<span class="pastilla-flujo pastilla-flujo-{{ m.estado }}">{{ m.get_estado_display }}</span>{% else %}<span class="pastilla">Borrador</span>{% endif %}
+            {% if m.enviada_en %}<p class="hito-detalle">Enviada el {{ m.enviada_en|date:"d-m-Y" }}</p>{% endif %}
+            {% if m.respondida_en %}
+            <p class="hito-detalle">Respondida por {{ m.respondida_por.nombre|default:m.respondida_por.email }} el {{ m.respondida_en|date:"d-m-Y" }}{% if m.motivo_rechazo %}. Motivo: {{ m.motivo_rechazo }}{% endif %}</p>
+            {% endif %}
+            <p>{{ m.descripcion|linebreaksbr }}</p>
+            {% if m.adjuntos_visibles %}
+            <div class="modificacion-adjuntos">
+                {% for a in m.adjuntos_visibles %}
+                <a href="{% url 'documentos:descargar_archivo' a.pk %}" class="btn-link">{{ a.nombre_original }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="hitos-acciones">
+                {% if m.enlace %}
+                <a href="{% url 'documentos:responder_modificacion' m.enlace %}" class="btn-primary">Responder</a>
+                {% endif %}
+                {% if puede_editar %}
+                <a href="{% url 'documentos:detalle_modificacion' m.pk %}" class="btn-link">Ver detalle</a>
+                {% endif %}
+            </div>
+        </article>
+        {% empty %}
+        <p class="view-subtitle">No hay modificaciones por ahora.</p>
+        {% endfor %}
+    </div>
+</section>

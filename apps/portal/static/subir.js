@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const res1 = await fetch(d.urlSubir, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': d.csrf },
-            body: JSON.stringify({ nombre: f.name, tipo: f.type || 'application/octet-stream', tamano: f.size, carpeta_id: d.carpetaId || null }),
+            body: JSON.stringify({ nombre: f.name, tipo: f.type || 'application/octet-stream', tamano: f.size, carpeta_id: d.carpetaId || null, modificacion_id: d.modificacionId || null }),
         });
         if (!res1.ok) throw new Error(await error(res1, 'No se pudo iniciar la subida'));
         const { id, firma } = await res1.json();

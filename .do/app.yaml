@@ -70,6 +70,24 @@ jobs:
     environment_slug: python
     run_command: python manage.py migrate --noinput
 
+  # Pendiente (tarea 16 del portal): `doctl apps spec validate` y confirmar que la cuenta permite `kind: SCHEDULED`.
+  # Si no lo permite, un cron externo que corra el mismo comando.
+  - name: recordatorios
+    kind: SCHEDULED
+    schedule:
+      cron: "0 9 * * *"
+      time_zone: America/Santiago
+    source_dir: apps/portal
+    github:
+      repo: blindjamin/BKB
+      branch: main
+      deploy_on_push: false
+    environment_slug: python
+    run_command: python manage.py enviar_recordatorios
+    envs:
+      - key: PORTAL_URL
+        value: https://portal.empresabkb.cl
+
 databases:
   - name: bkb-portal-db
     engine: PG

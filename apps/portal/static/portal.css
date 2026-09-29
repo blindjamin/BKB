@@ -885,6 +885,11 @@ fieldset.form-group-fieldset legend.form-label {
     margin: 0;
 }
 
+.hitos-acciones .btn-primary {
+    width: auto;
+    padding: 0.75rem 1.5rem;
+}
+
 .hito.is-actual {
     color: var(--text-main);
     font-weight: 600;
@@ -1963,16 +1968,24 @@ fieldset.form-group-fieldset legend.form-label {
     font-weight: 600;
 }
 
-.pastilla-flujo-en_curso {
+.pastilla-flujo-en_curso,
+.pastilla-flujo-pendiente {
     color: var(--bkb-sec-info-text);
     background-color: var(--bkb-sec-info-bg);
     border-color: var(--bkb-sec-info-border);
 }
 
-.pastilla-flujo-finalizado {
+.pastilla-flujo-finalizado,
+.pastilla-flujo-aprobada {
     color: var(--bkb-sec-ok-text);
     background-color: var(--bkb-sec-ok-bg);
     border-color: var(--bkb-sec-ok-border);
+}
+
+.pastilla-flujo-rechazada {
+    color: var(--bkb-sec-danger-text);
+    background-color: var(--bkb-sec-danger-bg);
+    border-color: var(--bkb-sec-danger-border);
 }
 
 /* Hitos como lista de pasos */
@@ -2363,6 +2376,12 @@ h1, h2, h3,
     color: var(--text-muted);
 }
 
+.hito-fila-quitar {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+}
+
 @media (min-width: 640px) {
     .hito-fila {
         grid-template-columns: 1fr 8rem auto;
@@ -2486,4 +2505,30 @@ a.btn-volver:hover,
 a[href^="mailto:"] {
     color: var(--accent-text);
     text-underline-offset: 3px;
+}
+
+/* Modificaciones del proyecto (M8) */
+.modificaciones-lista {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}
+
+.modificacion {
+    padding: var(--space-4);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-card, 16px);
+    color: var(--text-main);
+}
+
+.modificacion h3 {
+    margin: 0 0 var(--space-2);
+}
+
+.modificacion-adjuntos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3, 12px);
 }

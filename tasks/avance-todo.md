@@ -64,7 +64,7 @@ activo, al menos uno). Usa `obtener_o_invitar`.
 **Archivos:** `documentos/permisos.py`, `documentos/views.py`, `templates/archivos.html`, pruebas.
 
 ### ◆ Checkpoint 1
-- [ ] `test`, `check` y `makemigrations --check` en verde.
+- [x] `test`, `check` y `makemigrations --check` en verde.
 - [ ] En el navegador: una empresa y un proyecto nuevos, con las invitaciones correctas en la consola.
 - [ ] PR `encargados` → `desarrollo`.
 
@@ -211,7 +211,7 @@ a ingeniería. Asunto: *"Proyecto {nombre} finalizado y aprobado por {cliente}"*
 **Archivos:** `documentos/views.py`, 2 plantillas `.html` y `.txt`, pruebas.
 
 ### ◆ Checkpoint 3
-- [ ] Correr `vista_correos` y **revisar las muestras con el usuario** antes del módulo 4.
+- [x] Correr `vista_correos` y **revisar las muestras con el usuario** antes del módulo 4.
 - [ ] PR `avisos-proyecto` → `desarrollo`.
 
 ---
@@ -224,11 +224,11 @@ a ingeniería. Asunto: *"Proyecto {nombre} finalizado y aprobado por {cliente}"*
 `permisos.modificaciones_visibles(u, p)`: el personal ve todas; el cliente, solo las enviadas.
 
 **Criterios de aceptación:**
-- [ ] Los adjuntos de una modificación no se cuentan ni se listan en la sección de archivos.
-- [ ] El cliente no ve los borradores.
+- [x] Los adjuntos de una modificación no se cuentan ni se listan en la sección de archivos.
+- [x] El cliente no ve los borradores.
 
 **Verificación:** `test`, `makemigrations --check` (`test_modificaciones.py`).
-**Archivos:** `documentos/models.py`, migración `0007`, `documentos/permisos.py`, `documentos/admin.py`, pruebas.
+**Archivos:** `documentos/models.py`, migración `0006`, `documentos/permisos.py`, `documentos/admin.py`, pruebas.
 
 ### Tarea 16: Crear una modificación y adjuntar archivos
 **Descripción:** el botón "Añadir modificación" (solo con `puede_editar_proyecto`) abre un formulario con título y
@@ -236,8 +236,8 @@ descripción que crea un borrador. En la página del borrador se suben los adjun
 (`iniciar_subida` recibe `modificacion_id`) y se pueden quitar mientras siga en borrador.
 
 **Criterios de aceptación:**
-- [ ] Solo un encargado BKB o el jefe puede crearla (M1); valen las extensiones de `EXTENSIONES_PERMITIDAS`.
-- [ ] No se pueden agregar adjuntos a una modificación ya enviada.
+- [x] Solo un encargado BKB o el jefe puede crearla (M1); valen las extensiones de `EXTENSIONES_PERMITIDAS`.
+- [x] No se pueden agregar adjuntos a una modificación ya enviada.
 
 **Verificación:** `test`; en el navegador, subir 2 fotos y un PDF.
 **Archivos:** `documentos/modificaciones.py`, `documentos/subidas.py`, `documentos/urls.py`, `templates/modificacion_form.html`, pruebas.
@@ -249,9 +249,9 @@ Space con `storage.leer(clave)`) y enlaces si pasan de ese tamaño, más los bot
 enlaces firmados (`firmar_enlace`).
 
 **Criterios de aceptación:**
-- [ ] Con 20 MB o menos, el correo trae los archivos; con más, trae enlaces (M2).
-- [ ] Los botones apuntan a URLs firmadas distintas para aprobar y para rechazar.
-- [ ] Una modificación no se puede enviar dos veces.
+- [x] Con 20 MB o menos, el correo trae los archivos; con más, trae enlaces (M2).
+- [x] Los botones apuntan a URLs firmadas distintas para aprobar y para rechazar.
+- [x] Una modificación no se puede enviar dos veces.
 
 **Verificación:** `test` (con el Space simulado, igual que en `test_storage.py`).
 **Archivos:** `documentos/modificaciones.py`, `documentos/storage.py`, `templates/correos/modificacion.html` y `.txt`, pruebas.
@@ -264,10 +264,10 @@ alterado o vencido (30 días), da 404. La misma lógica funciona con sesión ini
 el de la empresa (M5).
 
 **Criterios de aceptación:**
-- [ ] **Un GET nunca cambia el estado** (M3).
-- [ ] Un enlace alterado, vencido o de otra modificación da 404 (M4).
-- [ ] La respuesta es definitiva: un segundo POST no la cambia (M7).
-- [ ] La página funciona sin sesión y la protección CSRF sigue activa.
+- [x] **Un GET nunca cambia el estado** (M3).
+- [x] Un enlace alterado, vencido o de otra modificación da 404 (M4).
+- [x] La respuesta es definitiva: un segundo POST no la cambia (M7).
+- [x] La página funciona sin sesión y la protección CSRF sigue activa.
 
 **Verificación:** `test`.
 **Archivos:** `documentos/modificaciones.py`, `documentos/urls.py`, `templates/modificacion_responder.html`, `templates/modificacion_respondida.html`, pruebas.
@@ -277,8 +277,8 @@ el de la empresa (M5).
 respondió, la fecha y el motivo si se rechazó.
 
 **Criterios de aceptación:**
-- [ ] Hay 1 correo al aprobar y 1 al rechazar (M7).
-- [ ] Si el correo falla, la respuesta queda guardada igual.
+- [x] Hay 1 correo al aprobar y 1 al rechazar (M7).
+- [x] Si el correo falla, la respuesta queda guardada igual.
 
 **Verificación:** `test`.
 **Archivos:** `documentos/modificaciones.py`, plantillas `.html` y `.txt`, pruebas.
@@ -289,8 +289,8 @@ modificación: título, estado, fechas, adjuntos descargables y quién respondi�
 y descargar los adjuntos aunque el proyecto no esté finalizado (excepción a A8, M8).
 
 **Criterios de aceptación:**
-- [ ] El cliente descarga los adjuntos de las modificaciones enviadas, pero no los demás archivos.
-- [ ] Los borradores solo los ve el personal.
+- [x] El cliente descarga los adjuntos de las modificaciones enviadas, pero no los demás archivos.
+- [x] Los borradores solo los ve el personal.
 
 **Verificación:** `test`; en el navegador (cliente y personal).
 **Archivos:** `templates/avance.html`, `templates/archivos.html`, `documentos/permisos.py`, `documentos/views.py`, pruebas.
@@ -302,9 +302,9 @@ y manda `modificacion_recordatorio` (con enlaces, sin adjuntos). Si la cuenta ll
 `modificacion_sin_respuesta` a ingeniería.
 
 **Criterios de aceptación:**
-- [ ] Los correos salen los días 0, 2, 4, 6 y 8, y nunca un sexto (M6).
-- [ ] Correr el comando dos veces seguidas envía un solo correo.
-- [ ] Una modificación respondida no recibe más correos.
+- [x] Los correos salen los días 0, 2, 4, 6 y 8, y nunca un sexto (M6).
+- [x] Correr el comando dos veces seguidas envía un solo correo.
+- [x] Una modificación respondida no recibe más correos.
 
 **Verificación:** `test` (con el tiempo simulado).
 **Archivos:** `documentos/management/commands/enviar_recordatorios.py`, 2 plantillas, pruebas.
@@ -315,13 +315,13 @@ y manda `modificacion_recordatorio` (con enlaces, sin adjuntos). Si la cuenta ll
 portal, `docs/03` (§12 queda reemplazada por `docs/11`) y `docs/06` (bitácora).
 
 **Criterios de aceptación:**
-- [ ] `doctl apps spec validate` aprueba el archivo, o queda anotado como pendiente de la tarea 16.
-- [ ] La documentación no menciona la recepción conforme / no conforme como algo vigente.
+- [x] `doctl apps spec validate` aprueba el archivo, o queda anotado como pendiente de la tarea 16.
+- [x] La documentación no menciona la recepción conforme / no conforme como algo vigente.
 
 **Verificación:** revisión de la documentación.
 **Archivos:** `.do/app.yaml`, `apps/portal/README.md`, `docs/03-portal-django.md`, `docs/06-bitacora-avances.md`.
 
 ### ◆ Checkpoint 4 (final)
-- [ ] Los 8 criterios de éxito de la spec quedan demostrados por pruebas.
-- [ ] `test`, `check` y `makemigrations --check` en verde.
+- [x] Los 8 criterios de éxito de la spec quedan demostrados por pruebas.
+- [x] `test`, `check` y `makemigrations --check` en verde.
 - [ ] PR `modificaciones` → `desarrollo`.
