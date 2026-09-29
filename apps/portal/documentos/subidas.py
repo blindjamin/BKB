@@ -7,8 +7,8 @@ import json
 import os
 import uuid
 
-from .permisos import puede_subir, proyectos_visibles
-from .models import Archivo, Carpeta, EstadoArchivo
+from .permisos import puede_editar_proyecto, puede_subir, proyectos_visibles
+from .models import Archivo, Carpeta, EstadoArchivo, Modificacion
 from .storage import post_subida, clave_para, tamano_en_space
 
 # Una sola fuente: la plantilla la pasa al navegador para la validación previa (docs/09 §5.4).
@@ -28,6 +28,7 @@ def iniciar_subida(request, pk):
         tipo = data.get('tipo')
         tamano = data.get('tamano')
         carpeta_id = data.get('carpeta_id')
+        modificacion_id = data.get('modificacion_id')
     except json.JSONDecodeError:
         return JsonResponse({'error': 'JSON inválido.'}, status=400)
         
@@ -54,8 +55,21 @@ def iniciar_subida(request, pk):
         except (ValueError, Carpeta.DoesNotExist):
             return JsonResponse({'error': 'Carpeta no válida.'}, status=400)
 
+    modificacion = None
+    if modificacion_id:  # M1: adjunto de un borrador
+        try:
+            modificacion = proyecto.modificaciones.get(pk=uuid.UUID(str(modificacion_id)))
+        except (ValueError, Modificacion.DoesNotExist):
+            return JsonResponse({'error': 'Modificación no válida.'}, status=400)
+        if not puede_editar_proyecto(request.user, proyecto):
+            return JsonResponse({'error': 'No tienes permisos para adjuntar a esta modificación.'}, status=403)
+        if modificacion.enviada_en:
+            return JsonResponse({'error': 'La modificación ya fue enviada.'}, status=400)
+        carpeta = None
+
     archivo = Archivo(
         proyecto=proyecto,
+        modificacion=modificacion,
         carpeta=carpeta,
         nombre_original=nombre,
         tamano=tamano,
@@ -87,6 +101,9 @@ def confirmar_subida(request, pk):
     if archivo.estado != EstadoArchivo.PENDIENTE:
         return JsonResponse({'error': 'El archivo ya no está pendiente.'}, status=400)
         
+    if archivo.modificacion_id and archivo.modificacion.enviada_en:  # M1: confirmó tras el envío
+        return JsonResponse({'error': 'La modificación ya fue enviada.'}, status=400)
+
     tamano_real = tamano_en_space(archivo.clave_space)
     if tamano_real is None:
         return JsonResponse({'error': 'El archivo no se encontró en el servidor de almacenamiento.'}, status=400)

@@ -1,0 +1,10 @@
+{% extends 'correos/base.html' %}
+{% block contenido %}
+<p>Comenzó el proyecto <strong>{{ proyecto.nombre }}</strong> de {{ proyecto.empresa.nombre }}.</p>
+<p>Encargado cliente: {{ proyecto.encargado.nombre|default:proyecto.encargado.email }}<br>
+Inicio: {{ proyecto.fecha_inicio|date:"d-m-Y" }}<br>
+Término previsto: {{ proyecto.fecha_termino|date:"d-m-Y" }}</p>
+<p>Estos son los hitos del avance:</p>
+<ol>{% for hito in hitos %}<li>{{ hito.nombre }}</li>{% endfor %}</ol>
+{% endblock %}
+{% block boton %}Ver avance{% endblock %}

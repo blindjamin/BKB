@@ -1,0 +1,6 @@
+{% extends 'correos/base.html' %}
+{% block contenido %}
+<p>El proyecto <strong>{{ proyecto.nombre }}</strong> de {{ proyecto.empresa.nombre }} quedó finalizado y aprobado por {{ cliente.nombre|default:cliente.email }} el {{ proyecto.finalizado_en|date:"d-m-Y H:i" }}.</p>
+<p>Los archivos del proyecto ya están disponibles en el portal.</p>
+{% endblock %}
+{% block boton %}Ver archivos{% endblock %}

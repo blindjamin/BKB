@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Nueva modificación - {{ proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <nav class="breadcrumbs" aria-label="Navegación secundaria">
+        <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-volver">&larr; Volver al Proyecto</a>
+    </nav>
+
+    <div class="form-container">
+        <h1 class="proyectos-title">Nueva modificación de {{ proyecto.nombre }}</h1>
+
+        <form method="post" class="form-card">
+            {% csrf_token %}
+            {% for campo in form %}
+                <div class="form-group">
+                    <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                    {{ campo }}
+                    {% for error in campo.errors %}
+                        <div class="field-error" role="alert">
+                            <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                            <span>{{ error }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Crear borrador</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

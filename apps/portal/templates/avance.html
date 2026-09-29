@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ proyecto.nombre }} - Avance{% endblock %}
+
+{% block content %}
+<div class="archivos-container avance">
+    <nav class="breadcrumbs">
+        <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}" class="btn-volver">&larr; {{ proyecto.empresa.nombre }}</a>
+    </nav>
+    <h1 class="archivos-title">{{ proyecto.nombre }}</h1>
+    <div class="archivos-meta">
+        <span>
+            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#empresa"></use></svg>
+            {{ proyecto.empresa.nombre }}
+        </span>
+        <span class="pastilla-flujo pastilla-flujo-en_curso">En curso</span>
+    </div>
+
+    <dl class="avance-fechas">
+        <div>
+            <dt>Inicio</dt>
+            <dd>{{ proyecto.fecha_inicio|date:"d M Y" }}</dd>
+        </div>
+        <div>
+            <dt>Término estimado</dt>
+            <dd>{{ proyecto.fecha_termino|date:"d M Y" }}</dd>
+        </div>
+    </dl>
+
+    <p class="avance-encargado">
+        Encargado: {{ proyecto.encargado.nombre|default:proyecto.encargado.email }}
+        · <a href="mailto:{{ proyecto.encargado.email }}">{{ proyecto.encargado.email }}</a>
+    </p>
+
+    <section class="hitos">
+        <h2 class="seccion-title">Avance del proyecto</h2>
+        {% include "includes/linea_hitos.html" %}
+    </section>
+
+    {% if revision %}
+    <section class="hitos revision-final" id="revision">
+        <h2 class="seccion-title">Revisión final</h2>
+        <p>BKB completó todos los hitos. Acepta la Revisión para finalizar el proyecto y ver los archivos, o cuéntanos qué falta.</p>
+        <form method="post" action="{% url 'documentos:responder_revision' proyecto.pk %}" data-confirmar="Al aceptar, el proyecto queda finalizado.">
+            {% csrf_token %}
+            {# hidden y no name/value del botón: confirmar.js envía con form.submit(), que no manda el botón #}
+            <input type="hidden" name="respuesta" value="aceptar">
+            <button type="submit" class="btn-primary">Aceptar la Revisión</button>
+        </form>
+        <form method="post" action="{% url 'documentos:responder_revision' proyecto.pk %}" class="form-group revision-rechazo">
+            {% csrf_token %}
+            <label for="motivo">Motivo del rechazo</label>
+            <textarea id="motivo" name="motivo" rows="3" required></textarea>
+            <button type="submit" name="respuesta" value="rechazar" class="btn-secondary">Rechazar la Revisión</button>
+        </form>
+    </section>
+    {% endif %}
+
+    {% if rechazos %}
+    <section class="hitos" id="rechazos">
+        <h2 class="seccion-title">Historial de rechazos</h2>
+        <ul class="rechazos-lista">
+            {% for rechazo in rechazos %}
+                <li>
+                    <span class="hito-detalle">{{ rechazo.fecha|date:"d M Y, H:i" }} · {{ rechazo.usuario.nombre|default:rechazo.usuario.email }}</span>
+                    <p>{{ rechazo.motivo|linebreaksbr }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {% include "includes/modificaciones.html" %}
+</div>
+{% endblock %}

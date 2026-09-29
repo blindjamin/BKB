@@ -103,7 +103,7 @@ class CrearEmpresaEncargadoTests(TestCase):
                 self.assertEqual(Empresa.objects.count(), 0)
                 self.assertEqual(len(mail.outbox), 0)
 
-    @patch('gestion.views.send_mail', side_effect=SMTPException('caído'))
+    @patch('documentos.correos.EmailMultiAlternatives.send', side_effect=SMTPException('caído'))
     def test_correo_que_falla_no_impide_crear(self, _):  # V6
         r = self._crear('nuevo@cli.cl')
         self.assertTrue(Empresa.objects.filter(nombre='Nueva').exists())
@@ -122,7 +122,7 @@ class ProyectoEncargadosTests(TestCase):
         self.url = reverse('documentos:crear_proyecto')
 
     def _datos(self, **extra):
-        datos = {'empresa': self.empresa.pk, 'nombre': 'Proy', 'estado': 'activo', 'hitos_texto': 'Uno',
+        datos = {'empresa': self.empresa.pk, 'nombre': 'Proy', 'estado': 'activo', 'fecha_inicio': '2026-01-01', 'fecha_termino': '2026-06-30',
                  'encargado_nombre': 'Dueño', 'encargado_email': 'dueno@cli.cl',
                  'encargados_bkb': [self.personal.pk]}
         datos.update(extra)
@@ -133,13 +133,13 @@ class ProyectoEncargadosTests(TestCase):
         self.assertEqual(r.status_code, 302)
         proyecto = Proyecto.objects.get(nombre='Proy')
         self.assertEqual(proyecto.encargado, self.empresa.encargado)
-        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual([m.subject for m in mail.outbox], ['Inicio del proyecto Proy'])
         self.assertEqual(list(proyecto.encargados_bkb.all()), [self.personal])
 
     def test_persona_nueva_recibe_invitacion(self):  # E4
         self.client.post(self.url, self._datos(encargado_email='otra@cli.cl', encargado_nombre='Otra'))
         self.assertEqual(Proyecto.objects.get(nombre='Proy').encargado.email, 'otra@cli.cl')
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual([m.subject for m in mail.outbox], ['Invitación al Portal BKB', 'Inicio del proyecto Proy'])
 
     def test_sin_encargados_bkb_se_rechaza(self):  # E3
         r = self.client.post(self.url, self._datos(encargados_bkb=[]))

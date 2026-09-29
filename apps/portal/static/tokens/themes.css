@@ -12,13 +12,14 @@
 }
 [data-theme="light"] {
   color-scheme: light;
-  --page-bg: #FFF4EE;
+  /* Grafito y naranjo: fondo gris frío, tarjetas blancas y el naranjo BKB solo como acento */
+  --page-bg: #F1F5F9;
   --card-bg: #FFFFFF;
-  --card-border: #F5D9C7;
-  --text-main: #1A1513;
-  --text-muted: #7D6F64;
-  --text-subtle: #7D6F64; /* D3: subir subtle en claro (recomendaba #7D6F64 en vez de #9A8F86) */
-  --input-bg: #FAF6F2;
-  --input-border: #F5D9C7;
+  --card-border: #E2E8F0;
+  --text-main: #0F172A;
+  --text-muted: #475569;  /* 7.6:1 sobre blanco */
+  --text-subtle: #5B6778; /* 5.2:1 sobre el fondo */
+  --input-bg: #FFFFFF;
+  --input-border: #CBD5E1;
   --accent-text: var(--bkb-salmon-700);
 }

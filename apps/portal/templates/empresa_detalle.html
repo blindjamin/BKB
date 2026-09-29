@@ -7,7 +7,7 @@
 <div class="proyectos-container">
     {% if puede_gestionar %}
     <nav class="breadcrumbs">
-        <a href="{% url 'documentos:lista_proyectos' %}">&larr; Volver a Empresas</a>
+        <a href="{% url 'documentos:lista_proyectos' %}" class="btn-volver">&larr; Volver a Empresas</a>
     </nav>
     {% endif %}
 
@@ -46,7 +46,7 @@
                     <div class="project-card-meta">
                         <div class="project-card-secondary">
                             {% if proyecto.bloqueado %}
-                                <span>Confirma la recepción para ver los archivos</span>
+                                <span>Los archivos se muestran al finalizar el proyecto</span>
                             {% elif proyecto.archivos_count %}
                                 <span>{{ proyecto.archivos_count }} archivo{{ proyecto.archivos_count|pluralize }} · última carga {{ proyecto.ultima_carga|date:"d b Y" }}</span>
                             {% else %}

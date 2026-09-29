@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Responder modificación - {{ m.proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <nav class="breadcrumbs" aria-label="Navegación secundaria">
+        <a href="{% url 'documentos:lista_proyectos' %}" class="btn-volver">&larr; Ir al portal</a>
+    </nav>
+
+    <div class="form-container">
+        <h1 class="proyectos-title">{{ m.titulo }}</h1>
+        <p class="view-subtitle">{{ m.proyecto.nombre }} · {{ m.proyecto.empresa.nombre }}</p>
+        <p>{{ m.descripcion|linebreaksbr }}</p>
+
+        {% if adjuntos %}
+        <div class="modificacion-adjuntos">
+            {% for a in adjuntos %}
+            <a href="{% url 'documentos:descargar_adjunto_enlace' token a.pk %}" class="btn-link">{{ a.nombre_original }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <p class="view-subtitle">Respondes como {{ usuario.nombre|default:usuario.email }}.</p>
+
+        {% if error %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}
+
+        {# Sin data-confirmar: el diálogo de base.html solo existe con sesión y esta página ya es el paso de confirmación #}
+        {# Un solo formulario: el botón pulsado define la respuesta; el motivo lo exige la vista al rechazar #}
+        <form method="post" class="form-card">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="motivo">Motivo (solo si rechazas)</label>
+                <textarea id="motivo" name="motivo" rows="3"{% if accion == 'rechazar' %} autofocus{% endif %}>{{ motivo }}</textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" name="respuesta" value="aprobar" class="btn-primary">Aprobar</button>
+                <button type="submit" name="respuesta" value="rechazar" class="btn-secondary">Rechazar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

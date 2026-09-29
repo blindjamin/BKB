@@ -5,20 +5,13 @@
 
 {% block content %}
 <div class="archivos-container">
-    {% if mostrar_aviso %}
-        {% include "includes/aviso_hitos.html" %}
-    {% endif %}
-
     <div class="proyecto-cabecera">
         <div>
             <nav class="breadcrumbs">
-                <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}">{{ proyecto.empresa.nombre }}</a>
-                &rsaquo;
                 {% if carpeta_activa %}
-                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}">{{ proyecto.nombre }}</a>
-                    &rsaquo; <span>{{ carpeta_activa.nombre }}</span>
+                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-volver">&larr; {{ proyecto.nombre }}</a>
                 {% else %}
-                    <span>{{ proyecto.nombre }}</span>
+                    <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}" class="btn-volver">&larr; {{ proyecto.empresa.nombre }}</a>
                 {% endif %}
             </nav>
             <h1 class="archivos-title">
@@ -34,13 +27,22 @@
                     <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#empresa"></use></svg>
                     {{ proyecto.empresa.nombre }}
                 </span>
-                <span class="pastilla-flujo pastilla-flujo-{{ estado }}">
-                    {% if estado == 'recibido' %}Recibido{% elif estado == 'esperando_recepcion' %}Esperando recepción{% else %}En curso{% endif %}
+                <span class="pastilla-flujo pastilla-flujo-{% if proyecto.finalizado %}finalizado{% else %}en_curso{% endif %}">
+                    {% if proyecto.finalizado %}Finalizado{% else %}En curso{% endif %}
                 </span>
                 {% if puede_editar %}
                     <a href="{% url 'documentos:editar_proyecto' proyecto.pk %}" class="btn-link">Editar proyecto</a>
+                    <a href="{% url 'documentos:editar_hitos' proyecto.pk %}" class="btn-link">Editar hitos</a>
                 {% endif %}
             </div>
+            {% if not carpeta_activa %}
+            <dl class="proyecto-datos">
+                <div><dt>Inicio</dt><dd>{{ proyecto.fecha_inicio|date:"d M Y" }}</dd></div>
+                <div><dt>Término</dt><dd>{{ proyecto.fecha_termino|date:"d M Y" }}</dd></div>
+                <div><dt>Encargado cliente</dt><dd>{{ proyecto.encargado.nombre|default:proyecto.encargado.email }} · <a href="mailto:{{ proyecto.encargado.email }}">{{ proyecto.encargado.email }}</a></dd></div>
+                <div><dt>Encargados BKB</dt><dd>{% for u in proyecto.encargados_bkb.all %}{{ u.nombre|default:u.email }}{% if not forloop.last %}, {% endif %}{% empty %}Sin asignar{% endfor %}</dd></div>
+            </dl>
+            {% endif %}
         </div>
 
         {% if puede_subir %}
@@ -67,26 +69,9 @@
     </section>
     {% endif %}
 
-    {% if puede_gestionar_hitos %}
     <section class="hitos">
         <h2 class="seccion-title">Hitos</h2>
-        {% if hitos %}
-            <ol class="hitos-lista">
-                {% for hito in hitos %}
-                    <li class="hito{% if hito.cumplido %} is-cumplido{% endif %}">
-                        <svg class="icono hito-icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#{% if hito.cumplido %}cumplido{% else %}pendiente{% endif %}"></use></svg>
-                        <span class="hito-nombre">{{ hito.nombre }}</span>
-                        {% if hito.cumplido %}
-                            <span class="hito-detalle">{{ hito.cumplido_en|date:"d M Y, H:i" }} · {{ hito.cumplido_por.nombre|default:hito.cumplido_por.email }}</span>
-                        {% else %}
-                            <span class="hito-detalle">Pendiente</span>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ol>
-        {% else %}
-            <p class="view-subtitle">Este proyecto no tiene hitos.</p>
-        {% endif %}
+        {% include "includes/linea_hitos.html" %}
         <div class="hitos-acciones">
             {% if puede_avanzar %}
             <form action="{% url 'documentos:avanzar_hito' proyecto.pk %}" method="post">
@@ -102,12 +87,14 @@
             {% endif %}
         </div>
     </section>
+
+    {% if not carpeta_activa %}
+    {% include "includes/modificaciones.html" %}
     {% endif %}
 
     <section class="carpetas">
         {% if carpeta_activa %}
             <div class="carpeta-activa-acciones">
-                <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-link">&larr; Volver a {{ proyecto.nombre }}</a>
                 {% if puede_gestionar %}
                 <form action="{% url 'documentos:eliminar_carpeta' carpeta_activa.pk %}" method="post" class="form-eliminar" data-confirmar="Los archivos de la carpeta volverán a la raíz del proyecto." data-confirmar-titulo="¿Eliminar la carpeta «{{ carpeta_activa.nombre }}»?" data-confirmar-accion="Eliminar carpeta">
                     {% csrf_token %}
@@ -160,26 +147,18 @@
         </div>
     {% else %}
         <div class="archivos-empty">
-            {% if mostrar_aviso and estado == 'esperando_recepcion' %}
-                {# Sí hay archivos: el bloqueo por recepción los oculta al cliente #}
-                <p>Confirma la recepción para ver los archivos.</p>
-            {% else %}
                 <p>Aún no hay {% if tipo == 'fotos' %}fotos{% else %}documentos{% endif %} {% if carpeta_activa %}en esta carpeta{% else %}en este proyecto{% endif %}.</p>
                 {% if puede_subir %}
                     <button type="button" class="btn-secondary" data-abrir="archivo-input">Subir archivos</button>
                 {% else %}
                     <p>Tu ejecutivo de BKB los cargará aquí.</p>
                 {% endif %}
-            {% endif %}
         </div>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
-{% if mostrar_aviso %}
-<script src="{% static 'aviso.js' %}" nonce="{{ request.csp_nonce }}"></script>
-{% endif %}
 {% if puede_subir %}
 <script src="{% static 'subir.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endif %}

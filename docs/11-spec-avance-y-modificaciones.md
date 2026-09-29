@@ -216,7 +216,7 @@ sirva una sola vez.
 ### Recordatorios
 
 - El comando `python manage.py enviar_recordatorios` se puede correr varias veces sin enviar correos de más. Toma las
-  modificaciones pendientes con `correos_enviados < 5` y `ultimo_correo_en <= ahora - 2 días`, envía el
+  modificaciones pendientes con `correos_enviados < 5` y `ultimo_correo_en` de hace 2 días o más (por fecha, no por hora: el trabajo corre a hora fija y así salen los días 0, 2, 4, 6 y 8), envía el
   recordatorio y suma 1 al contador. Si el contador llega a 5, envía el aviso de M6 a ingeniería.
 - Corre **una vez al día** como trabajo programado de App Platform (`kind: SCHEDULED`, en `.do/app.yaml`). Hay que
   confirmar que la cuenta lo tiene disponible en la tarea de despliegue. Si no, la alternativa es un cron externo que

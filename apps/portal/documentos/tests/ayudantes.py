@@ -1,3 +1,7 @@
+from datetime import date
+
+from django.utils import timezone
+
 from accounts.models import Rol, Usuario
 from documentos.models import Empresa, Proyecto
 
@@ -12,6 +16,8 @@ def crear_empresa(encargado=None, **campos):
 
 
 def crear_proyecto(empresa, encargado=None, **campos):
+    campos.setdefault('fecha_inicio', date(2026, 1, 1))
+    campos.setdefault('fecha_termino', date(2026, 12, 31))
     return Proyecto.objects.create(empresa=empresa, encargado=encargado or relleno(), **campos)
 
 
@@ -23,3 +29,8 @@ def encargar(proyecto, usuario):
 def encargar_empresa(empresa, usuario):
     empresa.encargado = usuario
     empresa.save()
+
+
+def finalizar(proyecto):  # A5: lo que deja el cliente al aceptar la Revisión
+    proyecto.finalizado_en = timezone.now()
+    proyecto.save(update_fields=['finalizado_en'])

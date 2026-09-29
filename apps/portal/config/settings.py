@@ -166,8 +166,16 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or 'portal@empresa
 # Sitio público (landing); el login enlaza de vuelta a él.
 LANDING_URL = os.environ.get('LANDING_URL', '') or 'https://www.empresabkb.cl/'
 
-# Destinatarios fijos del aviso de recepción, separados por comas.
-AVISO_RECEPCION_CORREOS = [c.strip() for c in os.environ.get('AVISO_RECEPCION_CORREOS', '').split(',') if c.strip()]
+# URL pública del portal para los enlaces de los correos que no nacen de una petición (M6: el comando no tiene request).
+PORTAL_URL = os.environ.get('PORTAL_URL', '') or 'http://localhost:8000'
+
+# Destino de las solicitudes del formulario "Cotizar obra" del landing.
+COTIZACION_CORREO = os.environ.get('COTIZACION_CORREO', '') or 'ingenieria@empresabkb.cl'
+
+# V1: copia fija de los correos del proyecto, separados por comas.
+AVISO_INGENIERIA_CORREOS = [c.strip() for c in (
+    os.environ.get('AVISO_INGENIERIA_CORREOS', '') or 'ingenieria@empresabkb.cl,proyectos.ingenieria@empresabkb.cl'
+).split(',') if c.strip()]
 
 # Seguridad de Sesiones y Cookies (Plan Sección 5)
 SESSION_COOKIE_HTTPONLY = True

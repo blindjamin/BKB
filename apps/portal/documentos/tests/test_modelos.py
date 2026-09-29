@@ -79,6 +79,7 @@ class PanelAdminTests(DatosBase):
         datos = {
             'empresa': empresa.pk, 'nombre': 'Proyecto nuevo', 'estado': 'activo',
             'encargado': encargado.pk, 'encargados_bkb': [self.personal.pk],
+            'fecha_inicio': '2026-01-01', 'fecha_termino': '2026-06-30',
         }
         datos.update(extra)
         return datos

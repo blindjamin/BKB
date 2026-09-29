@@ -1,0 +1,16 @@
+{% autoescape off %}{% if recordatorio %}Recordatorio: esta modificación sigue esperando tu respuesta.
+
+{% endif %}BKB propone una modificación al proyecto {{ proyecto.nombre }} de {{ proyecto.empresa.nombre }}.
+
+{{ m.titulo }}
+
+{{ m.descripcion }}
+{% if adjuntos %}{% if adjuntados %}
+Adjuntamos {{ adjuntos|length }} archivo{{ adjuntos|length|pluralize }}.
+{% else %}
+Archivos: {% for a in adjuntos %}{{ a.nombre_original }}{% if not forloop.last %}, {% endif %}{% endfor %}.
+Ver y descargar los adjuntos: {{ url_pagina }}
+{% endif %}{% endif %}
+Aprobar: {{ url_aprobar }}
+Rechazar: {{ url_rechazar }}
+{% endautoescape %}

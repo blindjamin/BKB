@@ -1,0 +1,6 @@
+{% extends 'correos/base.html' %}
+{% block contenido %}
+<p>La modificación «{{ m.titulo }}» del proyecto <strong>{{ proyecto.nombre }}</strong> de {{ proyecto.empresa.nombre }} sigue sin respuesta tras {{ m.correos_enviados }} correos a {{ proyecto.encargado.nombre|default:proyecto.encargado.email }}.</p>
+<p>No se enviarán más recordatorios. Conviene contactar al cliente.</p>
+{% endblock %}
+{% block boton %}Ver proyecto{% endblock %}

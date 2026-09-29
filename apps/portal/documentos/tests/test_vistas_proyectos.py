@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 from accounts.models import Usuario, Rol
-from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
 from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Proyecto
 
 class VistasProyectosTests(TestCase):
@@ -22,6 +22,7 @@ class VistasProyectosTests(TestCase):
         )
         
         encargar(self.proyecto_asignado, self.cliente)
+        finalizar(self.proyecto_asignado)  # A8
 
     def test_requiere_login(self):
         response = self.client.get(self.url)
@@ -131,7 +132,7 @@ class VistasProyectosTests(TestCase):
 
 
 class ConteoProyectoBloqueadoTests(TestCase):
-    """B1: el conteo de archivos no revela lo que el bloqueo por recepción oculta al cliente."""
+    """B1, A8: el conteo de archivos no revela lo que el cliente aún no puede ver."""
 
     def setUp(self):
         self.personal = Usuario.objects.create_user('personal@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
@@ -139,9 +140,6 @@ class ConteoProyectoBloqueadoTests(TestCase):
         self.empresa = crear_empresa(nombre='Empresa A', rut='11.111.111-1')
         self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Bloqueado', estado=EstadoProyecto.ACTIVO)
         encargar(self.proyecto, self.cliente)
-        Hito.objects.create(
-            proyecto=self.proyecto, orden=1, nombre='Hito', cumplido_en=timezone.now(), cumplido_por=self.personal
-        )
         for n in (1, 2):
             Archivo.objects.create(
                 proyecto=self.proyecto, nombre_original=f'plano{n}.pdf', clave_space=f'portal-dev/{self.proyecto.pk}/{n}',
@@ -159,10 +157,10 @@ class ConteoProyectoBloqueadoTests(TestCase):
                 response = self.client.get(url)
                 self.assertNotContains(response, '2 archivos')
                 self.assertNotContains(response, 'última carga')
-                self.assertContains(response, 'Confirma la recepción para ver los archivos')
+                self.assertContains(response, 'Los archivos se muestran al finalizar el proyecto')
 
     def test_personal_si_ve_el_conteo(self):
         self.client.force_login(self.personal)
         response = self.client.get(self.urls[1])
         self.assertContains(response, '2 archivos')
-        self.assertNotContains(response, 'Confirma la recepción para ver los archivos')
+        self.assertNotContains(response, 'Los archivos se muestran al finalizar el proyecto')
