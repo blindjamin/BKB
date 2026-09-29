@@ -131,7 +131,8 @@ class RechazoRevision(models.Model):
 ### Reglas
 
 - **V1.** Todos los correos del portal salen en **HTML con respaldo de texto plano** (`EmailMultiAlternatives`) y
-  con la marca de BKB. Siempre llevan en **CC** las direcciones de `AVISO_INGENIERIA_CORREOS` (variable de entorno,
+  con la marca de BKB. Los correos **del proyecto** (no la invitación, que lleva un enlace para crear contraseña)
+  llevan siempre en **CC** las direcciones de `AVISO_INGENIERIA_CORREOS` (variable de entorno,
   por defecto `ingenieria@empresabkb.cl,proyectos.ingenieria@empresabkb.cl`). Esta variable reemplaza a
   `AVISO_RECEPCION_CORREOS`.
 - **V2. Inicio:** se envía al crear el proyecto. Va al encargado cliente, con copia a ingeniería, e incluye el
@@ -156,6 +157,8 @@ class RechazoRevision(models.Model):
 - **M1.** Un encargado BKB o el jefe crea una **modificación** desde el botón "Añadir modificación" del panel del
   proyecto. Lleva un título, una descripción y archivos opcionales (fotos o cualquiera de las extensiones permitidas,
   `EXTENSIONES_PERMITIDAS`). Pertenece al **proyecto**, no a un hito, y no bloquea el avance de los hitos.
+  Nace como **borrador** (el cliente no la ve) para poder subir los adjuntos, y se envía con el botón "Enviar al
+  cliente". Los recordatorios cuentan desde el envío.
 - **M2.** Al crearla se envía un correo al **encargado del proyecto**, con copia a ingeniería. El correo incluye el
   texto completo, los adjuntos y dos botones: **Aprobar** y **Rechazar**.
   - Si los adjuntos suman **20 MB o menos**, van adjuntos al correo.
@@ -191,6 +194,7 @@ class Modificacion(models.Model):
     proyecto = FK(Proyecto, CASCADE, related_name='modificaciones')
     titulo = CharField(200); descripcion = TextField()
     creada_por = FK(user, PROTECT); creada_en = DateTimeField(auto_now_add=True)
+    enviada_en = DateTimeField(null=True)  # null = borrador
     estado = CharField(choices=EstadoModificacion, default=PENDIENTE)
     respondida_por = FK(user, PROTECT, null=True); respondida_en = DateTimeField(null=True)
     motivo_rechazo = TextField(blank=True); ip = GenericIPAddressField(null=True)
