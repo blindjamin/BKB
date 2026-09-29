@@ -2509,3 +2509,27 @@ h1, h2, h3,
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* Botón para volver: reemplaza los enlaces subrayados "← Volver a …" */
+a.btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    box-sizing: border-box;
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-pill);
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+a.btn-volver:hover {
+    border-color: var(--bkb-salmon-500);
+    color: var(--accent-text);
+    text-decoration: none;
+}
