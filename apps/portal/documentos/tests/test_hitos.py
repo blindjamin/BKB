@@ -6,7 +6,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import Rol
-from documentos.models import Empresa, EstadoProyecto, Hito, Membresia, Proyecto, RespuestaRecepcion
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.models import Empresa, EstadoProyecto, Hito, Proyecto, RespuestaRecepcion
 
 Usuario = get_user_model()
 
@@ -17,9 +18,9 @@ class HitosTests(TestCase):
         self.jefe = Usuario.objects.create_user('jefe@bkb.cl', 'Clave123!', rol=Rol.JEFE)
         self.cliente = Usuario.objects.create_user('cli1@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
 
-        self.empresa = Empresa.objects.create(nombre='Empresa Alfa', rut='11.111.111-1')
-        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Alfa', estado=EstadoProyecto.ACTIVO)
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        self.empresa = crear_empresa(nombre='Empresa Alfa', rut='11.111.111-1')
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Alfa', estado=EstadoProyecto.ACTIVO)
+        encargar(self.proyecto, self.cliente)
 
         self.hitos = [
             Hito.objects.create(proyecto=self.proyecto, orden=n, nombre=f'Hito {n}') for n in (1, 2, 3)

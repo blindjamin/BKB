@@ -3,8 +3,9 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from accounts.models import Usuario, Rol
 from django.utils import timezone
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
 from documentos.models import (
-    Archivo, Carpeta, Empresa, EstadoArchivo, EstadoProyecto, Hito, Membresia, Proyecto, RespuestaRecepcion,
+    Archivo, Carpeta, Empresa, EstadoArchivo, EstadoProyecto, Hito, Proyecto, RespuestaRecepcion,
 )
 import uuid
 from unittest.mock import patch
@@ -17,16 +18,14 @@ class VistasArchivosTests(TestCase):
         self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         self.cliente_ajeno = Usuario.objects.create_user('ajeno@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         
-        self.empresa = Empresa.objects.create(nombre='Empresa A', rut='11.111.111-1')
+        self.empresa = crear_empresa(nombre='Empresa A', rut='11.111.111-1')
         
-        self.proyecto = Proyecto.objects.create(
-            empresa=self.empresa, nombre='Proyecto Asignado', estado=EstadoProyecto.ACTIVO
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Asignado', estado=EstadoProyecto.ACTIVO
         )
-        self.proyecto_ajeno = Proyecto.objects.create(
-            empresa=self.empresa, nombre='Proyecto Ajeno', estado=EstadoProyecto.ACTIVO
+        self.proyecto_ajeno = crear_proyecto(self.empresa, nombre='Proyecto Ajeno', estado=EstadoProyecto.ACTIVO
         )
         
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        encargar(self.proyecto, self.cliente)
         
         # Archivos válidos
         self.doc_valido = Archivo.objects.create(
@@ -157,9 +156,9 @@ class AvisoHitosTests(TestCase):
         self.jefe = Usuario.objects.create_user('jefe@bkb.cl', 'Clave123!', rol=Rol.JEFE)
         self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
 
-        self.empresa = Empresa.objects.create(nombre='Empresa A', rut='11.111.111-1')
-        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Aviso', estado=EstadoProyecto.ACTIVO)
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        self.empresa = crear_empresa(nombre='Empresa A', rut='11.111.111-1')
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Aviso', estado=EstadoProyecto.ACTIVO)
+        encargar(self.proyecto, self.cliente)
         self.carpeta = Carpeta.objects.create(proyecto=self.proyecto, nombre='Informes', creado_por=self.personal)
 
         self.hitos = [Hito.objects.create(proyecto=self.proyecto, orden=n, nombre=f'Hito {n}') for n in (1, 2)]

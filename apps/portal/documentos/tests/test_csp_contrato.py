@@ -8,7 +8,8 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from accounts.models import Rol, Usuario
-from documentos.models import Archivo, Carpeta, Empresa, Hito, RespuestaRecepcion, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.models import Archivo, Carpeta, Empresa, Hito, RespuestaRecepcion, EstadoArchivo, EstadoProyecto, Proyecto
 
 
 class ContratoCSPTests(TestCase):
@@ -26,13 +27,11 @@ class ContratoCSPTests(TestCase):
         self.personal = Usuario.objects.create_user('personal@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
         self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
 
-        self.empresa = Empresa.objects.create(nombre='Empresa Test', rut='12.345.678-9')
-        self.proyecto = Proyecto.objects.create(
-            empresa=self.empresa,
-            nombre='Proyecto Alpha',
+        self.empresa = crear_empresa(nombre='Empresa Test', rut='12.345.678-9')
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Alpha',
             estado=EstadoProyecto.ACTIVO,
         )
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        encargar(self.proyecto, self.cliente)
         Carpeta.objects.create(proyecto=self.proyecto, nombre='Informes', creado_por=self.personal)
         Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Levantamiento')
 
@@ -240,9 +239,9 @@ class BaseComunTests(TestCase):
         self.assertNotContains(self.client.get(self.inicio), gestion)
 
     def test_un_mensaje_aparece_una_sola_vez_en_el_proyecto(self):
-        empresa = Empresa.objects.create(nombre='Empresa Test')
-        proyecto = Proyecto.objects.create(empresa=empresa, nombre='Proyecto Beta')
-        Membresia.objects.create(usuario=self.cliente, proyecto=proyecto)
+        empresa = crear_empresa(nombre='Empresa Test')
+        proyecto = crear_proyecto(empresa, nombre='Proyecto Beta')
+        encargar(proyecto, self.cliente)
         Hito.objects.create(proyecto=proyecto, orden=1, nombre='Hito', cumplido_en=timezone.now(), cumplido_por=self.personal)
 
         self.client.force_login(self.cliente)

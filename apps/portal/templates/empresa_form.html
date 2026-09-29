@@ -52,6 +52,20 @@
                 {% endif %}
             </div>
 
+            <div class="form-group">
+                <label for="{{ form.encargado.id_for_label }}">
+                    {{ form.encargado.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
+                {{ form.encargado }}
+                {% if form.encargado.errors %}
+                    <div class="field-error" id="{{ form.encargado.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.encargado.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Guardar Empresa</button>
                 <a href="{% url 'documentos:lista_proyectos' %}" class="btn-secondary">Cancelar</a>

@@ -93,13 +93,27 @@
                 {% endif %}
             </div>
 
-            <fieldset class="form-group form-group-fieldset">
-                <legend class="form-label" id="label-clientes">{{ form.clientes.label }}</legend>
-                {% if form.clientes.help_text %}
-                    <small class="form-help" id="help-clientes">{{ form.clientes.help_text }}</small>
+            <div class="form-group">
+                <label for="{{ form.encargado.id_for_label }}">
+                    {{ form.encargado.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
+                {{ form.encargado }}
+                {% if form.encargado.errors %}
+                    <div class="field-error" id="{{ form.encargado.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.encargado.errors.0 }}</span>
+                    </div>
                 {% endif %}
-                <div class="checkbox-list" role="group" aria-labelledby="label-clientes">
-                    {% for choice in form.clientes %}
+            </div>
+
+            <fieldset class="form-group form-group-fieldset">
+                <legend class="form-label" id="label-encargados-bkb">{{ form.encargados_bkb.label }}</legend>
+                {% if form.encargados_bkb.help_text %}
+                    <small class="form-help" id="help-encargados-bkb">{{ form.encargados_bkb.help_text }}</small>
+                {% endif %}
+                <div class="checkbox-list" role="group" aria-labelledby="label-encargados-bkb">
+                    {% for choice in form.encargados_bkb %}
                         <div class="checkbox-item">
                             {{ choice.tag }}
                             <label for="{{ choice.id_for_label }}" class="checkbox-label">
@@ -117,13 +131,13 @@
                             </label>
                         </div>
                     {% empty %}
-                        <p class="text-muted empty-checklist">No hay cuentas de cliente registradas.</p>
+                        <p class="text-muted empty-checklist">No hay personal activo.</p>
                     {% endfor %}
                 </div>
-                {% if form.clientes.errors %}
-                    <div class="field-error" id="error-clientes" role="alert">
+                {% if form.encargados_bkb.errors %}
+                    <div class="field-error" id="error-encargados-bkb" role="alert">
                         <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
-                        <span>{{ form.clientes.errors.0 }}</span>
+                        <span>{{ form.encargados_bkb.errors.0 }}</span>
                     </div>
                 {% endif %}
             </fieldset>

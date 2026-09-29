@@ -5,7 +5,8 @@ from django.utils import timezone
 
 from accounts.models import Rol
 from documentos.forms import EmpresaForm, ProyectoForm
-from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Membresia, Proyecto, RespuestaRecepcion
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Proyecto, RespuestaRecepcion
 
 Usuario = get_user_model()
 
@@ -20,33 +21,29 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.cliente2 = Usuario.objects.create_user('cli2@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         self.cliente_ajeno = Usuario.objects.create_user('ajeno@otra.cl', 'Clave123!', rol=Rol.CLIENTE)
 
-        self.empresa_a = Empresa.objects.create(nombre='Empresa Alfa', rut='11.111.111-1')
-        self.empresa_b = Empresa.objects.create(nombre='Empresa Beta', rut='22.222.222-2')
-        self.empresa_sin_proyectos = Empresa.objects.create(nombre='Empresa Vacia', rut='33.333.333-3')
-        self.empresa_solo_cerrados = Empresa.objects.create(nombre='Empresa Cerrada', rut='44.444.444-4')
+        self.empresa_a = crear_empresa(nombre='Empresa Alfa', rut='11.111.111-1')
+        self.empresa_b = crear_empresa(nombre='Empresa Beta', rut='22.222.222-2')
+        self.empresa_sin_proyectos = crear_empresa(nombre='Empresa Vacia', rut='33.333.333-3')
+        self.empresa_solo_cerrados = crear_empresa(nombre='Empresa Cerrada', rut='44.444.444-4')
 
         # Proyectos de Empresa A: uno activo y uno cerrado
-        self.proy_a1 = Proyecto.objects.create(
-            empresa=self.empresa_a, nombre='Proyecto Alfa Activo', estado=EstadoProyecto.ACTIVO
+        self.proy_a1 = crear_proyecto(self.empresa_a, nombre='Proyecto Alfa Activo', estado=EstadoProyecto.ACTIVO
         )
-        self.proy_a2 = Proyecto.objects.create(
-            empresa=self.empresa_a, nombre='Proyecto Alfa Cerrado', estado=EstadoProyecto.CERRADO
+        self.proy_a2 = crear_proyecto(self.empresa_a, nombre='Proyecto Alfa Cerrado', estado=EstadoProyecto.CERRADO
         )
 
         # Proyecto de Empresa B: activo
-        self.proy_b1 = Proyecto.objects.create(
-            empresa=self.empresa_b, nombre='Proyecto Beta Activo', estado=EstadoProyecto.ACTIVO
+        self.proy_b1 = crear_proyecto(self.empresa_b, nombre='Proyecto Beta Activo', estado=EstadoProyecto.ACTIVO
         )
 
         # Proyecto de Empresa Solo Cerrados
-        self.proy_c1 = Proyecto.objects.create(
-            empresa=self.empresa_solo_cerrados, nombre='Proyecto Historico', estado=EstadoProyecto.CERRADO
+        self.proy_c1 = crear_proyecto(self.empresa_solo_cerrados, nombre='Proyecto Historico', estado=EstadoProyecto.CERRADO
         )
 
         # Asignaciones
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proy_a1)
-        Membresia.objects.create(usuario=self.cliente2, proyecto=self.proy_a2)
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proy_b1)
+        encargar(self.proy_a1, self.cliente)
+        encargar(self.proy_a2, self.cliente2)
+        encargar(self.proy_b1, self.cliente)
 
     def test_personal_y_jefe_ven_empresas_con_proyectos_vigentes_en_inicio(self):
         for usuario in (self.personal, self.jefe):
@@ -100,6 +97,7 @@ class VistasEmpresasYProyectosTests(TestCase):
                 post_resp = self.client.post(url_crear, {
                     'nombre': nombre_empresa,
                     'rut': f'55.555.55{i}-5',
+                    'encargado': self.cliente.pk,
                 })
                 self.assertEqual(post_resp.status_code, 302)
 
@@ -167,7 +165,8 @@ class VistasEmpresasYProyectosTests(TestCase):
             'nombre': 'Tableros Principales',
             'estado': 'activo',
             'hitos_texto': "1. Replanteo en faena\n2. Cableado y montaje\n3. Pruebas y recepcion",
-            'clientes': [str(self.cliente.pk)],
+            'encargado': self.cliente.pk,
+            'encargados_bkb': [self.personal.pk],
         })
         self.assertEqual(post_resp.status_code, 302)
 
@@ -185,9 +184,7 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertEqual(hitos[2].nombre, '3. Pruebas y recepcion')
         self.assertEqual(hitos[2].orden, 3)
 
-        # Verifica membresía asignada al cliente
-        self.assertTrue(proyecto.membresias.filter(usuario=self.cliente).exists())
-        self.assertFalse(proyecto.membresias.filter(usuario=self.cliente2).exists())
+        self.assertEqual(proyecto.encargado, self.cliente)  # E2
 
     def test_crear_proyecto_cliente_recibe_403(self):
         self.client.force_login(self.cliente)
@@ -213,7 +210,8 @@ class VistasEmpresasYProyectosTests(TestCase):
             'nombre': 'Proyecto Alfa Modificado',
             'estado': 'cerrado',
             'hitos_texto': "Hito A1 Modificado\nHito A2 Modificado\nHito A3 Nuevo",
-            'clientes': [str(self.cliente2.pk)],
+            'encargado': self.cliente2.pk,
+            'encargados_bkb': [self.personal.pk],
         })
         self.assertEqual(post_resp.status_code, 302)
 
@@ -227,9 +225,7 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertEqual(hitos[0].nombre, 'Hito A1 Modificado')
         self.assertEqual(hitos[2].nombre, 'Hito A3 Nuevo')
 
-        # Verifica membresías actualizadas
-        self.assertFalse(self.proy_a1.membresias.filter(usuario=self.cliente).exists())
-        self.assertTrue(self.proy_a1.membresias.filter(usuario=self.cliente2).exists())
+        self.assertEqual(self.proy_a1.encargado, self.cliente2)  # E2
 
     def test_editar_proyecto_cliente_recibe_403(self):
         self.client.force_login(self.cliente)
@@ -266,6 +262,8 @@ class VistasEmpresasYProyectosTests(TestCase):
                 'nombre': self.proy_a1.nombre,
                 'estado': self.proy_a1.estado,
                 'hitos_texto': '',
+                'encargado': self.cliente.pk,
+                'encargados_bkb': [self.personal.pk],
             }
         )
         self.assertFalse(form.is_valid())
@@ -279,6 +277,8 @@ class VistasEmpresasYProyectosTests(TestCase):
                 'nombre': self.proy_a1.nombre,
                 'estado': self.proy_a1.estado,
                 'hitos_texto': hitos_texto,
+                'encargado': self.cliente.pk,
+                'encargados_bkb': [self.personal.pk],
             }
         )
 
@@ -431,7 +431,7 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertContains(get_resp, 'class="checkbox-list"')
         self.assertContains(get_resp, 'class="checkbox-item"')
         self.assertContains(get_resp, 'class="client-name"')
-        self.assertContains(get_resp, 'cli1@empresa.cl')
+        self.assertContains(get_resp, 'personal@bkb.cl')
 
         # POST sin hitos verifica mensaje de error con ícono SVG explicativo
         post_resp = self.client.post(url, {
@@ -462,14 +462,3 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertContains(resp_editar_err, 'class="field-error"')
         self.assertContains(resp_editar_err, '#alerta')
         self.assertContains(resp_editar_err, 'Los hitos ya cumplidos no se pueden editar, quitar ni reordenar.')
-
-    def test_formulario_proyecto_checklist_clientes_vacio(self):
-        # Eliminar todos los clientes para validar el estado vacío
-        Usuario.objects.filter(rol=Rol.CLIENTE).delete()
-        self.client.force_login(self.personal)
-        url = reverse('documentos:crear_proyecto')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'No hay cuentas de cliente registradas.')
-
-

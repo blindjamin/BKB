@@ -8,7 +8,8 @@ from django.urls import reverse
 
 from accounts.models import Rol
 from documentos import storage
-from documentos.models import Archivo, Carpeta, Empresa, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.models import Archivo, Carpeta, Empresa, EstadoArchivo, EstadoProyecto, Proyecto
 
 Usuario = get_user_model()
 
@@ -20,10 +21,10 @@ class CarpetasTests(TestCase):
         self.cliente = Usuario.objects.create_user('cli1@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         self.cliente_ajeno = Usuario.objects.create_user('ajeno@otra.cl', 'Clave123!', rol=Rol.CLIENTE)
 
-        self.empresa = Empresa.objects.create(nombre='Empresa Alfa', rut='11.111.111-1')
-        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Alfa', estado=EstadoProyecto.ACTIVO)
-        self.otro_proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Beta', estado=EstadoProyecto.ACTIVO)
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        self.empresa = crear_empresa(nombre='Empresa Alfa', rut='11.111.111-1')
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Alfa', estado=EstadoProyecto.ACTIVO)
+        self.otro_proyecto = crear_proyecto(self.empresa, nombre='Proyecto Beta', estado=EstadoProyecto.ACTIVO)
+        encargar(self.proyecto, self.cliente)
 
         self.carpeta = Carpeta.objects.create(proyecto=self.proyecto, nombre='Informes', creado_por=self.personal)
         self.carpeta_ajena = Carpeta.objects.create(proyecto=self.otro_proyecto, nombre='Planos', creado_por=self.personal)
