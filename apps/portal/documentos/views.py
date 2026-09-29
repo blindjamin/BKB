@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
 
+from . import correos
 from .encargados import obtener_o_invitar
 from .forms import EmpresaForm, HitoFormSet, ProyectoForm
 from .permisos import (
@@ -130,6 +131,7 @@ def crear_proyecto(request):
             with transaction.atomic():
                 proyecto = form.save()
                 proyecto.crear_hitos_estandar()  # A1
+            correos.avisar_inicio(request, proyecto)  # V2, V6: después del atomic
             return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
     else:
         form = ProyectoForm(initial=initial)
@@ -363,8 +365,11 @@ def responder_revision(request, pk):
             proyecto.finalizado_en = ahora
             proyecto.save(update_fields=['finalizado_en'])
         else:
-            RechazoRevision.objects.create(proyecto=proyecto, usuario=request.user, motivo=motivo)
-    # V3/V4: los correos de término y rechazo llegan en T14, aquí, después del atomic
+            rechazo = RechazoRevision.objects.create(proyecto=proyecto, usuario=request.user, motivo=motivo)
+    if respuesta == 'aceptar':
+        correos.avisar_termino(request, proyecto)  # V3, V6: después del atomic
+    else:
+        correos.avisar_rechazo_revision(request, rechazo)  # V4
     messages.success(request, 'Revisión aceptada.' if respuesta == 'aceptar' else 'Registramos el rechazo. BKB te contactará.')
     return redirect(url)
 

@@ -170,9 +170,9 @@ un booleano. `templates/correos/base.html` lleva la marca de BKB con estilos en 
 settings, `.env.example` y `.do/app.yaml`. Pasar la invitación a esta base con `cc=False`.
 
 **Criterios de aceptación:**
-- [ ] Un correo del proyecto lleva la copia a las 2 direcciones; la invitación no la lleva.
-- [ ] Una `SMTPException` devuelve False y queda en el log.
-- [ ] El correo trae la versión HTML y la de texto plano.
+- [x] Un correo del proyecto lleva la copia a las 2 direcciones; la invitación no la lleva.
+- [x] Una `SMTPException` devuelve False y queda en el log.
+- [x] El correo trae la versión HTML y la de texto plano.
 
 **Verificación:** `test` (`test_avisos.py`).
 **Archivos:** `documentos/correos.py`, `templates/correos/base.html`, `config/settings.py`, `.env.example`, `gestion/views.py`.
@@ -182,7 +182,7 @@ settings, `.env.example` y `.do/app.yaml`. Pasar la invitación a esta base con 
 (sin tocar la base de datos) y muestra las rutas.
 
 **Criterios de aceptación:**
-- [ ] Genera una muestra de cada correo existente y funciona en una base de datos vacía.
+- [x] Genera una muestra de cada correo existente y funciona en una base de datos vacía.
 
 **Verificación:** correrlo y abrir las muestras.
 **Archivos:** `documentos/management/commands/vista_correos.py`.
@@ -192,8 +192,8 @@ settings, `.env.example` y `.do/app.yaml`. Pasar la invitación a esta base con 
 con el nombre, la empresa, las fechas, los hitos y un botón "Ver avance" con la URL absoluta.
 
 **Criterios de aceptación:**
-- [ ] Crear un proyecto envía 1 correo de inicio (y la invitación, si la persona es nueva) (V2).
-- [ ] Editar el proyecto no reenvía el correo de inicio.
+- [x] Crear un proyecto envía 1 correo de inicio (y la invitación, si la persona es nueva) (V2).
+- [x] Editar el proyecto no reenvía el correo de inicio.
 
 **Verificación:** `test`.
 **Archivos:** `documentos/views.py`, `templates/correos/inicio.html` y `.txt`, pruebas.
@@ -204,8 +204,8 @@ a ingeniería. Asunto: *"Proyecto {nombre} finalizado y aprobado por {cliente}"*
 `revision_rechazada` a ingeniería con el motivo. Confirmar un hito intermedio no envía nada.
 
 **Criterios de aceptación:**
-- [ ] Hay 1 correo en cada caso, con los destinatarios correctos (V3, V4 y V5).
-- [ ] Si el correo falla, la respuesta queda guardada igual.
+- [x] Hay 1 correo en cada caso, con los destinatarios correctos (V3, V4 y V5).
+- [x] Si el correo falla, la respuesta queda guardada igual.
 
 **Verificación:** `test`.
 **Archivos:** `documentos/views.py`, 2 plantillas `.html` y `.txt`, pruebas.
