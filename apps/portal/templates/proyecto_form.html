@@ -73,22 +73,29 @@
             </div>
 
             <div class="form-group">
-                <label for="{{ form.hitos_texto.id_for_label }}">
-                    {{ form.hitos_texto.label }}
+                <label for="{{ form.fecha_inicio.id_for_label }}">
+                    {{ form.fecha_inicio.label }}
                     <span class="campo-requerido" aria-label="obligatorio">*</span>
                 </label>
-                {{ form.hitos_texto }}
-                <small class="form-help" id="{{ form.hitos_texto.id_for_label }}-help">
-                    {% if form.hitos_texto.help_text %}
-                        {{ form.hitos_texto.help_text }}
-                    {% else %}
-                        Escribe un hito por línea. Los hitos se ordenarán cronológicamente.
-                    {% endif %}
-                </small>
-                {% if form.hitos_texto.errors %}
-                    <div class="field-error" id="{{ form.hitos_texto.id_for_label }}-error" role="alert">
+                {{ form.fecha_inicio }}
+                {% if form.fecha_inicio.errors %}
+                    <div class="field-error" id="{{ form.fecha_inicio.id_for_label }}-error" role="alert">
                         <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
-                        <span>{{ form.hitos_texto.errors.0 }}</span>
+                        <span>{{ form.fecha_inicio.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.fecha_termino.id_for_label }}">
+                    {{ form.fecha_termino.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
+                {{ form.fecha_termino }}
+                {% if form.fecha_termino.errors %}
+                    <div class="field-error" id="{{ form.fecha_termino.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.fecha_termino.errors.0 }}</span>
                     </div>
                 {% endif %}
             </div>

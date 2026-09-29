@@ -131,7 +131,9 @@ def crear_proyecto(request):
         if form.is_valid():
             form.instance.encargado, _ = obtener_o_invitar(
                 request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
-            proyecto = form.save()
+            with transaction.atomic():
+                proyecto = form.save()
+                proyecto.crear_hitos_estandar()  # A1
             return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
     else:
         form = ProyectoForm(initial=initial)

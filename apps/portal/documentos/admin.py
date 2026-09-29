@@ -13,8 +13,8 @@ class EmpresaAdmin(admin.ModelAdmin):
 class HitoInline(admin.TabularInline):
     model = Hito
     extra = 0
-    fields = ('orden', 'nombre', 'cumplido_en', 'cumplido_por')
-    readonly_fields = ('orden', 'nombre', 'cumplido_en', 'cumplido_por')
+    fields = ('orden', 'nombre', 'es_revision', 'cumplido_en', 'cumplido_por')
+    readonly_fields = ('orden', 'nombre', 'es_revision', 'cumplido_en', 'cumplido_por')
 
     def has_view_permission(self, request, obj=None):
         return obj is not None
@@ -36,6 +36,11 @@ class ProyectoAdmin(admin.ModelAdmin):
     list_select_related = ('empresa',)
     search_fields = ('nombre', 'empresa__nombre')
     inlines = [HitoInline]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not change:
+            obj.crear_hitos_estandar()  # A1
 
 
 @admin.register(Archivo)

@@ -122,7 +122,7 @@ class ProyectoEncargadosTests(TestCase):
         self.url = reverse('documentos:crear_proyecto')
 
     def _datos(self, **extra):
-        datos = {'empresa': self.empresa.pk, 'nombre': 'Proy', 'estado': 'activo', 'hitos_texto': 'Uno',
+        datos = {'empresa': self.empresa.pk, 'nombre': 'Proy', 'estado': 'activo', 'fecha_inicio': '2026-01-01', 'fecha_termino': '2026-06-30',
                  'encargado_nombre': 'Dueño', 'encargado_email': 'dueno@cli.cl',
                  'encargados_bkb': [self.personal.pk]}
         datos.update(extra)
