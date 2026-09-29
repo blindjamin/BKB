@@ -15,6 +15,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.DeleteModel(name='RespuestaRecepcion'),
         migrations.CreateModel(
             name='RechazoRevision',
             fields=[

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import Archivo, DescargaLog, Empresa, Hito, Proyecto, RespuestaRecepcion
+from .models import Archivo, DescargaLog, Empresa, Hito, Proyecto, RechazoRevision
 
 
 @admin.register(Empresa)
@@ -81,14 +81,14 @@ class DescargaLogAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(RespuestaRecepcion)
-class RespuestaRecepcionAdmin(admin.ModelAdmin):
+@admin.register(RechazoRevision)
+class RechazoRevisionAdmin(admin.ModelAdmin):
     """Registro de solo lectura para el superusuario."""
 
-    list_display = ('fecha', 'proyecto', 'usuario', 'nombre_revisor', 'conforme', 'ip')
-    list_filter = ('conforme', 'proyecto')
+    list_display = ('fecha', 'proyecto', 'usuario', 'motivo')
+    list_filter = ('proyecto',)
     list_select_related = ('proyecto', 'usuario')
-    search_fields = ('nombre_revisor', 'usuario__email', 'proyecto__nombre')
+    search_fields = ('motivo', 'usuario__email', 'proyecto__nombre')
 
     def has_add_permission(self, request):
         return False

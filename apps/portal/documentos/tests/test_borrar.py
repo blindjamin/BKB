@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from accounts.models import Usuario, Rol
-from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
 from documentos.models import Empresa, Proyecto, EstadoProyecto, Archivo, EstadoArchivo
 
 class BorrarArchivoTests(TestCase):
@@ -17,6 +17,7 @@ class BorrarArchivoTests(TestCase):
         self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto', estado=EstadoProyecto.ACTIVO
         )
         encargar(self.proyecto, self.cliente)
+        finalizar(self.proyecto)  # A8: sin finalizar el cliente recibiría 404
         
         self.archivo = Archivo.objects.create(
             proyecto=self.proyecto,

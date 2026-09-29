@@ -27,12 +27,10 @@ from .permisos import (
     puede_borrar,
     puede_gestionar_hitos,
     puede_editar_proyecto,
-    estado_proyecto,
-    EstadoFlujoProyecto,
-    puede_responder_recepcion,
+    puede_responder_cliente,
+    ve_archivos,
 )
-from .avisos import enviar_aviso_recepcion
-from .models import Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RespuestaRecepcion
+from .models import Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RechazoRevision
 from .storage import url_descarga
 from .subidas import EXTENSIONES_PERMITIDAS
 
@@ -55,13 +53,12 @@ def _tarjetas_de_proyecto(usuario, proyectos):
 
 
 def _ocultar_conteo_bloqueados(usuario, proyectos):
-    """El cliente no ve el conteo ni la última carga de un proyecto que espera su recepción (§12.3.5)."""
-    if puede_gestionar_hitos(usuario):
+    """A8: el cliente no ve el conteo ni la última carga de un proyecto sin finalizar."""
+    if _es_personal(usuario):
         return proyectos
     proyectos = list(proyectos)
-    # ponytail: una consulta de estado por proyecto (N+1); un cliente tiene pocos proyectos.
     for p in proyectos:
-        p.bloqueado = estado_proyecto(p) == EstadoFlujoProyecto.ESPERANDO_RECEPCION
+        p.bloqueado = not ve_archivos(usuario, p)
         if p.bloqueado:
             p.archivos_count, p.ultima_carga = 0, None
     return proyectos
@@ -233,8 +230,6 @@ def detalle_proyecto(request, pk):
     gestiona_hitos = puede_gestionar_hitos(request.user)
     edita = puede_editar_proyecto(request.user, proyecto)  # E3
     hitos = list(proyecto.hitos.select_related('cumplido_por'))
-    estado = estado_proyecto(proyecto)
-    recibido = estado == EstadoFlujoProyecto.RECIBIDO
 
     context = {
         'proyecto': proyecto,
@@ -243,12 +238,6 @@ def detalle_proyecto(request, pk):
         'puede_editar': edita,
         'puede_avanzar': edita and any(not h.cumplido and not h.es_revision for h in hitos),
         'puede_retroceder': edita and not proyecto.finalizado and any(h.cumplido for h in hitos),
-        'estado': estado,
-        'mostrar_aviso': not gestiona_hitos,  # el aviso es para el cliente (§12.1)
-        'hito_actual': next((h for h in hitos if not h.cumplido), None),
-        'recepcion_conforme': (
-            proyecto.respuestas_recepcion.filter(conforme=True).order_by('fecha').first() if recibido else None
-        ),
         'carpetas': carpetas,
         'carpeta_activa': carpeta_activa,
         'archivos': archivos,
@@ -336,47 +325,35 @@ def retroceder_hito(request, pk):
 
 @login_required
 @require_POST
-def responder_recepcion(request, pk):
+def responder_revision(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
-    if not puede_responder_recepcion(request.user, proyecto):
-        raise PermissionDenied("No puedes responder la recepción de este proyecto.")
-
-    resultado = request.POST.get('resultado')
-    if resultado not in ('conforme', 'no_conforme'):
-        return HttpResponseBadRequest("Resultado no válido.")
-    conforme = resultado == 'conforme'
-    nombre = request.POST.get('nombre_revisor', '').strip()
-    if not nombre:
-        error = 'Escribe el nombre de quien revisó.'
-    elif len(nombre) > 200:
-        error = 'El nombre no puede superar 200 caracteres.'
-    elif conforme and not request.POST.get('revisado'):
-        error = 'Marca "Recepcionado y revisado" para confirmar.'
-    else:
-        error = None
-    if error:
-        messages.error(request, error)
-        return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
-
+    if not puede_responder_cliente(request.user, proyecto):
+        raise PermissionDenied('Solo el encargado cliente responde la Revisión.')  # A5
+    respuesta = request.POST.get('respuesta')
+    if respuesta not in ('aceptar', 'rechazar'):
+        return HttpResponseBadRequest('Respuesta no válida.')
+    motivo = request.POST.get('motivo', '').strip()
+    url = reverse('documentos:detalle_proyecto', args=[proyecto.pk])
+    if respuesta == 'rechazar' and not motivo:
+        messages.error(request, 'Escribe el motivo del rechazo.')  # A5
+        return redirect(url)
     with transaction.atomic():
-        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # mismo bloqueo que avanzar/retroceder
-        if not puede_responder_recepcion(request.user, proyecto):  # el estado pudo cambiar mientras tanto
-            messages.error(request, 'El proyecto ya no está esperando tu recepción.')
-            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
-        respuesta = RespuestaRecepcion.objects.create(
-            proyecto=proyecto,
-            usuario=request.user,
-            nombre_revisor=nombre,
-            conforme=conforme,
-            ip=_get_client_ip(request),
-        )
-
-    enviar_aviso_recepcion(respuesta)  # fuera del atomic: un fallo del correo no deshace la respuesta
-    if conforme:
-        messages.success(request, 'Recepción confirmada.')
-    else:
-        messages.success(request, 'Registramos tu respuesta "No conforme". BKB te contactará.')
-    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+        proyecto = Proyecto.objects.select_for_update().get(pk=proyecto.pk)
+        revision = proyecto.revision_por_responder()
+        if not revision:
+            messages.error(request, 'La Revisión todavía no se puede responder.')
+            return redirect(url)
+        if respuesta == 'aceptar':
+            ahora = timezone.now()
+            revision.cumplido_en, revision.cumplido_por = ahora, request.user
+            revision.save(update_fields=['cumplido_en', 'cumplido_por'])
+            proyecto.finalizado_en = ahora
+            proyecto.save(update_fields=['finalizado_en'])
+        else:
+            RechazoRevision.objects.create(proyecto=proyecto, usuario=request.user, motivo=motivo)
+    # V3/V4: los correos de término y rechazo llegan en T14, aquí, después del atomic
+    messages.success(request, 'Revisión aceptada.' if respuesta == 'aceptar' else 'Registramos el rechazo. BKB te contactará.')
+    return redirect(url)
 
 
 @login_required

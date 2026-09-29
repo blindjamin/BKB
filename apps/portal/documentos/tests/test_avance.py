@@ -198,3 +198,109 @@ class AvanzarYDeshacerTests(Base):
         finalizar(self.proyecto)
         self.retroceder()
         self.assertEqual(self.proyecto.hitos.filter(cumplido_en__isnull=False).count(), 5)
+
+
+class RevisionDelClienteTests(Base):
+    def responder(self, respuesta='aceptar', **extra):
+        return self.client.post(reverse('documentos:responder_revision', args=[self.proyecto.pk]),
+                                {'respuesta': respuesta, **extra})
+
+    def test_el_encargado_del_proyecto_acepta_y_finaliza(self):  # A5
+        self.cumplir(6)
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.responder().status_code, 302)
+        self.proyecto.refresh_from_db()
+        self.assertTrue(self.proyecto.finalizado)
+        revision = self.proyecto.hitos.get(es_revision=True)
+        self.assertEqual(revision.cumplido_por, self.cliente)
+        self.assertEqual(revision.cumplido_en, self.proyecto.finalizado_en)
+
+    def test_el_encargado_de_la_empresa_tambien_puede(self):  # A5, M5
+        self.cumplir(6)
+        self.client.force_login(self.cliente2)
+        self.responder()
+        self.proyecto.refresh_from_db()
+        self.assertTrue(self.proyecto.finalizado)
+
+    def test_rechazar_sin_motivo_no_crea_nada(self):  # A5
+        self.cumplir(6)
+        self.client.force_login(self.cliente)
+        r = self.responder('rechazar', motivo='   ')
+        self.assertRedirects(r, reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]), fetch_redirect_response=False)
+        self.assertEqual(self.proyecto.rechazos_revision.count(), 0)
+        self.assertContains(self.client.get(r.url), 'Escribe el motivo del rechazo.')
+
+    def test_rechazar_con_motivo_deja_la_revision_pendiente_y_luego_se_puede_aceptar(self):  # A5
+        self.cumplir(6)
+        self.client.force_login(self.cliente)
+        self.responder('rechazar', motivo='Falta un tablero')
+        rechazo = self.proyecto.rechazos_revision.get()
+        self.assertEqual((rechazo.motivo, rechazo.usuario), ('Falta un tablero', self.cliente))
+        self.proyecto.refresh_from_db()
+        self.assertFalse(self.proyecto.finalizado)
+        self.assertFalse(self.proyecto.hitos.get(es_revision=True).cumplido)
+        self.responder()
+        self.proyecto.refresh_from_db()
+        self.assertTrue(self.proyecto.finalizado)
+
+    def test_antes_de_cumplir_los_hitos_anteriores_no_cambia_nada(self):  # A5
+        self.cumplir(5)
+        self.client.force_login(self.cliente)
+        self.responder()
+        self.responder('rechazar', motivo='x')
+        self.proyecto.refresh_from_db()
+        self.assertFalse(self.proyecto.finalizado)
+        self.assertEqual(self.proyecto.rechazos_revision.count(), 0)
+
+    def test_quien_no_responde(self):  # A5
+        self.cumplir(6)
+        for usuario in (self.personal, self.jefe):
+            self.client.force_login(usuario)
+            self.assertEqual(self.responder().status_code, 403)
+        self.client.force_login(self.ajeno)
+        self.assertEqual(self.responder().status_code, 404)
+        self.client.force_login(self.cliente)
+        r = self.client.get(reverse('documentos:responder_revision', args=[self.proyecto.pk]))
+        self.assertEqual(r.status_code, 405)
+        self.assertEqual(self.responder('otra').status_code, 400)
+        self.proyecto.refresh_from_db()
+        self.assertFalse(self.proyecto.finalizado)
+
+    def test_la_recepcion_antigua_ya_no_existe(self):  # A9
+        import documentos.models
+        from django.urls import NoReverseMatch
+        self.assertFalse(hasattr(documentos.models, 'RespuestaRecepcion'))
+        with self.assertRaises(NoReverseMatch):
+            reverse('documentos:responder_recepcion', args=[self.proyecto.pk])
+
+
+class ArchivosOcultosHastaFinalizarTests(Base):
+    def setUp(self):
+        super().setUp()
+        from unittest.mock import patch
+        from documentos.models import Archivo, EstadoArchivo
+        self.archivo = Archivo.objects.create(
+            proyecto=self.proyecto, nombre_original='plano.pdf', clave_space='portal-dev/plano.pdf', tamano=10,
+            tipo='application/pdf', estado=EstadoArchivo.DISPONIBLE, subido_por=self.personal)
+        self.url = reverse('documentos:descargar_archivo', args=[self.archivo.pk])
+        p = patch('documentos.views.url_descarga', return_value='http://space/x.pdf')
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_descarga_404_antes_de_finalizar_y_302_despues(self):  # A8
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+        finalizar(self.proyecto)
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_el_personal_descarga_siempre(self):  # A8
+        self.client.force_login(self.personal)
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_el_contador_de_la_tarjeta_es_0_antes_y_real_despues(self):  # A8
+        self.client.force_login(self.cliente)
+        antes = self.client.get(reverse('documentos:lista_proyectos')).context['proyectos']
+        self.assertEqual([p.archivos_count for p in antes], [0])
+        finalizar(self.proyecto)
+        despues = self.client.get(reverse('documentos:lista_proyectos')).context['proyectos']
+        self.assertEqual([p.archivos_count for p in despues], [1])

@@ -161,27 +161,6 @@ class Hito(models.Model):
         return f'{self.proyecto.nombre} - {self.orden}. {self.nombre}'
 
 
-class RespuestaRecepcion(models.Model):
-    id = _uuid_pk()
-    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='respuestas_recepcion')
-    usuario = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='respuestas_recepcion'
-    )
-    nombre_revisor = models.CharField(max_length=200)
-    conforme = models.BooleanField()
-    fecha = models.DateTimeField(auto_now_add=True)
-    ip = models.GenericIPAddressField(null=True, blank=True)
-
-    class Meta:
-        verbose_name = 'respuesta de recepción'
-        verbose_name_plural = 'respuestas de recepción'
-        ordering = ['-fecha']
-
-    def __str__(self):
-        resultado = 'Conforme' if self.conforme else 'No conforme'
-        return f'{self.proyecto.nombre} - {resultado} ({self.nombre_revisor})'
-
-
 class RechazoRevision(models.Model):  # A5: los rechazos no se borran
     id = _uuid_pk()
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='rechazos_revision')

@@ -913,30 +913,6 @@ fieldset.form-group-fieldset legend.form-label {
     margin: 0;
 }
 
-/* Aviso de hitos al cliente (Tarea 25) */
-.aviso-hitos {
-    width: calc(100% - 2rem);
-    max-width: 36rem;
-    padding: 1.5rem;
-    background-color: var(--card-bg);
-    color: var(--text-main);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    box-sizing: border-box;
-}
-
-/* Sin JS el diálogo queda abierto sin modal: se muestra en su lugar, arriba de la página */
-.aviso-hitos:not(:modal) {
-    position: static;
-    width: auto;
-    max-width: none;
-    margin: 0 0 1.5rem;
-}
-
-.aviso-hitos::backdrop {
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
 .aviso-mensaje {
     margin: 0.5rem 0 0;
 }
@@ -951,20 +927,6 @@ fieldset.form-group-fieldset legend.form-label {
     gap: 0.75rem;
     flex-wrap: wrap;
     margin: 1rem 0 0;
-}
-
-.form-recepcion {
-    margin: 1rem 0 0;
-}
-
-.form-recepcion .checkbox-item {
-    margin-top: 0.75rem;
-}
-
-/* Anula el padding de .form-group input: la casilla conserva el 1.1rem de .checkbox-item */
-.form-recepcion .checkbox-item input {
-    padding: 0;
-    flex: none;
 }
 
 /* Gestión de usuarios (M4): Filtros combinables */
@@ -2065,13 +2027,7 @@ fieldset.form-group-fieldset legend.form-label {
     border-color: var(--bkb-sec-info-border);
 }
 
-.pastilla-flujo-esperando_recepcion {
-    color: var(--bkb-sec-warning-text);
-    background-color: var(--bkb-sec-warning-bg);
-    border-color: var(--bkb-sec-warning-border);
-}
-
-.pastilla-flujo-recibido {
+.pastilla-flujo-finalizado {
     color: var(--bkb-sec-ok-text);
     background-color: var(--bkb-sec-ok-bg);
     border-color: var(--bkb-sec-ok-border);
@@ -2234,15 +2190,6 @@ fieldset.form-group-fieldset legend.form-label {
     margin: 0 0 var(--space-3);
 }
 
-/* Aviso al cliente (paso C) */
-.aviso-hitos .hito {
-    justify-content: flex-start;
-}
-
-.aviso-hitos .hito .badge {
-    margin-left: auto;
-}
-
 .hito.is-actual .hito-icono {
     color: var(--accent-text);
 }
@@ -2347,10 +2294,6 @@ fieldset.form-group-fieldset legend.form-label {
     color: var(--bkb-sec-info-text);
     background-color: var(--bkb-sec-info-bg);
     border-color: var(--bkb-sec-info-border);
-}
-
-.form-recepcion .aviso {
-    margin: 0 0 var(--space-3);
 }
 
 /* Diálogo de confirmación único */
