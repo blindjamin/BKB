@@ -26,20 +26,17 @@
         {% if error %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}
 
         {# Sin data-confirmar: el diálogo de base.html solo existe con sesión y esta página ya es el paso de confirmación #}
+        {# Un solo formulario: el botón pulsado define la respuesta; el motivo lo exige la vista al rechazar #}
         <form method="post" class="form-card">
             {% csrf_token %}
-            <input type="hidden" name="respuesta" value="aprobar">
-            <button type="submit" class="btn-primary">Aprobar la modificación</button>
-        </form>
-
-        <form method="post" class="form-card">
-            {% csrf_token %}
-            <input type="hidden" name="respuesta" value="rechazar">
             <div class="form-group">
-                <label for="motivo">Motivo del rechazo</label>
-                <textarea id="motivo" name="motivo" rows="4" required{% if accion == 'rechazar' %} autofocus{% endif %}>{{ motivo }}</textarea>
+                <label for="motivo">Motivo (solo si rechazas)</label>
+                <textarea id="motivo" name="motivo" rows="3"{% if accion == 'rechazar' %} autofocus{% endif %}>{{ motivo }}</textarea>
             </div>
-            <button type="submit" class="btn-secondary">Rechazar la modificación</button>
+            <div class="form-actions">
+                <button type="submit" name="respuesta" value="aprobar" class="btn-primary">Aprobar</button>
+                <button type="submit" name="respuesta" value="rechazar" class="btn-secondary">Rechazar</button>
+            </div>
         </form>
     </div>
 </div>

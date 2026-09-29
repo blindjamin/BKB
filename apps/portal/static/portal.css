@@ -885,6 +885,11 @@ fieldset.form-group-fieldset legend.form-label {
     margin: 0;
 }
 
+.hitos-acciones .btn-primary {
+    width: auto;
+    padding: 0.75rem 1.5rem;
+}
+
 .hito.is-actual {
     color: var(--text-main);
     font-weight: 600;
@@ -1963,16 +1968,24 @@ fieldset.form-group-fieldset legend.form-label {
     font-weight: 600;
 }
 
-.pastilla-flujo-en_curso {
+.pastilla-flujo-en_curso,
+.pastilla-flujo-pendiente {
     color: var(--bkb-sec-info-text);
     background-color: var(--bkb-sec-info-bg);
     border-color: var(--bkb-sec-info-border);
 }
 
-.pastilla-flujo-finalizado {
+.pastilla-flujo-finalizado,
+.pastilla-flujo-aprobada {
     color: var(--bkb-sec-ok-text);
     background-color: var(--bkb-sec-ok-bg);
     border-color: var(--bkb-sec-ok-border);
+}
+
+.pastilla-flujo-rechazada {
+    color: var(--bkb-sec-danger-text);
+    background-color: var(--bkb-sec-danger-bg);
+    border-color: var(--bkb-sec-danger-border);
 }
 
 /* Hitos como lista de pasos */

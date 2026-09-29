@@ -10,7 +10,7 @@
     </nav>
     <h1 class="archivos-title">{{ m.titulo }}</h1>
     <div class="archivos-meta">
-        <span class="pastilla">{% if m.enviada_en %}{{ m.get_estado_display }}{% else %}Borrador{% endif %}</span>
+        {% if m.enviada_en %}<span class="pastilla-flujo pastilla-flujo-{{ m.estado }}">{{ m.get_estado_display }}</span>{% else %}<span class="pastilla">Borrador</span>{% endif %}
         {% if m.enviada_en %}<span>Enviada el {{ m.enviada_en|date:"d-m-Y" }}</span>{% endif %}
     </div>
 

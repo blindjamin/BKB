@@ -7,7 +7,7 @@
         {% for m in modificaciones %}
         <article class="modificacion">
             <h3>{{ m.titulo }}</h3>
-            <span class="pastilla">{% if m.enviada_en %}{{ m.get_estado_display }}{% else %}Borrador{% endif %}</span>
+            {% if m.enviada_en %}<span class="pastilla-flujo pastilla-flujo-{{ m.estado }}">{{ m.get_estado_display }}</span>{% else %}<span class="pastilla">Borrador</span>{% endif %}
             {% if m.enviada_en %}<p class="hito-detalle">Enviada el {{ m.enviada_en|date:"d-m-Y" }}</p>{% endif %}
             {% if m.respondida_en %}
             <p class="hito-detalle">Respondida por {{ m.respondida_por.nombre|default:m.respondida_por.email }} el {{ m.respondida_en|date:"d-m-Y" }}{% if m.motivo_rechazo %}. Motivo: {{ m.motivo_rechazo }}{% endif %}</p>
