@@ -166,8 +166,10 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or 'portal@empresa
 # Sitio público (landing); el login enlaza de vuelta a él.
 LANDING_URL = os.environ.get('LANDING_URL', '') or 'https://www.empresabkb.cl/'
 
-# Destinatarios fijos del aviso de recepción, separados por comas.
-AVISO_RECEPCION_CORREOS = [c.strip() for c in os.environ.get('AVISO_RECEPCION_CORREOS', '').split(',') if c.strip()]
+# V1: copia fija de los correos del proyecto, separados por comas.
+AVISO_INGENIERIA_CORREOS = [c.strip() for c in (
+    os.environ.get('AVISO_INGENIERIA_CORREOS', '') or 'ingenieria@empresabkb.cl,proyectos.ingenieria@empresabkb.cl'
+).split(',') if c.strip()]
 
 # Seguridad de Sesiones y Cookies (Plan Sección 5)
 SESSION_COOKIE_HTTPONLY = True

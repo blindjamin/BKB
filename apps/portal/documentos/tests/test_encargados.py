@@ -103,7 +103,7 @@ class CrearEmpresaEncargadoTests(TestCase):
                 self.assertEqual(Empresa.objects.count(), 0)
                 self.assertEqual(len(mail.outbox), 0)
 
-    @patch('gestion.views.send_mail', side_effect=SMTPException('caído'))
+    @patch('documentos.correos.EmailMultiAlternatives.send', side_effect=SMTPException('caído'))
     def test_correo_que_falla_no_impide_crear(self, _):  # V6
         r = self._crear('nuevo@cli.cl')
         self.assertTrue(Empresa.objects.filter(nombre='Nueva').exists())

@@ -1,10 +1,7 @@
-import logging
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import PasswordResetConfirmView
-from django.core.mail import send_mail
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -13,12 +10,10 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from accounts.models import Rol, Usuario
+from documentos.correos import enviar
 from documentos.permisos import es_jefe
 
 from .forms import UsuarioForm
-
-logger = logging.getLogger(__name__)
-
 
 def _gestionables():
     """Lo único que el jefe toca: personal y clientes. Él mismo, otro jefe o un superusuario dan 404 (§8)."""
@@ -47,23 +42,13 @@ def usuarios(request):
 
 
 def enviar_invitacion(request, usuario):
-    """Correo con un enlace de un solo uso para crear la contraseña. Nunca lanza; devuelve True si se envió."""
+    """Correo HTML con un enlace de un solo uso para crear la contraseña. Nunca lanza; True si se envió."""
     enlace = request.build_absolute_uri(reverse('crear_contrasena', args=[
         urlsafe_base64_encode(force_bytes(usuario.pk)),
         default_token_generator.make_token(usuario),
     ]))
-    cuerpo = (
-        f'Hola {usuario.nombre}:\n\n'
-        'BKB te invitó al Portal de Archivos. Crea tu contraseña en este enlace:\n\n'
-        f'{enlace}\n\n'
-        'El enlace vence en 3 días y sirve una sola vez. Si vence, pide al jefe que te reenvíe la invitación.'
-    )
-    try:
-        send_mail('Invitación al Portal BKB', cuerpo, None, [usuario.email], fail_silently=False)
-    except Exception:
-        logger.exception('No se pudo enviar la invitación al usuario %s.', usuario.pk)
-        return False
-    return True
+    return enviar('Invitación al Portal BKB', 'invitacion', {'usuario': usuario, 'enlace': enlace},
+                  [usuario.email], cc=False)  # V1: la invitación no va con copia
 
 
 def _avisar_invitacion(request, usuario, enviada):

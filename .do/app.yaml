@@ -39,8 +39,8 @@ envs:
     type: SECRET
   - key: DEFAULT_FROM_EMAIL
     value: instrumentacion@empresabkb.cl
-  - key: AVISO_RECEPCION_CORREOS
-    type: SECRET
+  - key: AVISO_INGENIERIA_CORREOS
+    value: ingenieria@empresabkb.cl,proyectos.ingenieria@empresabkb.cl
 
 services:
   - name: portal

@@ -22,6 +22,7 @@ class OlvideContrasenaView(PasswordResetView):
     form_class = OlvideContrasenaForm
     template_name = 'registration/password_reset_form.html'
     email_template_name = 'registration/password_reset_email.txt'
+    html_email_template_name = 'correos/recuperar_contrasena.html'  # V1
     subject_template_name = 'registration/password_reset_subject.txt'
     success_url = reverse_lazy('contrasena_olvide_enviado')
 

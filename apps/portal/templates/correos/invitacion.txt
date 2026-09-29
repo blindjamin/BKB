@@ -1,0 +1,8 @@
+{% autoescape off %}Hola {{ usuario.nombre|default:usuario.email }}:
+
+BKB te invitó al Portal de Archivos. Crea tu contraseña en este enlace:
+
+{{ enlace }}
+
+El enlace vence en 3 días y sirve una sola vez. Si vence, pide al jefe que te reenvíe la invitación.
+{% endautoescape %}

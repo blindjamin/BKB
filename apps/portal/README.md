@@ -39,7 +39,7 @@ Sin `DATABASE_URL` se usa SQLite (`db.sqlite3`). Sin `EMAIL_HOST` los correos sa
 Las pruebas se corren con el `.env` local (`DJANGO_DEBUG=True`). Con `DJANGO_DEBUG=False` los estáticos usan el manifiesto de WhiteNoise, y las pruebas exigirían un `collectstatic` previo.
 
 ## Variables de entorno
-La lista completa, con comentarios, está en [`.env.example`](.env.example). Las principales: `DJANGO_DEBUG`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `DATABASE_URL`, `SPACES_*`, `MAX_UPLOAD_MB`, `EMAIL_*`, `DEFAULT_FROM_EMAIL` y `AVISO_RECEPCION_CORREOS`.
+La lista completa, con comentarios, está en [`.env.example`](.env.example). Las principales: `DJANGO_DEBUG`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `DATABASE_URL`, `SPACES_*`, `MAX_UPLOAD_MB`, `EMAIL_*`, `DEFAULT_FROM_EMAIL` y `AVISO_INGENIERIA_CORREOS`.
 
 ## Despliegue (DigitalOcean App Platform)
 La especificación está en [`.do/app.yaml`](../../.do/app.yaml), en la raíz del monorepo. Resumen:
@@ -48,7 +48,7 @@ La especificación está en [`.do/app.yaml`](../../.do/app.yaml), en la raíz de
 - **Antes de cada despliegue:** job `PRE_DEPLOY` con `python manage.py migrate --noinput`.
 - **Salud:** `/health/`.
 - **Base de datos:** PostgreSQL administrado; `DATABASE_URL` lo inyecta App Platform y ya trae `sslmode=require`, por eso el código no fuerza SSL (así sigue funcionando el respaldo de SQLite en local).
-- **Secretos:** `DJANGO_SECRET_KEY`, `SPACES_KEY`, `SPACES_SECRET`, `EMAIL_HOST_PASSWORD` y `AVISO_RECEPCION_CORREOS` van en `app.yaml` como `type: SECRET` **sin valor**, y se cargan a mano en el panel de App Platform. `DJANGO_SECRET_KEY` también se necesita en el build, porque `collectstatic` carga la configuración.
+- **Secretos:** `DJANGO_SECRET_KEY`, `SPACES_KEY`, `SPACES_SECRET` y `EMAIL_HOST_PASSWORD` van en `app.yaml` como `type: SECRET` **sin valor**, y se cargan a mano en el panel de App Platform. `DJANGO_SECRET_KEY` también se necesita en el build, porque `collectstatic` carga la configuración.
 - **Límite de "¿Olvidaste tu contraseña?":** vive en la caché en memoria de cada proceso; con 2 workers, el límite efectivo es de 10 pedidos por IP cada 15 minutos.
 - **Validación del spec:** `doctl apps spec validate .do/app.yaml` queda para la tarea 16 (necesita una sesión de DigitalOcean).
 
