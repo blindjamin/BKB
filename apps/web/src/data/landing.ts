@@ -49,7 +49,6 @@ export interface ServicioItem {
   image: ImageMetadata;
   title: string;
   desc: string;
-  href?: string;
 }
 
 // Textos de los 4 primeros servicios: verificados (empresabkb.cl). Arriendo: dato entregado por el cliente.
@@ -59,7 +58,7 @@ export const servicios: ServicioItem[] = [
   { image: faena2, title: 'Automatización PLC', desc: 'Programación y desarrollo de sistemas PLC con pruebas FAT/SAT e integración SCADA.' },
   { image: faena3, title: 'Fabricación Propia', desc: 'Fabricación de Sistemas Kit: Bombeo, Filtrado, Lubricación y otros componentes especializados.' },
   { image: faenaHero, title: 'Montaje y Soporte', desc: 'Montaje en terreno y puesta en marcha con soporte técnico post-entrega garantizado.' },
-  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo y/o servicios de medición y análisis eléctrico con equipos de alta gama, certificados y de marcas de prestigio como Fluke: mediciones de red, mallas a tierra, aislación, RIC 19, termografías y alineación láser.', href: '/arriendo' }
+  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo y/o servicios de medición y análisis eléctrico con equipos de alta gama, certificados y de marcas de prestigio como Fluke: mediciones de red, mallas a tierra, aislación, RIC 19, termografías y alineación láser.' }
 ];
 
 export interface PortfolioItem {
