@@ -20,7 +20,8 @@
 <body>
     <a href="#contenido" class="skip-link">Saltar al contenido</a>
 
-    <header class="encabezado">
+    {# El encabezado y el pie van siempre en grafito, también en el tema claro #}
+    <header class="encabezado" data-theme="dark">
         <a href="{% url 'documentos:lista_proyectos' %}" class="marca">
             <img src="{% static 'img/logo-bkb.png' %}" alt="BKB" class="marca-logo" height="44">
             <span class="marca-nombre">Portal de Archivos</span>
@@ -28,6 +29,8 @@
         <div class="header-actions">
             {% if not user.is_authenticated %}
             <a href="{{ landing_url }}" class="btn-link">&larr; Volver al sitio</a>
+            {% else %}
+            <a href="{% url 'documentos:lista_proyectos' %}" class="btn-link">{% if user.rol == 'cliente' %}Mis proyectos{% else %}Empresas{% endif %}</a>
             {% endif %}
             {% if es_jefe %}
             <a href="{% url 'gestion:usuarios' %}" class="btn-link">Gestión</a>
@@ -68,7 +71,7 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="pie">
+    <footer class="pie" data-theme="dark">
         <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#ayuda"></use></svg>
         <span>¿Necesitas ayuda? Llama a BKB:</span>
         <a href="tel:+56961911593">+56 9 6191 1593</a>

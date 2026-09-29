@@ -8,7 +8,7 @@
     <div class="proyecto-cabecera">
         <div>
             <nav class="breadcrumbs">
-                <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}">{{ proyecto.empresa.nombre }}</a>
+                <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}">&larr; {{ proyecto.empresa.nombre }}</a>
                 &rsaquo;
                 {% if carpeta_activa %}
                     <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}">{{ proyecto.nombre }}</a>

@@ -48,9 +48,21 @@
     --contenedor: 1120px;
 }
 
-/* Contraste aprobado solo para el portal (docs/09 §9, decisión 3) */
+/* Tema claro del portal: grafito y naranjo. Fondo gris frío, tarjetas blancas y el naranjo BKB solo como acento.
+   El encabezado y el pie siempre van en grafito (data-theme="dark" en base.html). */
 [data-theme="light"] {
-    --text-muted: #72645A;
+    --page-bg: #F1F5F9;
+    --card-bg: #FFFFFF;
+    --card-border: #E2E8F0;
+    --text-main: #0F172A;
+    --text-muted: #475569;  /* 7.6:1 sobre blanco */
+    --text-subtle: #5B6778; /* 5.2:1 sobre el fondo */
+    --input-bg: #FFFFFF;
+    --input-border: #CBD5E1;
+}
+
+[data-theme="light"] .encabezado {
+    border-bottom: 3px solid var(--bkb-salmon-500);
 }
 
 body {
@@ -1063,6 +1075,7 @@ fieldset.form-group-fieldset legend.form-label {
     justify-content: center;
     gap: var(--space-2) var(--space-4);
     padding: var(--space-6) var(--space-4);
+    background-color: var(--card-bg);
     border-top: 1px solid var(--card-border);
     color: var(--text-muted);
     font-size: var(--bkb-text-body-sm);

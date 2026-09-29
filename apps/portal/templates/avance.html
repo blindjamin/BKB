@@ -6,7 +6,7 @@
 {% block content %}
 <div class="archivos-container avance">
     <nav class="breadcrumbs">
-        <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}">{{ proyecto.empresa.nombre }}</a>
+        <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}">&larr; {{ proyecto.empresa.nombre }}</a>
         &rsaquo; <span>{{ proyecto.nombre }}</span>
     </nav>
     <h1 class="archivos-title">{{ proyecto.nombre }}</h1>
