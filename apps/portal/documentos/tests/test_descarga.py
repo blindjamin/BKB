@@ -3,7 +3,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 from accounts.models import Usuario, Rol
-from documentos.models import Empresa, Proyecto, Membresia, EstadoProyecto, Archivo, EstadoArchivo, DescargaLog, Hito
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.models import Empresa, Proyecto, EstadoProyecto, Archivo, EstadoArchivo, DescargaLog, Hito
 
 class DescargaTests(TestCase):
     def setUp(self):
@@ -13,13 +14,12 @@ class DescargaTests(TestCase):
         self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         self.cliente_ajeno = Usuario.objects.create_user('ajeno@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         
-        self.empresa = Empresa.objects.create(nombre='Empresa A', rut='11.111.111-1')
+        self.empresa = crear_empresa(nombre='Empresa A', rut='11.111.111-1')
         
-        self.proyecto = Proyecto.objects.create(
-            empresa=self.empresa, nombre='Proyecto Asignado', estado=EstadoProyecto.ACTIVO
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Asignado', estado=EstadoProyecto.ACTIVO
         )
         
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        encargar(self.proyecto, self.cliente)
         
         self.doc_valido = Archivo.objects.create(
             proyecto=self.proyecto,

@@ -81,6 +81,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'gestion.context_processors.jefe',
+                'gestion.context_processors.sitio',
             ],
         },
     },
@@ -162,6 +163,9 @@ if EMAIL_HOST:
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or 'portal@empresabkb.cl'
+# Sitio público (landing); el login enlaza de vuelta a él.
+LANDING_URL = os.environ.get('LANDING_URL', '') or 'https://www.empresabkb.cl/'
+
 # Destinatarios fijos del aviso de recepción, separados por comas.
 AVISO_RECEPCION_CORREOS = [c.strip() for c in os.environ.get('AVISO_RECEPCION_CORREOS', '').split(',') if c.strip()]
 

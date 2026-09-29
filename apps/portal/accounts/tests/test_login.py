@@ -93,10 +93,10 @@ class LoginTests(TestCase):
         self.assertContains(response, 'Sus documentos, siempre a mano.')
 
         # Teléfonos oficiales de soporte (clickable tel: links)
-        self.assertContains(response, 'tel:+56989753095')
         self.assertContains(response, 'tel:+56961911593')
-        self.assertContains(response, '+56 9 8975 3095')
+        self.assertContains(response, 'tel:+56966626540')
         self.assertContains(response, '+56 9 6191 1593')
+        self.assertContains(response, '+56 9 6662 6540')
 
         # El teléfono antiguo no debe aparecer
         self.assertNotContains(response, '8249 1403')
@@ -149,5 +149,5 @@ class LoginTests(TestCase):
         response = self.client.post(self.login_url, {'username': 'test@bkb.cl', 'password': 'PasswordMala123!'})
         self.assertEqual(response.status_code, 429)
         self.assertTemplateUsed(response, 'bloqueo.html')
-        for texto in ('Por seguridad bloqueamos el acceso', 'tel:+56989753095', 'tel:+56961911593'):
+        for texto in ('Por seguridad bloqueamos el acceso', 'tel:+56961911593', 'tel:+56966626540'):
             self.assertContains(response, texto, status_code=429)

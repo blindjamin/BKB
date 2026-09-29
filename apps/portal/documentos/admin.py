@@ -1,24 +1,13 @@
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import Archivo, DescargaLog, Empresa, Hito, Membresia, Proyecto, RespuestaRecepcion
+from .models import Archivo, DescargaLog, Empresa, Hito, Proyecto, RespuestaRecepcion
 
 
 @admin.register(Empresa)
 class EmpresaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'rut')
+    list_display = ('nombre', 'rut', 'encargado')
     search_fields = ('nombre', 'rut')
-
-
-class MembresiaInline(admin.TabularInline):
-    model = Membresia
-    extra = 1
-    fields = ('usuario', 'empresa')
-    readonly_fields = ('empresa',)
-
-    @admin.display(description='empresa del proyecto')
-    def empresa(self, obj):
-        return obj.proyecto.empresa if obj and obj.proyecto_id else '-'
 
 
 class HitoInline(admin.TabularInline):
@@ -42,11 +31,11 @@ class HitoInline(admin.TabularInline):
 
 @admin.register(Proyecto)
 class ProyectoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'empresa', 'estado')
+    list_display = ('nombre', 'empresa', 'estado', 'encargado')
     list_filter = ('estado', 'empresa')
     list_select_related = ('empresa',)
     search_fields = ('nombre', 'empresa__nombre')
-    inlines = [MembresiaInline, HitoInline]
+    inlines = [HitoInline]
 
 
 @admin.register(Archivo)

@@ -1,7 +1,8 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from accounts.models import Usuario, Rol
-from documentos.models import Empresa, Proyecto, Membresia, EstadoProyecto, Archivo, EstadoArchivo
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.models import Empresa, Proyecto, EstadoProyecto, Archivo, EstadoArchivo
 
 class BorrarArchivoTests(TestCase):
     def setUp(self):
@@ -12,11 +13,10 @@ class BorrarArchivoTests(TestCase):
         self.superuser = Usuario.objects.create_superuser('super@bkb.cl', 'Clave123!')
         self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         
-        self.empresa = Empresa.objects.create(nombre='Empresa A', rut='11.111.111-1')
-        self.proyecto = Proyecto.objects.create(
-            empresa=self.empresa, nombre='Proyecto', estado=EstadoProyecto.ACTIVO
+        self.empresa = crear_empresa(nombre='Empresa A', rut='11.111.111-1')
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto', estado=EstadoProyecto.ACTIVO
         )
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        encargar(self.proyecto, self.cliente)
         
         self.archivo = Archivo.objects.create(
             proyecto=self.proyecto,

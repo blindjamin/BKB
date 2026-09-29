@@ -2,13 +2,27 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from accounts.models import Rol
-from .models import Empresa, EstadoProyecto, Hito, Membresia, Proyecto
+from .encargados import validar_encargado
+from .models import Empresa, EstadoProyecto, Hito, Proyecto
 from .permisos import EstadoFlujoProyecto, estado_proyecto
 
 Usuario = get_user_model()
 
 
-class EmpresaForm(forms.ModelForm):
+class CamposEncargado(forms.Form):
+    encargado_nombre = forms.CharField(max_length=200, label='Nombre del encargado')
+    encargado_email = forms.EmailField(
+        label='Correo del encargado',
+        help_text='Si es nuevo en el portal, le llegará una invitación para crear su contraseña.',
+    )
+
+    def clean_encargado_email(self):
+        email = self.cleaned_data['encargado_email'].lower()
+        validar_encargado(email)  # E5
+        return email
+
+
+class EmpresaForm(CamposEncargado, forms.ModelForm):
     class Meta:
         model = Empresa
         fields = ['nombre', 'rut']
@@ -37,7 +51,7 @@ class EmpresaForm(forms.ModelForm):
         return self.cleaned_data.get('rut', '').strip()
 
 
-class ProyectoForm(forms.ModelForm):
+class ProyectoForm(CamposEncargado, forms.ModelForm):
     hitos_texto = forms.CharField(
         widget=forms.Textarea(attrs={
             'rows': 5,
@@ -47,32 +61,30 @@ class ProyectoForm(forms.ModelForm):
         label='Hitos del proyecto',
         help_text='Ingresa un hito por línea en orden cronológico. Todo proyecto debe tener al menos un hito.',
     )
-    clientes = forms.ModelMultipleChoiceField(
-        queryset=Usuario.objects.none(),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        label='Clientes asignados',
-        help_text='Selecciona los usuarios clientes que tendrán acceso a este proyecto.',
-    )
 
     class Meta:
         model = Proyecto
-        fields = ['empresa', 'nombre', 'estado']
+        fields = ['empresa', 'nombre', 'estado', 'encargados_bkb']
         labels = {
             'empresa': 'Empresa / Cliente',
             'nombre': 'Nombre del proyecto',
             'estado': 'Estado',
         }
+        widgets = {'encargados_bkb': forms.CheckboxSelectMultiple}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['clientes'].queryset = Usuario.objects.filter(rol=Rol.CLIENTE, is_active=True).order_by('nombre', 'email')
+        self.fields['encargados_bkb'].queryset = Usuario.objects.filter(
+            rol__in=(Rol.PERSONAL, Rol.JEFE), is_active=True, is_superuser=False).order_by('nombre', 'email')  # E3
+
+        if self.instance.encargado_id:  # no .pk: el UUID ya trae valor antes de guardar
+            self.initial.setdefault('encargado_nombre', self.instance.encargado.nombre)
+            self.initial.setdefault('encargado_email', self.instance.encargado.email)
 
         if self.instance and self.instance.pk:
             hitos = self.instance.hitos.order_by('orden')
             if hitos.exists():
                 self.initial['hitos_texto'] = '\n'.join(h.nombre for h in hitos)
-            self.initial['clientes'] = list(self.instance.membresias.values_list('usuario_id', flat=True))
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre', '').strip()
@@ -100,21 +112,7 @@ class ProyectoForm(forms.ModelForm):
         if not commit:
             return proyecto
 
-        # 1. Sincronizar clientes (Membresia)
-        clientes_seleccionados = set(self.cleaned_data.get('clientes', []))
-        actuales = set(Usuario.objects.filter(membresias__proyecto=proyecto))
-
-        # Eliminar los que ya no están
-        quitar = actuales - clientes_seleccionados
-        if quitar:
-            Membresia.objects.filter(proyecto=proyecto, usuario__in=quitar).delete()
-
-        # Agregar los nuevos
-        agregar = clientes_seleccionados - actuales
-        for usuario in agregar:
-            Membresia.objects.create(proyecto=proyecto, usuario=usuario)
-
-        # 2. Sincronizar hitos
+        # Sincronizar hitos
         lines = self.cleaned_data.get('hitos_texto', [])
         existentes = list(proyecto.hitos.order_by('orden'))
 

@@ -2,7 +2,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 from accounts.models import Usuario, Rol
-from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Membresia, Proyecto
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Proyecto
 
 class VistasProyectosTests(TestCase):
     def setUp(self):
@@ -13,16 +14,14 @@ class VistasProyectosTests(TestCase):
         self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         self.cliente_sin_proyectos = Usuario.objects.create_user('otro@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         
-        self.empresa = Empresa.objects.create(nombre='Empresa A', rut='11.111.111-1')
+        self.empresa = crear_empresa(nombre='Empresa A', rut='11.111.111-1')
         
-        self.proyecto_asignado = Proyecto.objects.create(
-            empresa=self.empresa, nombre='Proyecto Asignado', estado=EstadoProyecto.ACTIVO
+        self.proyecto_asignado = crear_proyecto(self.empresa, nombre='Proyecto Asignado', estado=EstadoProyecto.ACTIVO
         )
-        self.proyecto_no_asignado = Proyecto.objects.create(
-            empresa=self.empresa, nombre='Proyecto No Asignado', estado=EstadoProyecto.ACTIVO
+        self.proyecto_no_asignado = crear_proyecto(self.empresa, nombre='Proyecto No Asignado', estado=EstadoProyecto.ACTIVO
         )
         
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto_asignado)
+        encargar(self.proyecto_asignado, self.cliente)
 
     def test_requiere_login(self):
         response = self.client.get(self.url)
@@ -61,10 +60,10 @@ class VistasProyectosTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'No tienes proyectos asignados actualmente.')
-        self.assertContains(response, 'tel:+56989753095')
-        self.assertContains(response, '+56 9 8975 3095')
         self.assertContains(response, 'tel:+56961911593')
         self.assertContains(response, '+56 9 6191 1593')
+        self.assertContains(response, 'tel:+56966626540')
+        self.assertContains(response, '+56 9 6662 6540')
         self.assertNotContains(response, '8249 1403')
         self.assertNotContains(response, '82491403')
 
@@ -137,9 +136,9 @@ class ConteoProyectoBloqueadoTests(TestCase):
     def setUp(self):
         self.personal = Usuario.objects.create_user('personal@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
         self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
-        self.empresa = Empresa.objects.create(nombre='Empresa A', rut='11.111.111-1')
-        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Bloqueado', estado=EstadoProyecto.ACTIVO)
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        self.empresa = crear_empresa(nombre='Empresa A', rut='11.111.111-1')
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Bloqueado', estado=EstadoProyecto.ACTIVO)
+        encargar(self.proyecto, self.cliente)
         Hito.objects.create(
             proyecto=self.proyecto, orden=1, nombre='Hito', cumplido_en=timezone.now(), cumplido_por=self.personal
         )

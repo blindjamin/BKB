@@ -535,7 +535,7 @@ Estado verificado en el código de la rama `benjamin/2026-09-25-portal-prod`. Ca
 | Filtro de archivos | `docs/09` §5.3: Documentos y Fotos | Además "Todos", por defecto | Una página muestra todo lo visible | `test_vistas_archivos.py::test_filtro_por_tipo_en_el_servidor` |
 | Conteos | — | Los conteos de archivos y la última carga respetan el bloqueo del cliente | Salen de `permisos.py` | `test_vistas_proyectos.py::ConteoProyectoBloqueadoTests`, `test_vistas_archivos.py` |
 | Estáticos | §3 | Manifiesto de WhiteNoise solo con `DEBUG=False` | Las pruebas no corren `collectstatic` | `config/settings.py`, `test_produccion.py` |
-| Ayuda | — | Se muestran +56 9 8975 3095 y +56 9 6191 1593 | Aprobados por el usuario (`docs/09` §12.1) | `templates/base.html`, `test_csp_contrato.py::BaseComunTests` |
+| Ayuda | — | Se muestran +56 9 6191 1593 y +56 9 6662 6540 | Aprobados por el usuario (`docs/09` §12.1) | `templates/base.html`, `test_csp_contrato.py::BaseComunTests` |
 
 ### 15.2 Alertas pendientes de decisión del usuario
 

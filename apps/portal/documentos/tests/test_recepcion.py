@@ -10,7 +10,8 @@ from django.utils import timezone
 from accounts.models import Rol
 from documentos.avisos import enviar_aviso_recepcion
 from documentos.permisos import EstadoFlujoProyecto, archivos_visibles, estado_proyecto
-from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Membresia, Proyecto, RespuestaRecepcion
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, encargar_empresa
+from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Hito, Proyecto, RespuestaRecepcion
 
 Usuario = get_user_model()
 
@@ -24,12 +25,12 @@ class RecepcionTests(TestCase):
         self.cliente2 = Usuario.objects.create_user('cli2@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         self.cliente_ajeno = Usuario.objects.create_user('ajeno@otra.cl', 'Clave123!', rol=Rol.CLIENTE)
 
-        self.empresa = Empresa.objects.create(nombre='Empresa Alfa', rut='11.111.111-1')
-        self.proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Alfa', estado=EstadoProyecto.ACTIVO)
-        self.otro_proyecto = Proyecto.objects.create(empresa=self.empresa, nombre='Proyecto Beta', estado=EstadoProyecto.ACTIVO)
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
-        Membresia.objects.create(usuario=self.cliente2, proyecto=self.proyecto)
-        Membresia.objects.create(usuario=self.cliente_ajeno, proyecto=self.otro_proyecto)
+        self.empresa = crear_empresa(nombre='Empresa Alfa', rut='11.111.111-1')
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Alfa', estado=EstadoProyecto.ACTIVO)
+        self.otro_proyecto = crear_proyecto(self.empresa, nombre='Proyecto Beta', estado=EstadoProyecto.ACTIVO)
+        encargar(self.proyecto, self.cliente)
+        encargar_empresa(self.empresa, self.cliente2)
+        encargar(self.otro_proyecto, self.cliente_ajeno)
 
         for n in (1, 2):
             Hito.objects.create(

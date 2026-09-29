@@ -37,7 +37,7 @@
                 <span class="pastilla-flujo pastilla-flujo-{{ estado }}">
                     {% if estado == 'recibido' %}Recibido{% elif estado == 'esperando_recepcion' %}Esperando recepción{% else %}En curso{% endif %}
                 </span>
-                {% if puede_gestionar %}
+                {% if puede_editar %}
                     <a href="{% url 'documentos:editar_proyecto' proyecto.pk %}" class="btn-link">Editar proyecto</a>
                 {% endif %}
             </div>

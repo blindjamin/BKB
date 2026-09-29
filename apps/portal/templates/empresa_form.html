@@ -52,6 +52,8 @@
                 {% endif %}
             </div>
 
+            {% include 'includes/campos_encargado.html' %}
+
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Guardar Empresa</button>
                 <a href="{% url 'documentos:lista_proyectos' %}" class="btn-secondary">Cancelar</a>

@@ -5,6 +5,8 @@ Las vistas obtienen los objetos con `get_object_or_404(<consulta de aquí>, pk=.
 son visibles para nadie, ni siquiera para quien los subió.
 """
 
+from django.db.models import Q
+
 from accounts.models import Rol
 
 from .models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Proyecto
@@ -46,11 +48,15 @@ def estado_proyecto(proyecto):
     return EstadoFlujoProyecto.ESPERANDO_RECEPCION
 
 
+def _a_cargo(usuario):  # E1, E6
+    return Q(encargado=usuario) | Q(empresa__encargado=usuario)
+
+
 def proyectos_visibles(usuario):
     if _es_personal(usuario):
         return Proyecto.objects.all()
-    if _activo(usuario):  # cliente: solo los proyectos que se le asignaron
-        return Proyecto.objects.filter(membresias__usuario=usuario)
+    if _activo(usuario):  # cliente: los proyectos a su cargo, o de una empresa a su cargo
+        return Proyecto.objects.filter(_a_cargo(usuario))
     return Proyecto.objects.none()
 
 
@@ -58,12 +64,12 @@ def empresas_visibles(usuario):
     """Empresas visibles para el usuario (§14.3).
 
     - Personal y jefe: empresas con proyectos vigentes (activos).
-    - Cliente: empresas que contienen proyectos asignados al cliente.
+    - Cliente: empresas a su cargo o con algún proyecto a su cargo.
     """
     if _es_personal(usuario):
         return Empresa.objects.filter(proyectos__estado=EstadoProyecto.ACTIVO).distinct()
     if _activo(usuario):
-        return Empresa.objects.filter(proyectos__membresias__usuario=usuario).distinct()
+        return Empresa.objects.filter(Q(encargado=usuario) | Q(proyectos__encargado=usuario)).distinct()
     return Empresa.objects.none()
 
 
@@ -72,7 +78,7 @@ def puede_ver_empresa(usuario, empresa):
     if _es_personal(usuario):
         return True
     if _activo(usuario):
-        return empresa.proyectos.filter(membresias__usuario=usuario).exists()
+        return empresa.encargado_id == usuario.pk or empresa.proyectos.filter(encargado=usuario).exists()
     return False
 
 
@@ -81,7 +87,7 @@ def proyectos_de_empresa(usuario, empresa):
     if _es_personal(usuario):
         return empresa.proyectos.all()
     if _activo(usuario):
-        return empresa.proyectos.filter(membresias__usuario=usuario)
+        return empresa.proyectos.filter(_a_cargo(usuario))
     return Proyecto.objects.none()
 
 
@@ -132,10 +138,15 @@ def puede_gestionar_hitos(usuario):
     return _es_personal(usuario)
 
 
+def puede_editar_proyecto(usuario, proyecto):
+    """E3: el jefe o un encargado BKB del proyecto; el resto del personal solo mira."""
+    return es_jefe(usuario) or (_es_personal(usuario) and proyecto.encargados_bkb.filter(pk=usuario.pk).exists())
+
+
 def puede_responder_recepcion(usuario, proyecto):
-    """Solo un cliente asignado y cuando el proyecto está esperando recepción."""
+    """Solo un cliente a cargo y cuando el proyecto está esperando recepción."""
     if not _activo(usuario) or usuario.rol != Rol.CLIENTE:
         return False
-    if not proyecto.membresias.filter(usuario=usuario).exists():
+    if not proyectos_visibles(usuario).filter(pk=proyecto.pk).exists():  # E1
         return False
     return estado_proyecto(proyecto) == EstadoFlujoProyecto.ESPERANDO_RECEPCION
