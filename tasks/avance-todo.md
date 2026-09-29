@@ -277,8 +277,8 @@ el de la empresa (M5).
 respondió, la fecha y el motivo si se rechazó.
 
 **Criterios de aceptación:**
-- [ ] Hay 1 correo al aprobar y 1 al rechazar (M7).
-- [ ] Si el correo falla, la respuesta queda guardada igual.
+- [x] Hay 1 correo al aprobar y 1 al rechazar (M7).
+- [x] Si el correo falla, la respuesta queda guardada igual.
 
 **Verificación:** `test`.
 **Archivos:** `documentos/modificaciones.py`, plantillas `.html` y `.txt`, pruebas.
