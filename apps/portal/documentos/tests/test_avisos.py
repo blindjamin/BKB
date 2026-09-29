@@ -38,6 +38,12 @@ class CorreoBaseTests(Base):
         self.assertEqual(m.cc, [])
         self.assertTrue(m.alternatives)
 
+    def test_recuperar_contrasena_sale_en_html_sin_copia(self):  # V1
+        self.client.post(reverse('contrasena_olvide'), {'email': self.cliente.email})
+        m = mail.outbox[0]
+        self.assertEqual(m.cc, [])
+        self.assertIn('/contrasena/crear/', m.alternatives[0][0])
+
     def test_smtp_caido_devuelve_false_y_queda_en_el_log(self):  # V6
         with CAIDO, self.assertLogs('documentos.correos', 'ERROR'):
             self.assertFalse(correos.enviar('A', 'inicio', {'proyecto': self.proyecto, 'hitos': []}, ['x@y.cl']))

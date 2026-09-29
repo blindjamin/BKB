@@ -15,6 +15,7 @@ from documentos.permisos import es_jefe
 
 from .forms import UsuarioForm
 
+
 def _gestionables():
     """Lo único que el jefe toca: personal y clientes. Él mismo, otro jefe o un superusuario dan 404 (§8)."""
     return Usuario.objects.filter(is_superuser=False).exclude(rol=Rol.JEFE)
