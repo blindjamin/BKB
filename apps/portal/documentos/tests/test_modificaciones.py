@@ -1,6 +1,7 @@
 """Módulo modificaciones: reglas M1 a M9 (docs/11-spec-avance-y-modificaciones.md)."""
 
 import json
+import re
 import time
 from unittest.mock import patch
 
@@ -11,6 +12,7 @@ from django.utils import timezone
 
 from documentos.models import Archivo, DescargaLog, EstadoArchivo, EstadoModificacion, Modificacion
 from documentos.permisos import archivos_visibles, firmar_enlace, modificaciones_visibles
+from documentos.tests.ayudantes import finalizar
 from documentos.tests.test_avance import Base
 from documentos.tests.test_avisos import CAIDO
 
@@ -264,3 +266,59 @@ class ResponderTests(ModificacionBase):
         otro = self.adjunto(self.crear_mod(titulo='Otra'), nombre='otro.jpg')
         r = self.anonimo.get(reverse('documentos:descargar_adjunto_enlace', args=[token, otro.pk]))
         self.assertEqual(r.status_code, 404)
+
+
+class PanelYDescargaTests(ModificacionBase):
+    def panel(self, usuario):
+        self.client.force_login(usuario)
+        return self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+
+    def test_el_cliente_no_ve_el_borrador_en_el_panel(self):  # M1
+        self.crear_mod(enviada=False, titulo='Secreta')
+        self.assertNotContains(self.panel(self.cliente), 'Secreta')
+        self.assertContains(self.panel(self.personal), 'Secreta')
+
+    def test_panel_de_personal_sin_y_con_proyecto_finalizado(self):  # T20
+        self.crear_mod(titulo='Visible')
+        for finalizado in (False, True):
+            if finalizado:
+                finalizar(self.proyecto)
+            for usuario in (self.personal, self.cliente):
+                self.assertContains(self.panel(usuario), 'Visible')
+
+    def test_responder_con_sesion_como_encargado_de_la_empresa(self):  # M5
+        m = self.crear_mod()
+        r = self.panel(self.cliente2)
+        self.assertContains(r, 'Responder')
+        enlace = re.search(r'href="(/modificaciones/responder/[^"]+)"', r.content.decode()).group(1)
+        self.assertEqual(self.client.get(enlace).status_code, 200)
+        self.client.post(enlace, {'respuesta': 'aprobar'})
+        m.refresh_from_db()
+        self.assertEqual(m.respondida_por, self.cliente2)
+        self.assertEqual(self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])).status_code, 200)
+        self.assertContains(self.panel(self.cliente2), 'cli2@empresa.cl')
+
+    def test_ajeno_no_ve_el_proyecto(self):  # M5
+        self.crear_mod()
+        self.assertEqual(self.panel(self.ajeno).status_code, 404)
+
+    def test_personal_no_ve_boton_responder(self):  # M5
+        self.crear_mod()
+        self.assertNotContains(self.panel(self.personal), 'Responder')
+
+    def test_cliente_descarga_adjunto_enviado_pero_no_borrador_ni_archivos_generales(self):  # M8
+        enviada, borrador = self.crear_mod(), self.crear_mod(enviada=False, titulo='B')
+        a, b = self.adjunto(enviada), self.adjunto(borrador, nombre='b.jpg')
+        general = Archivo.objects.create(
+            proyecto=self.proyecto, nombre_original='g.pdf', clave_space='portal-dev/g', tamano=1, tipo='application/pdf',
+            estado=EstadoArchivo.DISPONIBLE, subido_por=self.personal)
+        self.client.force_login(self.cliente)
+        with patch('documentos.views.url_descarga', return_value='https://space/x'):
+            self.assertEqual(self.client.get(reverse('documentos:descargar_archivo', args=[a.pk])).status_code, 302)
+        for x in (b, general):
+            self.assertEqual(self.client.get(reverse('documentos:descargar_archivo', args=[x.pk])).status_code, 404)
+
+    def test_personal_no_borra_adjunto_de_modificacion_enviada(self):  # M8
+        a = self.adjunto(self.crear_mod())
+        self.client.force_login(self.jefe)
+        self.assertEqual(self.client.post(reverse('documentos:eliminar_archivo', args=[a.pk])).status_code, 403)

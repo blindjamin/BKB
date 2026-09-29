@@ -88,6 +88,10 @@
         </div>
     </section>
 
+    {% if not carpeta_activa %}
+    {% include "includes/modificaciones.html" %}
+    {% endif %}
+
     <section class="carpetas">
         {% if carpeta_activa %}
             <div class="carpeta-activa-acciones">

@@ -2493,3 +2493,29 @@ a[href^="mailto:"] {
     color: var(--accent-text);
     text-underline-offset: 3px;
 }
+
+/* Modificaciones del proyecto (M8) */
+.modificaciones-lista {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}
+
+.modificacion {
+    padding: var(--space-4);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-card, 16px);
+    color: var(--text-main);
+}
+
+.modificacion h3 {
+    margin: 0 0 var(--space-2);
+}
+
+.modificacion-adjuntos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3, 12px);
+}

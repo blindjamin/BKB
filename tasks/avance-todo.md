@@ -289,8 +289,8 @@ modificación: título, estado, fechas, adjuntos descargables y quién respondi�
 y descargar los adjuntos aunque el proyecto no esté finalizado (excepción a A8, M8).
 
 **Criterios de aceptación:**
-- [ ] El cliente descarga los adjuntos de las modificaciones enviadas, pero no los demás archivos.
-- [ ] Los borradores solo los ve el personal.
+- [x] El cliente descarga los adjuntos de las modificaciones enviadas, pero no los demás archivos.
+- [x] Los borradores solo los ve el personal.
 
 **Verificación:** `test`; en el navegador (cliente y personal).
 **Archivos:** `templates/avance.html`, `templates/archivos.html`, `documentos/permisos.py`, `documentos/views.py`, pruebas.
