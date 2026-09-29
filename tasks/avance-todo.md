@@ -236,8 +236,8 @@ descripción que crea un borrador. En la página del borrador se suben los adjun
 (`iniciar_subida` recibe `modificacion_id`) y se pueden quitar mientras siga en borrador.
 
 **Criterios de aceptación:**
-- [ ] Solo un encargado BKB o el jefe puede crearla (M1); valen las extensiones de `EXTENSIONES_PERMITIDAS`.
-- [ ] No se pueden agregar adjuntos a una modificación ya enviada.
+- [x] Solo un encargado BKB o el jefe puede crearla (M1); valen las extensiones de `EXTENSIONES_PERMITIDAS`.
+- [x] No se pueden agregar adjuntos a una modificación ya enviada.
 
 **Verificación:** `test`; en el navegador, subir 2 fotos y un PDF.
 **Archivos:** `documentos/modificaciones.py`, `documentos/subidas.py`, `documentos/urls.py`, `templates/modificacion_form.html`, pruebas.

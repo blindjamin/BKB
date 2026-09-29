@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 
 from accounts.models import Rol
 from .encargados import validar_encargado
-from .models import Empresa, Hito, Proyecto
+from .models import Empresa, Hito, Modificacion, Proyecto
 
 Usuario = get_user_model()
 
@@ -140,3 +140,9 @@ class BaseHitoFormSet(forms.BaseInlineFormSet):
 
 HitoFormSet = forms.inlineformset_factory(
     Proyecto, Hito, form=HitoForm, formset=BaseHitoFormSet, extra=1, can_delete=True)
+
+
+class ModificacionForm(forms.ModelForm):
+    class Meta:
+        model = Modificacion
+        fields = ['titulo', 'descripcion']

@@ -42,6 +42,12 @@ def _get_client_ip(request):
     return request.META.get('REMOTE_ADDR')
 
 
+def _preparar_archivo(usuario, archivo):
+    archivo.puede_borrar = puede_borrar(usuario, archivo)
+    archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
+    return archivo
+
+
 def _tarjetas_de_proyecto(usuario, proyectos):
     """Proyectos con conteo de archivos disponibles y última carga, cerrados al final (docs/09 §12.1)."""
     disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True,
@@ -226,8 +232,7 @@ def detalle_proyecto(request, pk):
     # carpeta_activa=None filtra carpeta IS NULL: los archivos de la raíz
     todos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
     for archivo in todos:
-        archivo.puede_borrar = puede_borrar(request.user, archivo)
-        archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
+        _preparar_archivo(request.user, archivo)
 
     fotos = [a for a in todos if a.tipo.startswith('image/')]
     documentos = [a for a in todos if not a.tipo.startswith('image/')]
@@ -407,4 +412,6 @@ def eliminar_archivo(request, pk):
     archivo.save()
     messages.success(request, f'Se eliminó «{archivo.nombre_original}».')
 
+    if archivo.modificacion_id:  # M1: vuelve al borrador
+        return redirect('documentos:detalle_modificacion', pk=archivo.modificacion_id)
     return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)
