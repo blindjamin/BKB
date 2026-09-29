@@ -138,6 +138,11 @@ def puede_gestionar_hitos(usuario):
     return _es_personal(usuario)
 
 
+def puede_editar_proyecto(usuario, proyecto):
+    """E3: el jefe o un encargado BKB del proyecto; el resto del personal solo mira."""
+    return es_jefe(usuario) or (_es_personal(usuario) and proyecto.encargados_bkb.filter(pk=usuario.pk).exists())
+
+
 def puede_responder_recepcion(usuario, proyecto):
     """Solo un cliente a cargo y cuando el proyecto está esperando recepción."""
     if not _activo(usuario) or usuario.rol != Rol.CLIENTE:

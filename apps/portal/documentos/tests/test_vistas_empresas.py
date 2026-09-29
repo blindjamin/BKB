@@ -42,6 +42,7 @@ class VistasEmpresasYProyectosTests(TestCase):
 
         # Asignaciones
         encargar(self.proy_a1, self.cliente)
+        self.proy_a1.encargados_bkb.add(self.personal)
         encargar(self.proy_a2, self.cliente2)
         encargar(self.proy_b1, self.cliente)
 

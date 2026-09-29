@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import Rol
@@ -14,6 +15,7 @@ from documentos.permisos import (
     estado_proyecto,
     proyectos_visibles,
     puede_borrar,
+    puede_editar_proyecto,
     puede_gestionar_hitos,
     puede_responder_recepcion,
     puede_subir,
@@ -576,3 +578,57 @@ class HitoYRespuestaRecepcionModelosYAdminTests(TestCase):
         self.assertFalse(resp_admin.has_add_permission(None))
         self.assertFalse(resp_admin.has_change_permission(None))
         self.assertFalse(resp_admin.has_delete_permission(None))
+
+
+class EditarProyectoTests(Datos):
+    """E3: solo el jefe y los encargados BKB editan; el resto del personal mira y sigue subiendo y creando carpetas."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.hito = Hito.objects.create(proyecto=cls.asignado, orden=1, nombre='Uno')
+        cls.asignado.encargados_bkb.add(cls.personal)
+
+    def test_tabla_puede_editar_proyecto(self):
+        inactivo = Usuario.objects.create_user('baja@bkb.cl', rol=Rol.PERSONAL, is_active=False)
+        self.asignado.encargados_bkb.add(inactivo)
+        casos = [(self.jefe, True), (self.personal, True), (self.otro_personal, False), (self.admin, False),
+                 (self.cliente, False), (inactivo, False), (AnonymousUser(), False)]
+        for usuario, esperado in casos:
+            with self.subTest(usuario=str(usuario)):
+                self.assertIs(puede_editar_proyecto(usuario, self.asignado), esperado)
+
+    def test_personal_que_no_esta_a_cargo_no_edita(self):
+        self.client.force_login(self.otro_personal)
+        for nombre in ('avanzar_hito', 'retroceder_hito'):
+            self.assertEqual(self.client.post(reverse(f'documentos:{nombre}', args=[self.asignado.pk])).status_code, 403)
+        self.hito.refresh_from_db()
+        self.assertFalse(self.hito.cumplido)
+        url = reverse('documentos:editar_proyecto', args=[self.asignado.pk])
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.assertEqual(self.client.post(url, {}).status_code, 403)
+        r = self.client.get(reverse('documentos:detalle_proyecto', args=[self.asignado.pk]))
+        for nombre in ('avanzar_hito', 'retroceder_hito', 'editar_proyecto'):
+            self.assertNotContains(r, reverse(f'documentos:{nombre}', args=[self.asignado.pk]))
+
+    def test_cliente_a_cargo_recibe_403_y_ajeno_404(self):
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.client.post(reverse('documentos:avanzar_hito', args=[self.asignado.pk])).status_code, 403)
+        self.client.force_login(self.otro_cliente)
+        self.assertEqual(self.client.post(reverse('documentos:avanzar_hito', args=[self.asignado.pk])).status_code, 404)
+
+    def test_jefe_sin_asignar_avanza_hitos(self):
+        self.client.force_login(self.jefe)
+        r = self.client.post(reverse('documentos:avanzar_hito', args=[self.asignado.pk]))
+        self.assertEqual(r.status_code, 302)
+        self.hito.refresh_from_db()
+        self.assertEqual(self.hito.cumplido_por, self.jefe)
+
+    def test_personal_que_no_esta_a_cargo_sigue_creando_carpetas_y_subiendo(self):
+        self.client.force_login(self.otro_personal)
+        r = self.client.post(reverse('documentos:crear_carpeta', args=[self.asignado.pk]), {'nombre': 'Planos'})
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(self.asignado.carpetas.filter(nombre='Planos').exists())
+        self.assertTrue(puede_subir(self.otro_personal))
+        r = self.client.get(reverse('documentos:detalle_proyecto', args=[self.asignado.pk]))
+        self.assertContains(r, 'id="archivo-input"')

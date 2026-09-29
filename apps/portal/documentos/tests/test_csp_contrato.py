@@ -32,6 +32,7 @@ class ContratoCSPTests(TestCase):
             estado=EstadoProyecto.ACTIVO,
         )
         encargar(self.proyecto, self.cliente)
+        self.proyecto.encargados_bkb.add(self.personal)
         Carpeta.objects.create(proyecto=self.proyecto, nombre='Informes', creado_por=self.personal)
         Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Levantamiento')
 

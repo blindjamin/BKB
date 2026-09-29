@@ -26,6 +26,7 @@ from .permisos import (
     puede_subir,
     puede_borrar,
     puede_gestionar_hitos,
+    puede_editar_proyecto,
     estado_proyecto,
     EstadoFlujoProyecto,
     puede_responder_recepcion,
@@ -149,6 +150,8 @@ def editar_proyecto(request, pk):
         raise PermissionDenied("No tienes permisos para editar proyectos.")
 
     proyecto = get_object_or_404(Proyecto, pk=pk)
+    if not puede_editar_proyecto(request.user, proyecto):
+        raise PermissionDenied("Solo los encargados BKB del proyecto pueden editarlo.")  # E3
 
     if request.method == 'POST':
         form = ProyectoForm(request.POST, instance=proyecto)
@@ -205,6 +208,7 @@ def detalle_proyecto(request, pk):
         c.n_archivos = conteo.get(c.pk, 0)
 
     gestiona_hitos = puede_gestionar_hitos(request.user)
+    edita = puede_editar_proyecto(request.user, proyecto)  # E3
     hitos = list(proyecto.hitos.select_related('cumplido_por'))
     estado = estado_proyecto(proyecto)
     recibido = estado == EstadoFlujoProyecto.RECIBIDO
@@ -213,8 +217,9 @@ def detalle_proyecto(request, pk):
         'proyecto': proyecto,
         'hitos': hitos,
         'puede_gestionar_hitos': gestiona_hitos,
-        'puede_avanzar': gestiona_hitos and not all(h.cumplido for h in hitos),
-        'puede_retroceder': gestiona_hitos and any(h.cumplido for h in hitos) and not recibido,
+        'puede_editar': edita,
+        'puede_avanzar': edita and not all(h.cumplido for h in hitos),
+        'puede_retroceder': edita and any(h.cumplido for h in hitos) and not recibido,
         'estado': estado,
         'mostrar_aviso': not gestiona_hitos,  # el aviso es para el cliente (§12.1)
         'hito_actual': next((h for h in hitos if not h.cumplido), None),
@@ -273,10 +278,9 @@ def eliminar_carpeta(request, pk):
 @login_required
 @require_POST
 def avanzar_hito(request, pk):
-    if not puede_gestionar_hitos(request.user):
-        raise PermissionDenied("No tienes permisos para marcar hitos.")
-
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not puede_editar_proyecto(request.user, proyecto):
+        raise PermissionDenied("No tienes permisos para marcar hitos.")  # E3
     with transaction.atomic():
         Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
         hito = proyecto.hitos.filter(cumplido_en__isnull=True).order_by('orden').first()
@@ -290,10 +294,9 @@ def avanzar_hito(request, pk):
 @login_required
 @require_POST
 def retroceder_hito(request, pk):
-    if not puede_gestionar_hitos(request.user):
-        raise PermissionDenied("No tienes permisos para deshacer hitos.")
-
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not puede_editar_proyecto(request.user, proyecto):
+        raise PermissionDenied("No tienes permisos para deshacer hitos.")  # E3
     with transaction.atomic():
         Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
         if estado_proyecto(proyecto) == EstadoFlujoProyecto.RECIBIDO:

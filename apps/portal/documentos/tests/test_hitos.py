@@ -21,6 +21,7 @@ class HitosTests(TestCase):
         self.empresa = crear_empresa(nombre='Empresa Alfa', rut='11.111.111-1')
         self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Alfa', estado=EstadoProyecto.ACTIVO)
         encargar(self.proyecto, self.cliente)
+        self.proyecto.encargados_bkb.add(self.personal)
 
         self.hitos = [
             Hito.objects.create(proyecto=self.proyecto, orden=n, nombre=f'Hito {n}') for n in (1, 2, 3)
