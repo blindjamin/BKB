@@ -97,7 +97,8 @@ class VistasEmpresasYProyectosTests(TestCase):
                 post_resp = self.client.post(url_crear, {
                     'nombre': nombre_empresa,
                     'rut': f'55.555.55{i}-5',
-                    'encargado': self.cliente.pk,
+                    'encargado_nombre': 'Cliente Uno',
+                    'encargado_email': self.cliente.email,
                 })
                 self.assertEqual(post_resp.status_code, 302)
 
@@ -239,6 +240,7 @@ class VistasEmpresasYProyectosTests(TestCase):
         f_empresa = EmpresaForm(data={'nombre': '', 'rut': '123'})
         self.assertFalse(f_empresa.is_valid())
         self.assertIn('nombre', f_empresa.errors)
+        self.assertIn('encargado_email', f_empresa.errors)
 
         # ProyectoForm exige empresa, nombre y al menos un hito
         f_proyecto = ProyectoForm(data={'empresa': '', 'nombre': '', 'hitos_texto': ''})

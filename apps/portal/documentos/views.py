@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
 
+from .encargados import obtener_o_invitar
 from .forms import EmpresaForm, ProyectoForm
 from .permisos import (
     _es_personal,
@@ -85,6 +86,8 @@ def crear_empresa(request):
     if request.method == 'POST':
         form = EmpresaForm(request.POST)
         if form.is_valid():
+            form.instance.encargado, _ = obtener_o_invitar(
+                request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
             empresa = form.save()
             return redirect('documentos:detalle_empresa', pk=empresa.pk)
     else:

@@ -2,16 +2,30 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from accounts.models import Rol
+from .encargados import validar_encargado
 from .models import Empresa, EstadoProyecto, Hito, Proyecto
 from .permisos import EstadoFlujoProyecto, estado_proyecto
 
 Usuario = get_user_model()
 
 
-class EmpresaForm(forms.ModelForm):
+class CamposEncargado(forms.Form):
+    encargado_nombre = forms.CharField(max_length=200, label='Nombre del encargado')
+    encargado_email = forms.EmailField(
+        label='Correo del encargado',
+        help_text='Si es nuevo en el portal, le llegará una invitación para crear su contraseña.',
+    )
+
+    def clean_encargado_email(self):
+        email = self.cleaned_data['encargado_email'].lower()
+        validar_encargado(email)  # E5
+        return email
+
+
+class EmpresaForm(CamposEncargado, forms.ModelForm):
     class Meta:
         model = Empresa
-        fields = ['nombre', 'rut', 'encargado']  # puente: T2 lo quita
+        fields = ['nombre', 'rut']
         labels = {
             'nombre': 'Nombre de la empresa o cliente',
             'rut': 'RUT (opcional)',
