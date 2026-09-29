@@ -228,7 +228,7 @@ a ingeniería. Asunto: *"Proyecto {nombre} finalizado y aprobado por {cliente}"*
 - [x] El cliente no ve los borradores.
 
 **Verificación:** `test`, `makemigrations --check` (`test_modificaciones.py`).
-**Archivos:** `documentos/models.py`, migración `0007`, `documentos/permisos.py`, `documentos/admin.py`, pruebas.
+**Archivos:** `documentos/models.py`, migración `0006`, `documentos/permisos.py`, `documentos/admin.py`, pruebas.
 
 ### Tarea 16: Crear una modificación y adjuntar archivos
 **Descripción:** el botón "Añadir modificación" (solo con `puede_editar_proyecto`) abre un formulario con título y

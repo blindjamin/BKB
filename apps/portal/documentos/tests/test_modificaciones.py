@@ -270,6 +270,12 @@ class ResponderTests(ModificacionBase):
         r = self.anonimo.get(reverse('documentos:descargar_adjunto_enlace', args=[token, otro.pk]))
         self.assertEqual(r.status_code, 404)
 
+    def test_descarga_por_enlace_solo_acepta_get(self):  # M3
+        a = self.adjunto(self.m)
+        token = firmar_enlace(self.m, self.cliente)
+        r = self.anonimo.post(reverse('documentos:descargar_adjunto_enlace', args=[token, a.pk]))
+        self.assertEqual(r.status_code, 405)
+
 
 class PanelYDescargaTests(ModificacionBase):
     def panel(self, usuario):

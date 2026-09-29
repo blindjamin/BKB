@@ -125,6 +125,9 @@ class Modificacion(models.Model):  # M1, M9: sin límite por proyecto
     def __str__(self):
         return f'{self.proyecto.nombre} - {self.titulo}'
 
+    def adjuntos_disponibles(self):
+        return self.adjuntos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True)
+
 
 class Archivo(models.Model):
     """Un archivo del Space. Nunca se borra de verdad: se marca con `eliminado_en`."""

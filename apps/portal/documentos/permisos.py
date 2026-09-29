@@ -150,7 +150,8 @@ def leer_enlace(token):
         mod_pk, usuario_pk = TimestampSigner(salt='modificacion').unsign(token, max_age=VIGENCIA_ENLACE).split(':')
     except (BadSignature, ValueError):
         raise Http404
-    m = Modificacion.objects.select_related('proyecto__empresa', 'proyecto__encargado', 'respondida_por')         .filter(pk=mod_pk, enviada_en__isnull=False).first()
+    m = Modificacion.objects.select_related(
+        'proyecto__empresa', 'proyecto__encargado', 'respondida_por').filter(pk=mod_pk, enviada_en__isnull=False).first()
     usuario = Usuario.objects.filter(pk=usuario_pk).first()
     if not m or not usuario or not puede_responder_cliente(usuario, m.proyecto):
         raise Http404

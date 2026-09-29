@@ -7,7 +7,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 from . import storage
-from .models import EstadoArchivo
 from .permisos import firmar_enlace
 
 logger = logging.getLogger(__name__)
@@ -68,7 +67,7 @@ def _enlaces(m, base):  # M3: un enlace por acción, firmado para el encargado
 
 def avisar_modificacion(m, base, recordatorio=False):  # M2, M6: `base` es https://host; el comando no tiene request
     proyecto = m.proyecto
-    adjuntos = list(m.adjuntos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True))
+    adjuntos = list(m.adjuntos_disponibles())
     archivos = []
     if not recordatorio and sum(a.tamano for a in adjuntos) <= LIMITE_ADJUNTOS:
         try:

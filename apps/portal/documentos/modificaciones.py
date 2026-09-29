@@ -4,18 +4,22 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponseBadRequest, HttpResponseNotAllowed
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from . import correos
 from .forms import ModificacionForm
-from .models import DescargaLog, EstadoArchivo, EstadoModificacion, Modificacion
+from .models import DescargaLog, EstadoModificacion, Modificacion
 from .permisos import leer_enlace, modificaciones_visibles, proyectos_visibles, puede_editar_proyecto
 from .storage import url_descarga
 from .subidas import EXTENSIONES_PERMITIDAS
 from .views import _get_client_ip, _preparar_archivo
+
+
+def _base(request):  # https://host, como PORTAL_URL en el comando
+    return request.build_absolute_uri('/').rstrip('/')
 
 
 @login_required
@@ -35,7 +39,7 @@ def crear_modificacion(request, pk):
 def detalle_modificacion(request, pk):
     m = get_object_or_404(modificaciones_visibles(request.user).select_related(
         'proyecto__encargado', 'proyecto__empresa', 'respondida_por'), pk=pk)
-    adjuntos = m.adjuntos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True).select_related('subido_por')
+    adjuntos = m.adjuntos_disponibles().select_related('subido_por', 'modificacion')
     return render(request, 'modificacion_detalle.html', {
         'm': m,
         'adjuntos': [_preparar_archivo(request.user, a) for a in adjuntos],
@@ -59,8 +63,7 @@ def enviar_modificacion(request, pk):
         messages.error(request, 'La modificación ya fue enviada.')
         return redirect('documentos:detalle_modificacion', pk=m.pk)
     m.refresh_from_db()
-    base = request.build_absolute_uri('/').rstrip('/')
-    correos._avisar_si_falla(request, correos.avisar_modificacion(m, base), 'la modificación')  # V6
+    correos._avisar_si_falla(request, correos.avisar_modificacion(m, _base(request)), 'la modificación')  # V6
     messages.success(request, 'Modificación enviada al cliente.')
     return redirect('documentos:detalle_modificacion', pk=m.pk)
 
@@ -72,7 +75,7 @@ def responder_modificacion(request, token):
     if m.estado != EstadoModificacion.PENDIENTE:
         return render(request, 'modificacion_respondida.html', {'m': m})  # M4
     ctx = {'m': m, 'usuario': usuario, 'token': token, 'accion': request.GET.get('accion'),
-           'adjuntos': m.adjuntos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True)}
+           'adjuntos': m.adjuntos_disponibles()}
     if request.method == 'GET':  # M3: abrir el enlace nunca responde
         return render(request, 'modificacion_responder.html', ctx)
     respuesta = request.POST.get('respuesta')
@@ -90,18 +93,16 @@ def responder_modificacion(request, token):
         motivo_rechazo=motivo if rechaza else '', ip=_get_client_ip(request))
     if hechas:
         m.refresh_from_db()
-        base = request.build_absolute_uri('/').rstrip('/')
-        correos._avisar_si_falla(request, correos.avisar_modificacion_respondida(m, base), 'aviso a ingeniería')  # T19
+        correos._avisar_si_falla(request, correos.avisar_modificacion_respondida(m, _base(request)), 'aviso a ingeniería')  # T19
         messages.success(request, 'Registramos tu respuesta.')
     return redirect(request.path)  # PRG: el GET muestra "ya respondida"
 
 
+@require_GET
 def descargar_adjunto_enlace(request, token, archivo_pk):
     """M8: los correos grandes y los recordatorios llevan enlaces; el destinatario puede no tener sesión."""
-    if request.method != 'GET':
-        return HttpResponseNotAllowed(['GET'])
     m, usuario = leer_enlace(token)
     archivo = get_object_or_404(
-        m.adjuntos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True), pk=archivo_pk)
+        m.adjuntos_disponibles(), pk=archivo_pk)
     DescargaLog.objects.create(usuario=usuario, archivo=archivo, ip=_get_client_ip(request))
     return redirect(url_descarga(archivo.clave_space, archivo.nombre_original))
