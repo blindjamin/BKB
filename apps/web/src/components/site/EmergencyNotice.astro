@@ -111,9 +111,9 @@ import { SITE } from '../../config/site';
 
   /* ---------- Tema claro ---------- */
   :global(html[data-theme="light"]) .en-card {
-    background: linear-gradient(160deg, rgba(255, 253, 251, 0.98), rgba(255, 248, 242, 0.98));
-    border-color: #EADFD6;
-    box-shadow: 0 16px 36px -16px rgba(120, 72, 40, 0.22);
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    box-shadow: 0 16px 36px -16px rgba(15, 23, 42, 0.25);
   }
   :global(html[data-theme="light"]) .en-stripe { background: linear-gradient(90deg, rgba(250, 90, 54, 0.45), rgba(250, 90, 54, 0.1)); }
   :global(html[data-theme="light"]) .en-icon {
@@ -127,7 +127,7 @@ import { SITE } from '../../config/site';
   :global(html[data-theme="light"]) .en-title { color: var(--text-main); }
   :global(html[data-theme="light"]) .en-muted { color: var(--text-muted); }
   :global(html[data-theme="light"]) .en-close { color: var(--text-muted); }
-  :global(html[data-theme="light"]) .en-close:hover { color: var(--text-main); background: rgba(26, 21, 19, 0.05); }
+  :global(html[data-theme="light"]) .en-close:hover { color: var(--text-main); background: rgba(15, 23, 42, 0.05); }
   :global(html[data-theme="light"]) .en-call {
     color: var(--bkb-salmon-700);
     background: rgba(250, 90, 54, 0.08);

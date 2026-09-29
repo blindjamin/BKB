@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.contrib.auth.views import LoginView, LogoutView, PasswordResetDoneView
 
 from accounts.views import OlvideContrasenaView
+from documentos.cotizacion import cotizar
 from gestion.views import CrearContrasenaView
 
 def health_check(request):
@@ -28,4 +29,5 @@ urlpatterns = [
     ),
     path('admin/', admin.site.urls),
     path('health/', health_check, name='health_check'),
+    path('cotizar/', cotizar, name='cotizar'),
 ]

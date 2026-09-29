@@ -48,9 +48,10 @@
     --contenedor: 1120px;
 }
 
-/* Contraste aprobado solo para el portal (docs/09 §9, decisión 3) */
-[data-theme="light"] {
-    --text-muted: #72645A;
+/* Tema claro grafito y naranjo (tokens/themes.css). El encabezado y el pie siempre van en grafito
+   (data-theme="dark" en base.html), con una línea naranja en el tema claro. */
+[data-theme="light"] .encabezado {
+    border-bottom: 3px solid var(--bkb-salmon-500);
 }
 
 body {
@@ -104,23 +105,6 @@ header {
     justify-content: center;
 }
 
-.btn-link {
-    background: none;
-    border: none;
-    color: var(--bkb-salmon-700);
-    cursor: pointer;
-    font-weight: bold;
-    padding: 0.5rem;
-}
-.btn-link:hover {
-    color: var(--bkb-salmon-800);
-}
-[data-theme="dark"] .btn-link {
-    color: var(--bkb-salmon-500);
-}
-[data-theme="dark"] .btn-link:hover {
-    color: var(--bkb-salmon-300);
-}
 
 h1, h2, h3 {
     font-family: var(--bkb-font-display);
@@ -540,18 +524,6 @@ main {
     display: inline;
 }
 
-.btn-eliminar {
-    font-size: 0.75rem;
-    color: var(--bkb-danger, #dc3545);
-    font-weight: bold;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-}
-.btn-eliminar:hover {
-    text-decoration: underline;
-}
 
 /* Jerarquía v1.3: Vistas de empresas y formularios */
 .view-header {
@@ -1063,6 +1035,7 @@ fieldset.form-group-fieldset legend.form-label {
     justify-content: center;
     gap: var(--space-2) var(--space-4);
     padding: var(--space-6) var(--space-4);
+    background-color: var(--card-bg);
     border-top: 1px solid var(--card-border);
     color: var(--text-muted);
     font-size: var(--bkb-text-body-sm);
@@ -1102,7 +1075,7 @@ fieldset.form-group-fieldset legend.form-label {
 
 /* Panel de marca institucional (escritorio >= 900px) */
 .login-brand-panel {
-    background-color: var(--bkb-night-900);
+    background-color: var(--bkb-night-800); /* grafito, igual que el encabezado */
     color: #F8FAFC;
     padding: var(--space-8) var(--space-6);
     display: flex;
@@ -1385,12 +1358,6 @@ fieldset.form-group-fieldset legend.form-label {
 
 .login-forgot-link {
     font-size: var(--bkb-text-body-base);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    font-weight: 500;
-    color: var(--accent-text);
-    padding: var(--space-2);
-    display: inline-block;
 }
 
 /* Soporte en tarjeta para vista móvil */
@@ -1659,13 +1626,6 @@ fieldset.form-group-fieldset legend.form-label {
     text-align: right;
 }
 
-.usuarios-col-acciones .btn-link {
-    font-size: var(--bkb-text-body-base, 0.9375rem);
-    font-weight: 600;
-    color: var(--accent-text);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
 
 /* Tarjetas móviles (< 768px) */
 .usuarios-cards {
@@ -1725,13 +1685,6 @@ fieldset.form-group-fieldset legend.form-label {
     gap: var(--space-2, 8px);
 }
 
-.usuarios-card-action .btn-link {
-    font-size: var(--bkb-text-body-base, 0.9375rem);
-    font-weight: 600;
-    color: var(--accent-text);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
 
 /* Reglas responsivas de alternancia tabla / tarjetas */
 @media (max-width: 767.98px) {
@@ -2153,14 +2106,6 @@ fieldset.form-group-fieldset legend.form-label {
     box-sizing: border-box;
 }
 
-.btn-eliminar {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    min-height: 44px;
-    font-size: var(--bkb-text-body-sm);
-    color: var(--bkb-danger);
-}
 
 @media (min-width: 768px) {
     .archivo-fila {
@@ -2495,4 +2440,50 @@ h1, h2, h3,
     .avance-fechas {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+/* Botón de texto: volver, editar, salir, eliminar… Todas las acciones secundarias usan esta pastilla
+   en vez de texto subrayado. */
+a.btn-volver,
+.btn-link,
+.btn-eliminar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    box-sizing: border-box;
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-pill);
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+a.btn-volver:hover,
+.btn-link:hover {
+    border-color: var(--bkb-salmon-500);
+    color: var(--accent-text);
+    text-decoration: none;
+}
+
+.btn-eliminar {
+    color: var(--bkb-danger);
+}
+
+.btn-eliminar:hover {
+    border-color: var(--bkb-danger);
+    text-decoration: none;
+}
+
+/* Correos del encargado: color de acento en vez del azul del navegador */
+a[href^="mailto:"] {
+    color: var(--accent-text);
+    text-underline-offset: 3px;
 }

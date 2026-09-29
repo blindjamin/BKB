@@ -77,23 +77,15 @@ const headerClasses = mode === 'reveal'
     --pill-bg: rgba(255, 255, 255, 0.1);
     --pill-border: rgba(255, 255, 255, 0.35);
   }
-  /* Tema claro con fondo claro -> texto oscuro.
-     Llevan #site-header para ganarle en especificidad a la regla de arriba. */
-  :global(html[data-theme="light"]) #site-header.site-header-solid,
-  :global(html[data-theme="light"]) #site-header.site-header-reveal.is-scrolled {
-    --hdr-text: var(--text-main);
-    --hdr-hover: var(--bkb-salmon-700);
-    --hdr-active: var(--bkb-salmon-700);
-    --pill-bg: rgba(26, 21, 19, 0.05);
-    --pill-border: rgba(26, 21, 19, 0.25);
-  }
+  /* En los dos temas el header es oscuro y con texto claro. En el tema claro va en grafito
+     con una línea naranja, igual que el portal. */
   :global(html[data-theme="dark"]) #site-header.site-header-solid {
     background-color: rgba(30, 30, 33, 0.92);
     border-color: rgba(255, 255, 255, 0.1);
   }
   :global(html[data-theme="light"]) #site-header.site-header-solid {
-    background-color: rgba(253, 241, 232, 0.97);
-    border-color: #E8DCD2;
+    background-color: rgba(15, 23, 42, 0.96);
+    border-bottom: 3px solid var(--bkb-salmon-500);
   }
 
   .nav-link {
@@ -127,9 +119,8 @@ const headerClasses = mode === 'reveal'
   }
 
   :global(html[data-theme="light"]) .site-header-reveal.is-scrolled {
-    background: rgba(253, 241, 232, 0.94);
-    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
-    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+    background: rgba(15, 23, 42, 0.94);
+    border-bottom: 3px solid var(--bkb-salmon-500);
   }
 
   /* "Soy cliente": pulso salmón tipo "pincha aquí" */

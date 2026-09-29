@@ -8,13 +8,10 @@
     <div class="proyecto-cabecera">
         <div>
             <nav class="breadcrumbs">
-                <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}">{{ proyecto.empresa.nombre }}</a>
-                &rsaquo;
                 {% if carpeta_activa %}
-                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}">{{ proyecto.nombre }}</a>
-                    &rsaquo; <span>{{ carpeta_activa.nombre }}</span>
+                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-volver">&larr; {{ proyecto.nombre }}</a>
                 {% else %}
-                    <span>{{ proyecto.nombre }}</span>
+                    <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}" class="btn-volver">&larr; {{ proyecto.empresa.nombre }}</a>
                 {% endif %}
             </nav>
             <h1 class="archivos-title">
@@ -94,7 +91,6 @@
     <section class="carpetas">
         {% if carpeta_activa %}
             <div class="carpeta-activa-acciones">
-                <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-link">&larr; Volver a {{ proyecto.nombre }}</a>
                 {% if puede_gestionar %}
                 <form action="{% url 'documentos:eliminar_carpeta' carpeta_activa.pk %}" method="post" class="form-eliminar" data-confirmar="Los archivos de la carpeta volverán a la raíz del proyecto." data-confirmar-titulo="¿Eliminar la carpeta «{{ carpeta_activa.nombre }}»?" data-confirmar-accion="Eliminar carpeta">
                     {% csrf_token %}

@@ -166,6 +166,9 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '') or 'portal@empresa
 # Sitio público (landing); el login enlaza de vuelta a él.
 LANDING_URL = os.environ.get('LANDING_URL', '') or 'https://www.empresabkb.cl/'
 
+# Destino de las solicitudes del formulario "Cotizar obra" del landing.
+COTIZACION_CORREO = os.environ.get('COTIZACION_CORREO', '') or 'ingenieria@empresabkb.cl'
+
 # V1: copia fija de los correos del proyecto, separados por comas.
 AVISO_INGENIERIA_CORREOS = [c.strip() for c in (
     os.environ.get('AVISO_INGENIERIA_CORREOS', '') or 'ingenieria@empresabkb.cl,proyectos.ingenieria@empresabkb.cl'
