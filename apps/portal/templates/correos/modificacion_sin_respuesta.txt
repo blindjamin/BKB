@@ -1,0 +1,6 @@
+{% autoescape off %}La modificación «{{ m.titulo }}» del proyecto {{ proyecto.nombre }} de {{ proyecto.empresa.nombre }} sigue sin respuesta tras {{ m.correos_enviados }} correos a {{ proyecto.encargado.nombre|default:proyecto.encargado.email }}.
+
+No se enviarán más recordatorios. Conviene contactar al cliente.
+
+Ver proyecto: {{ url }}
+{% endautoescape %}

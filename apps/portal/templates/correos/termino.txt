@@ -1,0 +1,6 @@
+{% autoescape off %}El proyecto {{ proyecto.nombre }} de {{ proyecto.empresa.nombre }} quedó finalizado y aprobado por {{ cliente.nombre|default:cliente.email }} el {{ proyecto.finalizado_en|date:"d-m-Y H:i" }}.
+
+Los archivos del proyecto ya están disponibles en el portal.
+
+Ver archivos: {{ url }}
+{% endautoescape %}

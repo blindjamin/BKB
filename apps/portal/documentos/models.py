@@ -1,10 +1,7 @@
 import uuid
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import models
-
-from accounts.models import Rol
 
 
 def _uuid_pk():
@@ -15,12 +12,17 @@ class Empresa(models.Model):
     id = _uuid_pk()
     nombre = models.CharField(max_length=200)
     rut = models.CharField(max_length=12, blank=True)
+    encargado = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='empresas_a_cargo',
+                                  limit_choices_to={'rol': 'cliente'})  # E1, E5 en el admin
 
     class Meta:
         ordering = ['nombre']
 
     def __str__(self):
         return self.nombre
+
+
+HITOS_ESTANDAR = ['Compras', 'Armado', 'Cableado', 'Pruebas', 'Envío', 'Recepción', 'Revisión']  # A1
 
 
 class EstadoProyecto(models.TextChoices):
@@ -33,6 +35,14 @@ class Proyecto(models.Model):
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name='proyectos')
     nombre = models.CharField(max_length=200)
     estado = models.CharField(max_length=10, choices=EstadoProyecto.choices, default=EstadoProyecto.ACTIVO)
+    encargado = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='proyectos_a_cargo',
+                                  limit_choices_to={'rol': 'cliente'})  # E2
+    encargados_bkb = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='proyectos_bkb',
+                                            limit_choices_to={'rol__in': ['personal', 'jefe']},
+                                            verbose_name='encargados BKB')  # E3
+    fecha_inicio = models.DateField()  # A3
+    fecha_termino = models.DateField()
+    finalizado_en = models.DateTimeField(null=True, blank=True)  # A5: se llena al aceptar la Revisión
 
     class Meta:
         ordering = ['nombre']
@@ -40,35 +50,24 @@ class Proyecto(models.Model):
     def __str__(self):
         return f'{self.nombre} ({self.empresa})'
 
+    @property
+    def finalizado(self):
+        return self.finalizado_en is not None
 
-class Membresia(models.Model):
-    """Asigna un cliente a un proyecto. El personal no la necesita: ya ve todos los proyectos."""
+    def crear_hitos_estandar(self):  # A1
+        Hito.objects.bulk_create([
+            Hito(proyecto=self, orden=n, nombre=nombre, es_revision=n == len(HITOS_ESTANDAR))
+            for n, nombre in enumerate(HITOS_ESTANDAR, 1)])
 
-    id = _uuid_pk()
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='membresias')
-    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='membresias')
-
-    class Meta:
-        verbose_name = 'asignación'
-        verbose_name_plural = 'asignaciones de clientes'
-        # unique_together y no UniqueConstraint: solo así el inline del panel avisa del par repetido
-        # en vez de fallar con un error de base de datos.
-        unique_together = [('usuario', 'proyecto')]
-
-    def __str__(self):
-        return f'{self.usuario} → {self.proyecto}'
-
-    def clean(self):
-        super().clean()
-        if self.usuario_id and self.usuario.rol != Rol.CLIENTE:
-            raise ValidationError({
-                'usuario': f'{self.usuario} es de tipo {self.usuario.get_rol_display().lower()} y ya ve todos los proyectos. '
-                           'Solo se asignan usuarios de tipo cliente.'
-            })
-
-    def save(self, *args, **kwargs):
-        self.clean()  # también rechaza la asignación de personal fuera del panel
-        super().save(*args, **kwargs)
+    def revision_por_responder(self):
+        """A5: la Revisión, si todos los hitos anteriores están cumplidos y el proyecto no está finalizado."""
+        if self.finalizado:
+            return None
+        hitos = list(self.hitos.all())
+        revision = next((h for h in hitos if h.es_revision), None)
+        if revision and all(h.cumplido for h in hitos if not h.es_revision):
+            return revision
+        return None
 
 
 class EstadoArchivo(models.TextChoices):
@@ -95,6 +94,41 @@ class Carpeta(models.Model):
         return f'{self.proyecto.nombre} - {self.nombre}'
 
 
+class EstadoModificacion(models.TextChoices):
+    PENDIENTE = 'pendiente', 'Pendiente'
+    APROBADA = 'aprobada', 'Aprobada'
+    RECHAZADA = 'rechazada', 'Rechazada'
+
+
+class Modificacion(models.Model):  # M1, M9: sin límite por proyecto
+    id = _uuid_pk()
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='modificaciones')
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    creada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='modificaciones_creadas')
+    creada_en = models.DateTimeField(auto_now_add=True)
+    enviada_en = models.DateTimeField(null=True, blank=True)  # M1: null = borrador
+    estado = models.CharField(max_length=10, choices=EstadoModificacion.choices, default=EstadoModificacion.PENDIENTE)
+    respondida_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+                                       related_name='modificaciones_respondidas')
+    respondida_en = models.DateTimeField(null=True, blank=True)
+    motivo_rechazo = models.TextField(blank=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    correos_enviados = models.PositiveSmallIntegerField(default=0)  # M6
+    ultimo_correo_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'modificación'
+        verbose_name_plural = 'modificaciones'
+        ordering = ['-creada_en']
+
+    def __str__(self):
+        return f'{self.proyecto.nombre} - {self.titulo}'
+
+    def adjuntos_disponibles(self):
+        return self.adjuntos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True)
+
+
 class Archivo(models.Model):
     """Un archivo del Space. Nunca se borra de verdad: se marca con `eliminado_en`."""
 
@@ -112,6 +146,7 @@ class Archivo(models.Model):
     eliminado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='archivos_eliminados'
     )
+    modificacion = models.ForeignKey(Modificacion, on_delete=models.SET_NULL, null=True, blank=True, related_name='adjuntos')  # M1
 
     class Meta:
         ordering = ['-subido_en']
@@ -144,12 +179,15 @@ class Hito(models.Model):
     cumplido_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='hitos_cumplidos'
     )
+    es_revision = models.BooleanField(default=False)  # A2: una por proyecto, siempre la última
 
     class Meta:
         verbose_name = 'hito'
         verbose_name_plural = 'hitos'
         ordering = ['orden']
         unique_together = [('proyecto', 'orden')]
+        constraints = [models.UniqueConstraint(
+            fields=['proyecto'], condition=models.Q(es_revision=True), name='una_revision_por_proyecto')]
 
     @property
     def cumplido(self):
@@ -159,22 +197,17 @@ class Hito(models.Model):
         return f'{self.proyecto.nombre} - {self.orden}. {self.nombre}'
 
 
-class RespuestaRecepcion(models.Model):
+class RechazoRevision(models.Model):  # A5: los rechazos no se borran
     id = _uuid_pk()
-    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='respuestas_recepcion')
-    usuario = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='respuestas_recepcion'
-    )
-    nombre_revisor = models.CharField(max_length=200)
-    conforme = models.BooleanField()
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='rechazos_revision')
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='rechazos_revision')
+    motivo = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
-    ip = models.GenericIPAddressField(null=True, blank=True)
 
     class Meta:
-        verbose_name = 'respuesta de recepción'
-        verbose_name_plural = 'respuestas de recepción'
+        verbose_name = 'rechazo de la Revisión'
+        verbose_name_plural = 'rechazos de la Revisión'
         ordering = ['-fecha']
 
     def __str__(self):
-        resultado = 'Conforme' if self.conforme else 'No conforme'
-        return f'{self.proyecto.nombre} - {resultado} ({self.nombre_revisor})'
+        return f'{self.proyecto.nombre} - rechazo ({self.usuario})'

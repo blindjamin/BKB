@@ -10,7 +10,7 @@ import { SITE } from '../../config/site';
   hidden
 >
   <div class="en-card relative overflow-hidden rounded-[18px] border">
-    <!-- Franja superior de acento -->
+    <!-- Franja superior de acento: se acorta como cuenta regresiva y al terminar cierra el aviso -->
     <div class="en-stripe absolute inset-x-0 top-0 h-[3px]" aria-hidden="true"></div>
 
     <button
@@ -71,6 +71,15 @@ import { SITE } from '../../config/site';
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+  /* Cuenta regresiva de 15 s; se pausa mientras el mouse o el foco están en el aviso */
+  .emergency-notice.is-open .en-stripe {
+    transform-origin: left;
+    animation: en-cuenta 15s linear forwards;
+  }
+  .emergency-notice:hover .en-stripe,
+  .emergency-notice:focus-within .en-stripe {
+    animation-play-state: paused;
+  }
 
   /* ---------- Tema oscuro (por defecto) ----------
      Versión suave: tintes en vez de colores sólidos, sin rojo intenso y con poco movimiento. */
@@ -111,9 +120,9 @@ import { SITE } from '../../config/site';
 
   /* ---------- Tema claro ---------- */
   :global(html[data-theme="light"]) .en-card {
-    background: linear-gradient(160deg, rgba(255, 253, 251, 0.98), rgba(255, 248, 242, 0.98));
-    border-color: #EADFD6;
-    box-shadow: 0 16px 36px -16px rgba(120, 72, 40, 0.22);
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    box-shadow: 0 16px 36px -16px rgba(15, 23, 42, 0.25);
   }
   :global(html[data-theme="light"]) .en-stripe { background: linear-gradient(90deg, rgba(250, 90, 54, 0.45), rgba(250, 90, 54, 0.1)); }
   :global(html[data-theme="light"]) .en-icon {
@@ -127,7 +136,7 @@ import { SITE } from '../../config/site';
   :global(html[data-theme="light"]) .en-title { color: var(--text-main); }
   :global(html[data-theme="light"]) .en-muted { color: var(--text-muted); }
   :global(html[data-theme="light"]) .en-close { color: var(--text-muted); }
-  :global(html[data-theme="light"]) .en-close:hover { color: var(--text-main); background: rgba(26, 21, 19, 0.05); }
+  :global(html[data-theme="light"]) .en-close:hover { color: var(--text-main); background: rgba(15, 23, 42, 0.05); }
   :global(html[data-theme="light"]) .en-call {
     color: var(--bkb-salmon-700);
     background: rgba(250, 90, 54, 0.08);
@@ -139,6 +148,9 @@ import { SITE } from '../../config/site';
     0%   { transform: scale(1);    opacity: 0.6; }
     70%  { transform: scale(1.35); opacity: 0; }
     100% { transform: scale(1.35); opacity: 0; }
+  }
+  @keyframes en-cuenta {
+    to { transform: scaleX(0); }
   }
   @keyframes en-blink {
     0%, 100% { opacity: 1; }
@@ -161,7 +173,8 @@ import { SITE } from '../../config/site';
 </style>
 
 <script>
-  // Aparece al pasar el hero (al llegar a "Qué hacemos"); si se cierra, no vuelve durante la sesión.
+  // Aparece al pasar el hero (al llegar a "Qué hacemos"); se cierra solo al terminar la cuenta
+  // regresiva de la franja o con la X, y no vuelve durante la sesión.
   const KEY = 'bkb-emergency-closed';
 
   function initEmergencyNotice() {
@@ -182,11 +195,13 @@ import { SITE } from '../../config/site';
     window.addEventListener('scroll', show, { passive: true });
     show();
 
-    notice.querySelector('[data-emergency-close]')?.addEventListener('click', () => {
+    const close = () => {
       notice.classList.remove('is-open');
       try { sessionStorage.setItem(KEY, '1'); } catch {}
       setTimeout(() => { notice.hidden = true; }, 400);
-    });
+    };
+    notice.querySelector('[data-emergency-close]')?.addEventListener('click', close);
+    notice.querySelector('.en-stripe')?.addEventListener('animationend', close);
   }
 
   if (document.readyState === 'loading') {

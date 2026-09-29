@@ -1,5 +1,4 @@
 ---
-import { quoteOptions } from '../../data/landing';
 import { SITE, QUOTE_ENDPOINT } from '../../config/site';
 import { getPath } from '../../utils/paths';
 import SectionHeading from '../ui/SectionHeading.astro';
@@ -52,12 +51,7 @@ const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
           <div class="flex flex-col gap-1.5">
             <label for="service" class="text-[13px] font-semibold text-main">Servicio requerido</label>
-            <select id="service" name="service" required class="h-[46px] px-4 rounded-input bg-input border border-input-border text-main text-[14.5px] focus:outline-none focus:border-salmon-500 focus:ring-1 focus:ring-salmon-500 transition-colors appearance-none cursor-pointer">
-              <option value="" disabled selected>Selecciona una opción...</option>
-              {quoteOptions.map(opt => (
-                <option value={opt}>{opt}</option>
-              ))}
-            </select>
+            <input type="text" id="service" name="service" required maxlength="200" placeholder="Ej. montaje de tablero, automatización, trámite TE1..." class="h-[46px] px-4 rounded-input bg-input border border-input-border text-main text-[14.5px] focus:outline-none focus:border-salmon-500 focus:ring-1 focus:ring-salmon-500 transition-colors" />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -86,6 +80,17 @@ const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
             Enviar Solicitud &rarr;
           </button>
           
+          <!-- Resultado del envío: el portal devuelve ?cotizacion=enviada|error|limite -->
+          <p data-cotizacion="enviada" hidden role="status" class="mt-2 text-[13.5px] text-main bg-success/10 border border-success/30 p-3 rounded-md text-center font-medium">
+            Recibimos tu solicitud. Nuestro equipo de ingeniería te contactará a la brevedad.
+          </p>
+          <p data-cotizacion="error" hidden role="alert" class="mt-2 text-[13.5px] text-main bg-salmon-500/10 border border-salmon-500/30 p-3 rounded-md text-center font-medium">
+            No pudimos enviar tu solicitud. Revisa los datos o escríbenos a <a href={`mailto:${SITE.email}`} class="underline hover:text-salmon-500">{SITE.email}</a>.
+          </p>
+          <p data-cotizacion="limite" hidden role="alert" class="mt-2 text-[13.5px] text-main bg-salmon-500/10 border border-salmon-500/30 p-3 rounded-md text-center font-medium">
+            Ya recibimos varias solicitudes desde tu conexión. Intenta más tarde o llámanos al <a href={SITE.phoneHref} class="underline hover:text-salmon-500">{SITE.phoneDisplay}</a>.
+          </p>
+
           {!isEndpointAvailable && (
             <div class="mt-2 text-[12.5px] text-warning bg-warning/10 border border-warning/30 p-3 rounded-md text-center font-medium">
               Formulario en habilitación. Escríbenos a <a href={`mailto:${SITE.email}`} class="underline hover:text-salmon-500">{SITE.email}</a> o llama al <a href={SITE.phoneHref} class="underline hover:text-salmon-500">{SITE.phoneDisplay}</a>
@@ -155,6 +160,14 @@ const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 </section>
 
 <script>
+  // Muestra el resultado del formulario de cotización y limpia la URL
+  const estado = new URLSearchParams(location.search).get('cotizacion');
+  const aviso = estado && document.querySelector<HTMLElement>(`[data-cotizacion="${CSS.escape(estado)}"]`);
+  if (aviso) {
+    aviso.hidden = false;
+    history.replaceState(null, '', location.pathname + location.hash);
+  }
+
   // Carga el mapa de Google solo al hacer clic (privacidad: sin cookies de Google hasta que la persona lo pide)
   document.querySelectorAll<HTMLElement>('[data-map-box]').forEach((box) => {
     const btn = box.querySelector<HTMLButtonElement>('[data-map-load]');

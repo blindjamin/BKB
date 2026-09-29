@@ -3,7 +3,8 @@ from unittest.mock import patch
 from django.test import TestCase, Client
 from django.urls import reverse
 from accounts.models import Usuario, Rol
-from documentos.models import Empresa, Proyecto, Archivo, EstadoProyecto, EstadoArchivo, Membresia
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
+from documentos.models import Empresa, Proyecto, Archivo, EstadoProyecto, EstadoArchivo
 
 class SubidaTests(TestCase):
     def setUp(self):
@@ -12,11 +13,11 @@ class SubidaTests(TestCase):
         self.otro_personal = Usuario.objects.create_user('otro@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
         self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
         
-        self.empresa = Empresa.objects.create(nombre='Empresa A', rut='11.111.111-1')
-        self.proyecto = Proyecto.objects.create(
-            empresa=self.empresa, nombre='Proyecto Test', estado=EstadoProyecto.ACTIVO
+        self.empresa = crear_empresa(nombre='Empresa A', rut='11.111.111-1')
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Test', estado=EstadoProyecto.ACTIVO
         )
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        encargar(self.proyecto, self.cliente)
+        finalizar(self.proyecto)  # A8
         
         self.url_subir = reverse('documentos:iniciar_subida', args=[self.proyecto.pk])
 

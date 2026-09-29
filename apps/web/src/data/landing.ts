@@ -19,6 +19,11 @@ import faena1 from '../assets/landing/faena-1.jpg';
 import faena2 from '../assets/landing/faena-2.jpg';
 import faena3 from '../assets/landing/faena-3.jpg';
 import faenaHero from '../assets/landing/faena-hero.jpg';
+// Fotos reales de BKB (29-09-2026)
+import servicioIngenieria from '../assets/landing/servicio-ingenieria.jpg';
+import servicioPlc from '../assets/landing/servicio-plc.jpg';
+import servicioFabricacion from '../assets/landing/servicio-fabricacion.jpg';
+import servicioMontaje from '../assets/landing/servicio-montaje.jpg'; // la tarjeta vertical recorta el borde derecho (patente)
 
 export interface StatItem {
   target: number;
@@ -49,17 +54,16 @@ export interface ServicioItem {
   image: ImageMetadata;
   title: string;
   desc: string;
-  href?: string;
 }
 
 // Textos de los 4 primeros servicios: verificados (empresabkb.cl). Arriendo: dato entregado por el cliente.
-// TODO: fotos provisorias (faena), reemplazar por fotos de cada servicio
+// TODO: Arriendo sigue con foto provisoria (faena); falta una de los equipos de medición
 export const servicios: ServicioItem[] = [
-  { image: faena1, title: 'Ingeniería Eléctrica', desc: 'Desarrollo de ingenierías conceptual, básica y de detalle. Diseño y ejecución de proyectos eléctricos completos: canalización, alimentación, tableros y sistemas de control.' },
-  { image: faena2, title: 'Automatización PLC', desc: 'Programación y desarrollo de sistemas PLC con pruebas FAT/SAT e integración SCADA.' },
-  { image: faena3, title: 'Fabricación Propia', desc: 'Fabricación de Sistemas Kit: Bombeo, Filtrado, Lubricación y otros componentes especializados.' },
-  { image: faenaHero, title: 'Montaje y Soporte', desc: 'Montaje en terreno y puesta en marcha con soporte técnico post-entrega garantizado.' },
-  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo y/o servicios de medición y análisis eléctrico con equipos de alta gama, certificados y de marcas de prestigio como Fluke: mediciones de red, mallas a tierra, aislación, RIC 19, termografías y alineación láser.', href: '/arriendo' }
+  { image: servicioIngenieria, title: 'Ingeniería Eléctrica', desc: 'Desarrollo de ingenierías conceptual, básica y de detalle. Diseño y ejecución de proyectos eléctricos completos: canalización, alimentación, tableros y sistemas de control.' },
+  { image: servicioPlc, title: 'Automatización PLC', desc: 'Programación y desarrollo de sistemas PLC con pruebas FAT/SAT e integración SCADA.' },
+  { image: servicioFabricacion, title: 'Fabricación Propia', desc: 'Fabricación de Sistemas Kit: Bombeo, Filtrado, Lubricación y otros componentes especializados.' },
+  { image: servicioMontaje, title: 'Montaje y Soporte', desc: 'Montaje en terreno y puesta en marcha con soporte técnico post-entrega garantizado.' },
+  { image: faena2, title: 'Arriendo de Equipos', desc: 'Arriendo y/o servicios de medición y análisis eléctrico con equipos de alta gama, certificados y de marcas de prestigio como Fluke: mediciones de red, mallas a tierra, aislación, RIC 19, termografías y alineación láser.' }
 ];
 
 export interface PortfolioItem {
@@ -97,8 +101,6 @@ export const brands: BrandItem[] = [
   { img: ingenproyect, alt: 'IngenProyect' },
   { img: shs, alt: 'SHS' }
 ];
-
-export const quoteOptions: string[] = ['Montaje TDF', 'Automatización', 'Trámite TE1', 'Mantención'];
 
 export interface TestimonialItem {
   quote: string;

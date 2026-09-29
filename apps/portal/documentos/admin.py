@@ -1,31 +1,20 @@
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import Archivo, DescargaLog, Empresa, Hito, Membresia, Proyecto, RespuestaRecepcion
+from .models import Archivo, DescargaLog, Empresa, Hito, Modificacion, Proyecto, RechazoRevision
 
 
 @admin.register(Empresa)
 class EmpresaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'rut')
+    list_display = ('nombre', 'rut', 'encargado')
     search_fields = ('nombre', 'rut')
-
-
-class MembresiaInline(admin.TabularInline):
-    model = Membresia
-    extra = 1
-    fields = ('usuario', 'empresa')
-    readonly_fields = ('empresa',)
-
-    @admin.display(description='empresa del proyecto')
-    def empresa(self, obj):
-        return obj.proyecto.empresa if obj and obj.proyecto_id else '-'
 
 
 class HitoInline(admin.TabularInline):
     model = Hito
     extra = 0
-    fields = ('orden', 'nombre', 'cumplido_en', 'cumplido_por')
-    readonly_fields = ('orden', 'nombre', 'cumplido_en', 'cumplido_por')
+    fields = ('orden', 'nombre', 'es_revision', 'cumplido_en', 'cumplido_por')
+    readonly_fields = ('orden', 'nombre', 'es_revision', 'cumplido_en', 'cumplido_por')
 
     def has_view_permission(self, request, obj=None):
         return obj is not None
@@ -42,11 +31,16 @@ class HitoInline(admin.TabularInline):
 
 @admin.register(Proyecto)
 class ProyectoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'empresa', 'estado')
+    list_display = ('nombre', 'empresa', 'estado', 'encargado')
     list_filter = ('estado', 'empresa')
     list_select_related = ('empresa',)
     search_fields = ('nombre', 'empresa__nombre')
-    inlines = [MembresiaInline, HitoInline]
+    inlines = [HitoInline]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not change:
+            obj.crear_hitos_estandar()  # A1
 
 
 @admin.register(Archivo)
@@ -87,14 +81,14 @@ class DescargaLogAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(RespuestaRecepcion)
-class RespuestaRecepcionAdmin(admin.ModelAdmin):
+@admin.register(RechazoRevision)
+class RechazoRevisionAdmin(admin.ModelAdmin):
     """Registro de solo lectura para el superusuario."""
 
-    list_display = ('fecha', 'proyecto', 'usuario', 'nombre_revisor', 'conforme', 'ip')
-    list_filter = ('conforme', 'proyecto')
+    list_display = ('fecha', 'proyecto', 'usuario', 'motivo')
+    list_filter = ('proyecto',)
     list_select_related = ('proyecto', 'usuario')
-    search_fields = ('nombre_revisor', 'usuario__email', 'proyecto__nombre')
+    search_fields = ('motivo', 'usuario__email', 'proyecto__nombre')
 
     def has_add_permission(self, request):
         return False
@@ -104,3 +98,11 @@ class RespuestaRecepcionAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Modificacion)
+class ModificacionAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'proyecto', 'estado', 'enviada_en', 'respondida_por')
+    list_filter = ('estado',)
+    readonly_fields = ('enviada_en', 'estado', 'respondida_por', 'respondida_en', 'motivo_rechazo', 'ip',
+                       'correos_enviados', 'ultimo_correo_en')  # M7: la respuesta es definitiva

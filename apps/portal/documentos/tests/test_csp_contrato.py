@@ -8,7 +8,9 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from accounts.models import Rol, Usuario
-from documentos.models import Archivo, Carpeta, Empresa, Hito, RespuestaRecepcion, EstadoArchivo, EstadoProyecto, Membresia, Proyecto
+from documentos.permisos import firmar_enlace
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
+from documentos.models import Modificacion, Archivo, Carpeta, Empresa, Hito, EstadoArchivo, EstadoProyecto, Proyecto
 
 
 class ContratoCSPTests(TestCase):
@@ -26,13 +28,12 @@ class ContratoCSPTests(TestCase):
         self.personal = Usuario.objects.create_user('personal@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
         self.cliente = Usuario.objects.create_user('cliente@empresa.cl', 'Clave123!', rol=Rol.CLIENTE)
 
-        self.empresa = Empresa.objects.create(nombre='Empresa Test', rut='12.345.678-9')
-        self.proyecto = Proyecto.objects.create(
-            empresa=self.empresa,
-            nombre='Proyecto Alpha',
+        self.empresa = crear_empresa(nombre='Empresa Test', rut='12.345.678-9')
+        self.proyecto = crear_proyecto(self.empresa, nombre='Proyecto Alpha',
             estado=EstadoProyecto.ACTIVO,
         )
-        Membresia.objects.create(usuario=self.cliente, proyecto=self.proyecto)
+        encargar(self.proyecto, self.cliente)
+        self.proyecto.encargados_bkb.add(self.personal)
         Carpeta.objects.create(proyecto=self.proyecto, nombre='Informes', creado_por=self.personal)
         Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Levantamiento')
 
@@ -141,14 +142,16 @@ class ContratoCSPTests(TestCase):
         self.assertNotIn('aviso.js', html)
 
     def test_detalle_archivos_cliente_cumple_contrato(self):
+        finalizar(self.proyecto)  # A8: sin finalizar el cliente ve avance.html
         self.client.force_login(self.cliente)
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
         self._verificar_contrato_csp_y_html(response)
-        self.assertIn('aviso.js', response.content.decode('utf-8'))
+        self.assertNotIn('aviso.js', response.content.decode('utf-8'))
 
     def test_vista_de_carpeta_cumple_contrato(self):
         carpeta = self.proyecto.carpetas.get()
         url = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])
+        finalizar(self.proyecto)  # A8
         for usuario in (self.personal, self.cliente):
             with self.subTest(usuario=usuario.email):
                 self.client.force_login(usuario)
@@ -157,22 +160,23 @@ class ContratoCSPTests(TestCase):
     def _marcar_hitos(self):
         self.proyecto.hitos.update(cumplido_en=timezone.now(), cumplido_por=self.personal)
 
-    def test_detalle_archivos_cliente_esperando_recepcion_cumple_contrato(self):
+    def test_detalle_archivos_cliente_finalizado_cumple_contrato(self):
         self._marcar_hitos()
+        finalizar(self.proyecto)
         self.client.force_login(self.cliente)
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
         self._verificar_contrato_csp_y_html(response)
-        self.assertIn('data-bloqueante', response.content.decode('utf-8'))
+        self.assertIn('Finalizado', response.content.decode('utf-8'))
 
-    def test_detalle_archivos_cliente_recibido_cumple_contrato(self):
-        self._marcar_hitos()
-        RespuestaRecepcion.objects.create(
-            proyecto=self.proyecto, usuario=self.cliente, nombre_revisor='Revisor', conforme=True
-        )
+    def test_avance_del_cliente_con_la_revision_cumple_contrato(self):  # A7
+        self.proyecto.hitos.all().delete()
+        self.proyecto.crear_hitos_estandar()
+        self.proyecto.hitos.filter(es_revision=False).update(cumplido_en=timezone.now(), cumplido_por=self.personal)
         self.client.force_login(self.cliente)
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+        self.assertTemplateUsed(response, 'avance.html')
+        self.assertContains(response, 'name="motivo"')
         self._verificar_contrato_csp_y_html(response)
-        self.assertIn('Recepción confirmada', response.content.decode('utf-8'))
 
     def test_gestion_de_usuarios_cumple_contrato(self):
         jefe = Usuario.objects.create_user('jefe@bkb.cl', 'Clave123!', rol=Rol.JEFE)
@@ -211,8 +215,28 @@ class ContratoCSPTests(TestCase):
         resp_err_empresa = self.client.post(reverse('documentos:crear_empresa'), {'nombre': '', 'rut': ''})
         self._verificar_contrato_csp_y_html(resp_err_empresa)
 
-        resp_err_proyecto = self.client.post(reverse('documentos:crear_proyecto'), {'nombre': '', 'hitos_texto': ''})
+        resp_err_proyecto = self.client.post(reverse('documentos:crear_proyecto'), {'nombre': '', 'fecha_inicio': ''})
         self._verificar_contrato_csp_y_html(resp_err_proyecto)
+
+    def test_paginas_de_modificaciones_cumplen_contrato(self):  # T16, T18, T20
+        m = Modificacion.objects.create(proyecto=self.proyecto, titulo='Cambio', descripcion='Detalle uno',
+                                        creada_por=self.personal)
+        self.client.force_login(self.personal)
+        for nombre, args in [('crear_modificacion', [self.proyecto.pk]), ('detalle_modificacion', [m.pk])]:
+            with self.subTest(pagina=nombre):
+                self._verificar_contrato_csp_y_html(self.client.get(reverse(f'documentos:{nombre}', args=args)))
+        m.enviada_en = timezone.now()
+        m.save()
+        self._verificar_contrato_csp_y_html(
+            self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])))
+        self.client.logout()
+        url = reverse('documentos:responder_modificacion', args=[firmar_enlace(m, self.cliente)])
+        self._verificar_contrato_csp_y_html(self.client.get(url))  # sin sesión
+        self.client.post(url, {'respuesta': 'aprobar'})
+        self._verificar_contrato_csp_y_html(self.client.get(url))  # ya respondida
+        self.client.force_login(self.cliente)
+        self._verificar_contrato_csp_y_html(
+            self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])))  # avance con modificación
 
 
 class BaseComunTests(TestCase):
@@ -227,7 +251,7 @@ class BaseComunTests(TestCase):
     def test_salto_al_contenido_y_telefonos_de_ayuda(self):
         self.client.force_login(self.personal)
         response = self.client.get(self.inicio)
-        for texto in ('href="#contenido"', 'id="contenido"', 'tel:+56989753095', 'tel:+56961911593', 'role="status"'):
+        for texto in ('href="#contenido"', 'id="contenido"', 'tel:+56961911593', 'tel:+56966626540', 'role="status"'):
             self.assertContains(response, texto)
         self.assertNotContains(response, '8249 1403')
         self.assertNotContains(response, '82491403')
@@ -240,15 +264,13 @@ class BaseComunTests(TestCase):
         self.assertNotContains(self.client.get(self.inicio), gestion)
 
     def test_un_mensaje_aparece_una_sola_vez_en_el_proyecto(self):
-        empresa = Empresa.objects.create(nombre='Empresa Test')
-        proyecto = Proyecto.objects.create(empresa=empresa, nombre='Proyecto Beta')
-        Membresia.objects.create(usuario=self.cliente, proyecto=proyecto)
-        Hito.objects.create(proyecto=proyecto, orden=1, nombre='Hito', cumplido_en=timezone.now(), cumplido_por=self.personal)
+        empresa = crear_empresa(nombre='Empresa Test')
+        proyecto = crear_proyecto(empresa, nombre='Proyecto Beta')
+        encargar(proyecto, self.cliente)
+        proyecto.crear_hitos_estandar()
+        proyecto.hitos.filter(es_revision=False).update(cumplido_en=timezone.now(), cumplido_por=self.personal)
 
         self.client.force_login(self.cliente)
-        self.client.post(
-            reverse('documentos:responder_recepcion', args=[proyecto.pk]),
-            {'resultado': 'conforme', 'nombre_revisor': 'Ana', 'revisado': '1'},
-        )
+        self.client.post(reverse('documentos:responder_revision', args=[proyecto.pk]), {'respuesta': 'aceptar'})
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[proyecto.pk]))
-        self.assertContains(response, 'Recepción confirmada.', count=1)
+        self.assertContains(response, 'Revisión aceptada.', count=1)

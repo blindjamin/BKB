@@ -55,7 +55,7 @@ const headerClasses = mode === 'reveal'
       <ThemeToggle />
 
       <a href={PORTAL_URLS.cliente} class="header-pill cta-pulse inline-flex items-center gap-2 whitespace-nowrap px-[18px] py-[10px] rounded-pill bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.2)] text-main text-sm font-semibold backdrop-blur-[8px] transition-colors hover:border-salmon-500 hover:text-salmon-500 focus-bkb">
-        Soy cliente &rarr;
+        Soy cliente <span class="cta-flecha" aria-hidden="true">&rarr;</span>
       </a>
 
       <a href={cotizarHref} class="hidden xl:inline-flex items-center px-5 py-[10px] rounded-pill bg-salmon-500 text-white text-sm font-semibold transition-transform hover:-translate-y-0.5 focus-bkb whitespace-nowrap">
@@ -77,23 +77,15 @@ const headerClasses = mode === 'reveal'
     --pill-bg: rgba(255, 255, 255, 0.1);
     --pill-border: rgba(255, 255, 255, 0.35);
   }
-  /* Tema claro con fondo claro -> texto oscuro.
-     Llevan #site-header para ganarle en especificidad a la regla de arriba. */
-  :global(html[data-theme="light"]) #site-header.site-header-solid,
-  :global(html[data-theme="light"]) #site-header.site-header-reveal.is-scrolled {
-    --hdr-text: var(--text-main);
-    --hdr-hover: var(--bkb-salmon-700);
-    --hdr-active: var(--bkb-salmon-700);
-    --pill-bg: rgba(26, 21, 19, 0.05);
-    --pill-border: rgba(26, 21, 19, 0.25);
-  }
+  /* En los dos temas el header es oscuro y con texto claro. En el tema claro va en grafito
+     con una línea naranja, igual que el portal. */
   :global(html[data-theme="dark"]) #site-header.site-header-solid {
     background-color: rgba(30, 30, 33, 0.92);
     border-color: rgba(255, 255, 255, 0.1);
   }
   :global(html[data-theme="light"]) #site-header.site-header-solid {
-    background-color: rgba(253, 241, 232, 0.97);
-    border-color: #E8DCD2;
+    background-color: rgba(15, 23, 42, 0.96);
+    border-bottom: 3px solid var(--bkb-salmon-500);
   }
 
   .nav-link {
@@ -127,27 +119,44 @@ const headerClasses = mode === 'reveal'
   }
 
   :global(html[data-theme="light"]) .site-header-reveal.is-scrolled {
-    background: rgba(253, 241, 232, 0.94);
-    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
-    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+    background: rgba(15, 23, 42, 0.94);
+    border-bottom: 3px solid var(--bkb-salmon-500);
   }
 
-  /* "Soy cliente": pulso salmón tipo "pincha aquí" */
+  /* "Soy cliente": barrido salmón cada 2 s y flecha que empuja, tipo "clickea aquí" */
+  #site-header :global(.cta-pulse) {
+    border-color: var(--bkb-salmon-500);
+    background-image: linear-gradient(110deg, transparent 30%, rgba(250, 90, 54, 0.85) 50%, transparent 70%);
+    background-size: 250% 100%;
+    background-repeat: no-repeat;
+    background-position: 150% 0;
+  }
   :global(.cta-pulse) {
-    animation: cta-pulse 1.6s ease-in-out infinite;
+    animation: cta-barrido 2s ease-in-out infinite;
+  }
+  :global(.cta-flecha) {
+    display: inline-block;
+    color: var(--bkb-salmon-500);
+    animation: cta-flecha 1s ease-in-out infinite;
   }
   :global(.cta-pulse:hover),
-  :global(.cta-pulse:focus-visible) {
+  :global(.cta-pulse:focus-visible),
+  :global(.cta-pulse:hover .cta-flecha),
+  :global(.cta-pulse:focus-visible .cta-flecha) {
     animation: none;
   }
-  @keyframes cta-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(250, 90, 54, 0.7); border-color: var(--bkb-salmon-500); }
-    50% { box-shadow: 0 0 0 8px rgba(250, 90, 54, 0); border-color: var(--bkb-salmon-300); }
+  @keyframes cta-barrido {
+    0%, 40% { background-position: 150% 0; }
+    100% { background-position: -50% 0; }
+  }
+  @keyframes cta-flecha {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .site-header-reveal { transition: none; }
-    :global(.cta-pulse) { animation: none; }
+    :global(.cta-pulse), :global(.cta-flecha) { animation: none; }
   }
 
   @media (max-width: 640px) {

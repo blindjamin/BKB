@@ -1,0 +1,11 @@
+{% autoescape off %}Comenzó el proyecto {{ proyecto.nombre }} de {{ proyecto.empresa.nombre }}.
+
+Encargado cliente: {{ proyecto.encargado.nombre|default:proyecto.encargado.email }}
+Inicio: {{ proyecto.fecha_inicio|date:"d-m-Y" }}
+Término previsto: {{ proyecto.fecha_termino|date:"d-m-Y" }}
+
+Hitos del avance:
+{% for hito in hitos %}{{ forloop.counter }}. {{ hito.nombre }}
+{% endfor %}
+Ver avance: {{ url }}
+{% endautoescape %}

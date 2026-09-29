@@ -3,7 +3,7 @@ import uuid
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Prefetch, Q
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseBadRequest, Http404
 from django.shortcuts import render, get_object_or_404, redirect
@@ -12,7 +12,9 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
 
-from .forms import EmpresaForm, ProyectoForm
+from . import correos
+from .encargados import obtener_o_invitar
+from .forms import EmpresaForm, HitoFormSet, ProyectoForm
 from .permisos import (
     _es_personal,
     proyectos_visibles,
@@ -22,15 +24,17 @@ from .permisos import (
     puede_gestionar_estructura,
     archivos_visibles,
     archivos_visibles_para,
+    firmar_enlace,
+    modificaciones_visibles,
     puede_subir,
     puede_borrar,
-    puede_gestionar_hitos,
-    estado_proyecto,
-    EstadoFlujoProyecto,
-    puede_responder_recepcion,
+    puede_editar_proyecto,
+    puede_responder_cliente,
+    ve_archivos,
 )
-from .avisos import enviar_aviso_recepcion
-from .models import Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoProyecto, Proyecto, RespuestaRecepcion
+from .models import (
+    Archivo, Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoModificacion, EstadoProyecto, Proyecto,
+    RechazoRevision)
 from .storage import url_descarga
 from .subidas import EXTENSIONES_PERMITIDAS
 
@@ -42,9 +46,16 @@ def _get_client_ip(request):
     return request.META.get('REMOTE_ADDR')
 
 
+def _preparar_archivo(usuario, archivo):
+    archivo.puede_borrar = puede_borrar(usuario, archivo)
+    archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
+    return archivo
+
+
 def _tarjetas_de_proyecto(usuario, proyectos):
     """Proyectos con conteo de archivos disponibles y última carga, cerrados al final (docs/09 §12.1)."""
-    disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True)
+    disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True,
+                    archivos__modificacion__isnull=True)  # M1
     proyectos = proyectos.annotate(
         archivos_count=Count('archivos', filter=disponibles),
         ultima_carga=Max('archivos__subido_en', filter=disponibles),
@@ -53,13 +64,12 @@ def _tarjetas_de_proyecto(usuario, proyectos):
 
 
 def _ocultar_conteo_bloqueados(usuario, proyectos):
-    """El cliente no ve el conteo ni la última carga de un proyecto que espera su recepción (§12.3.5)."""
-    if puede_gestionar_hitos(usuario):
+    """A8: el cliente no ve el conteo ni la última carga de un proyecto sin finalizar."""
+    if _es_personal(usuario):
         return proyectos
     proyectos = list(proyectos)
-    # ponytail: una consulta de estado por proyecto (N+1); un cliente tiene pocos proyectos.
     for p in proyectos:
-        p.bloqueado = estado_proyecto(p) == EstadoFlujoProyecto.ESPERANDO_RECEPCION
+        p.bloqueado = not ve_archivos(usuario, p)
         if p.bloqueado:
             p.archivos_count, p.ultima_carga = 0, None
     return proyectos
@@ -85,6 +95,8 @@ def crear_empresa(request):
     if request.method == 'POST':
         form = EmpresaForm(request.POST)
         if form.is_valid():
+            form.instance.encargado, _ = obtener_o_invitar(
+                request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
             empresa = form.save()
             return redirect('documentos:detalle_empresa', pk=empresa.pk)
     else:
@@ -108,6 +120,10 @@ def detalle_empresa(request, pk):
     return render(request, 'empresa_detalle.html', context)
 
 
+def _encargados_por_empresa():
+    return {str(e.pk): [e.encargado.nombre, e.encargado.email] for e in Empresa.objects.select_related('encargado')}
+
+
 @login_required
 def crear_proyecto(request):
     if not puede_gestionar_estructura(request.user):
@@ -121,7 +137,12 @@ def crear_proyecto(request):
     if request.method == 'POST':
         form = ProyectoForm(request.POST)
         if form.is_valid():
-            proyecto = form.save()
+            form.instance.encargado, _ = obtener_o_invitar(
+                request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
+            with transaction.atomic():
+                proyecto = form.save()
+                proyecto.crear_hitos_estandar()  # A1
+            correos.avisar_inicio(request, proyecto)  # V2, V6: después del atomic
             return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
     else:
         form = ProyectoForm(initial=initial)
@@ -130,6 +151,7 @@ def crear_proyecto(request):
         'form': form,
         'titulo': 'Nuevo Proyecto',
         'accion': 'Crear Proyecto',
+        'encargados_empresa': _encargados_por_empresa(),
     })
 
 
@@ -139,10 +161,14 @@ def editar_proyecto(request, pk):
         raise PermissionDenied("No tienes permisos para editar proyectos.")
 
     proyecto = get_object_or_404(Proyecto, pk=pk)
+    if not puede_editar_proyecto(request.user, proyecto):
+        raise PermissionDenied("Solo los encargados BKB del proyecto pueden editarlo.")  # E3
 
     if request.method == 'POST':
         form = ProyectoForm(request.POST, instance=proyecto)
         if form.is_valid():
+            form.instance.encargado, _ = obtener_o_invitar(
+                request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
             form.save()
             return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
     else:
@@ -153,12 +179,61 @@ def editar_proyecto(request, pk):
         'proyecto': proyecto,
         'titulo': f'Editar {proyecto.nombre}',
         'accion': 'Guardar Cambios',
+        'encargados_empresa': _encargados_por_empresa(),
     })
+
+
+@login_required
+def editar_hitos(request, pk):
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not puede_editar_proyecto(request.user, proyecto):
+        raise PermissionDenied("Solo los encargados BKB del proyecto pueden editar sus hitos.")  # E3
+    url = reverse('documentos:detalle_proyecto', args=[proyecto.pk])
+    if proyecto.finalizado:
+        messages.error(request, 'El proyecto está finalizado; sus hitos no se pueden cambiar.')
+        return redirect(url)
+
+    # Sin la Revisión en el queryset, un POST con su id no es válido: no se puede quitar ni mover (A2)
+    formset = HitoFormSet(request.POST or None, instance=proyecto, queryset=proyecto.hitos.filter(es_revision=False))
+    if request.method == 'POST' and formset.is_valid():
+        with transaction.atomic():
+            Proyecto.objects.select_for_update().get(pk=proyecto.pk)
+            formset.guardar()
+        messages.success(request, 'Hitos actualizados.')
+        return redirect(url)
+    return render(request, 'hitos_form.html', {'proyecto': proyecto, 'formset': formset})
+
+
+def _hitos_con_actual(proyecto):
+    """Los hitos en orden; el primero pendiente lleva `es_actual` (línea de hitos)."""
+    hitos = list(proyecto.hitos.select_related('cumplido_por'))
+    actual = next((h for h in hitos if not h.cumplido), None)
+    for h in hitos:
+        h.es_actual = h is actual
+    return hitos
+
+
+def _modificaciones(usuario, proyecto):  # M8
+    ms = list(modificaciones_visibles(usuario).filter(proyecto=proyecto).select_related('respondida_por')
+              .prefetch_related(Prefetch('adjuntos', queryset=Archivo.objects.filter(
+                  estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True), to_attr='adjuntos_visibles')))
+    responde = puede_responder_cliente(usuario, proyecto)
+    for m in ms:
+        m.enlace = firmar_enlace(m, usuario) if responde and m.estado == EstadoModificacion.PENDIENTE else None  # M5
+    return ms
 
 
 @login_required
 def detalle_proyecto(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not ve_archivos(request.user, proyecto):  # A7, A8: el cliente en curso ve solo el avance
+        return render(request, 'avance.html', {
+            'proyecto': proyecto,
+            'hitos': _hitos_con_actual(proyecto),
+            'revision': proyecto.revision_por_responder() if puede_responder_cliente(request.user, proyecto) else None,
+            'rechazos': proyecto.rechazos_revision.select_related('usuario'),
+            'modificaciones': _modificaciones(request.user, proyecto),
+        })
 
     carpeta_activa = None
     carpeta_id = request.GET.get('carpeta')
@@ -172,8 +247,7 @@ def detalle_proyecto(request, pk):
     # carpeta_activa=None filtra carpeta IS NULL: los archivos de la raíz
     todos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
     for archivo in todos:
-        archivo.puede_borrar = puede_borrar(request.user, archivo)
-        archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
+        _preparar_archivo(request.user, archivo)
 
     fotos = [a for a in todos if a.tipo.startswith('image/')]
     documentos = [a for a in todos if not a.tipo.startswith('image/')]
@@ -191,23 +265,15 @@ def detalle_proyecto(request, pk):
     for c in carpetas:
         c.n_archivos = conteo.get(c.pk, 0)
 
-    gestiona_hitos = puede_gestionar_hitos(request.user)
-    hitos = list(proyecto.hitos.select_related('cumplido_por'))
-    estado = estado_proyecto(proyecto)
-    recibido = estado == EstadoFlujoProyecto.RECIBIDO
+    edita = puede_editar_proyecto(request.user, proyecto)  # E3
+    hitos = _hitos_con_actual(proyecto)
 
     context = {
         'proyecto': proyecto,
         'hitos': hitos,
-        'puede_gestionar_hitos': gestiona_hitos,
-        'puede_avanzar': gestiona_hitos and not all(h.cumplido for h in hitos),
-        'puede_retroceder': gestiona_hitos and any(h.cumplido for h in hitos) and not recibido,
-        'estado': estado,
-        'mostrar_aviso': not gestiona_hitos,  # el aviso es para el cliente (§12.1)
-        'hito_actual': next((h for h in hitos if not h.cumplido), None),
-        'recepcion_conforme': (
-            proyecto.respuestas_recepcion.filter(conforme=True).order_by('fecha').first() if recibido else None
-        ),
+        'puede_editar': edita,
+        'puede_avanzar': edita and any(not h.cumplido and not h.es_revision for h in hitos),
+        'puede_retroceder': edita and not proyecto.finalizado and any(h.cumplido for h in hitos),
         'carpetas': carpetas,
         'carpeta_activa': carpeta_activa,
         'archivos': archivos,
@@ -220,6 +286,7 @@ def detalle_proyecto(request, pk):
         'max_upload_mb': settings.MAX_UPLOAD_MB,
         'extensiones': sorted(EXTENSIONES_PERMITIDAS),
         'puede_gestionar': puede_gestionar_estructura(request.user),
+        'modificaciones': _modificaciones(request.user, proyecto),
     }
     return render(request, 'archivos.html', context)
 
@@ -260,13 +327,13 @@ def eliminar_carpeta(request, pk):
 @login_required
 @require_POST
 def avanzar_hito(request, pk):
-    if not puede_gestionar_hitos(request.user):
-        raise PermissionDenied("No tienes permisos para marcar hitos.")
-
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not puede_editar_proyecto(request.user, proyecto):
+        raise PermissionDenied("No tienes permisos para marcar hitos.")  # E3
     with transaction.atomic():
         Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
-        hito = proyecto.hitos.filter(cumplido_en__isnull=True).order_by('orden').first()
+        # A5: la Revisión la responde el cliente
+        hito = proyecto.hitos.filter(cumplido_en__isnull=True, es_revision=False).order_by('orden').first()
         if hito:
             hito.cumplido_en = timezone.now()
             hito.cumplido_por = request.user
@@ -277,14 +344,13 @@ def avanzar_hito(request, pk):
 @login_required
 @require_POST
 def retroceder_hito(request, pk):
-    if not puede_gestionar_hitos(request.user):
-        raise PermissionDenied("No tienes permisos para deshacer hitos.")
-
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not puede_editar_proyecto(request.user, proyecto):
+        raise PermissionDenied("No tienes permisos para deshacer hitos.")  # E3
     with transaction.atomic():
-        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
-        if estado_proyecto(proyecto) == EstadoFlujoProyecto.RECIBIDO:
-            messages.error(request, 'El cliente ya confirmó la recepción; los hitos no se pueden deshacer.')
+        proyecto = Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa; lee finalizado_en ya bloqueado
+        if proyecto.finalizado:  # A6
+            messages.error(request, 'El proyecto está finalizado: los hitos no se pueden deshacer.')
             return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
         hito = proyecto.hitos.filter(cumplido_en__isnull=False).order_by('-orden').first()
         if hito:
@@ -296,47 +362,38 @@ def retroceder_hito(request, pk):
 
 @login_required
 @require_POST
-def responder_recepcion(request, pk):
+def responder_revision(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
-    if not puede_responder_recepcion(request.user, proyecto):
-        raise PermissionDenied("No puedes responder la recepción de este proyecto.")
-
-    resultado = request.POST.get('resultado')
-    if resultado not in ('conforme', 'no_conforme'):
-        return HttpResponseBadRequest("Resultado no válido.")
-    conforme = resultado == 'conforme'
-    nombre = request.POST.get('nombre_revisor', '').strip()
-    if not nombre:
-        error = 'Escribe el nombre de quien revisó.'
-    elif len(nombre) > 200:
-        error = 'El nombre no puede superar 200 caracteres.'
-    elif conforme and not request.POST.get('revisado'):
-        error = 'Marca "Recepcionado y revisado" para confirmar.'
-    else:
-        error = None
-    if error:
-        messages.error(request, error)
-        return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
-
+    if not puede_responder_cliente(request.user, proyecto):
+        raise PermissionDenied('Solo el encargado cliente responde la Revisión.')  # A5
+    respuesta = request.POST.get('respuesta')
+    if respuesta not in ('aceptar', 'rechazar'):
+        return HttpResponseBadRequest('Respuesta no válida.')
+    motivo = request.POST.get('motivo', '').strip()
+    url = reverse('documentos:detalle_proyecto', args=[proyecto.pk])
+    if respuesta == 'rechazar' and not motivo:
+        messages.error(request, 'Escribe el motivo del rechazo.')  # A5
+        return redirect(url)
     with transaction.atomic():
-        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # mismo bloqueo que avanzar/retroceder
-        if not puede_responder_recepcion(request.user, proyecto):  # el estado pudo cambiar mientras tanto
-            messages.error(request, 'El proyecto ya no está esperando tu recepción.')
-            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
-        respuesta = RespuestaRecepcion.objects.create(
-            proyecto=proyecto,
-            usuario=request.user,
-            nombre_revisor=nombre,
-            conforme=conforme,
-            ip=_get_client_ip(request),
-        )
-
-    enviar_aviso_recepcion(respuesta)  # fuera del atomic: un fallo del correo no deshace la respuesta
-    if conforme:
-        messages.success(request, 'Recepción confirmada.')
+        proyecto = Proyecto.objects.select_for_update().get(pk=proyecto.pk)
+        revision = proyecto.revision_por_responder()
+        if not revision:
+            messages.error(request, 'La Revisión todavía no se puede responder.')
+            return redirect(url)
+        if respuesta == 'aceptar':
+            ahora = timezone.now()
+            revision.cumplido_en, revision.cumplido_por = ahora, request.user
+            revision.save(update_fields=['cumplido_en', 'cumplido_por'])
+            proyecto.finalizado_en = ahora
+            proyecto.save(update_fields=['finalizado_en'])
+        else:
+            rechazo = RechazoRevision.objects.create(proyecto=proyecto, usuario=request.user, motivo=motivo)
+    if respuesta == 'aceptar':
+        correos.avisar_termino(request, proyecto)  # V3, V6: después del atomic
     else:
-        messages.success(request, 'Registramos tu respuesta "No conforme". BKB te contactará.')
-    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+        correos.avisar_rechazo_revision(request, rechazo)  # V4
+    messages.success(request, 'Revisión aceptada.' if respuesta == 'aceptar' else 'Registramos el rechazo. BKB te contactará.')
+    return redirect(url)
 
 
 @login_required
@@ -371,4 +428,6 @@ def eliminar_archivo(request, pk):
     archivo.save()
     messages.success(request, f'Se eliminó «{archivo.nombre_original}».')
 
+    if archivo.modificacion_id:  # M1: vuelve al borrador
+        return redirect('documentos:detalle_modificacion', pk=archivo.modificacion_id)
     return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)

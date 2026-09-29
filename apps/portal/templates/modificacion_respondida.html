@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Modificación respondida - {{ m.proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <nav class="breadcrumbs" aria-label="Navegación secundaria">
+        <a href="{% url 'documentos:lista_proyectos' %}" class="btn-volver">&larr; Ir al portal</a>
+    </nav>
+
+    <div class="form-container">
+        <h1 class="proyectos-title">{{ m.titulo }}</h1>
+        <p>Esta modificación ya fue {{ m.get_estado_display|lower }} por {{ m.respondida_por.nombre|default:m.respondida_por.email }} el {{ m.respondida_en|date:"d-m-Y" }}.</p>
+    </div>
+</div>
+{% endblock %}

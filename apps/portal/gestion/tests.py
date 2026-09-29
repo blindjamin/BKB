@@ -141,9 +141,9 @@ class CrearUsuarioTests(GestionTests):
                 self.assertFalse(response.context['form'].is_valid())
         self.assertEqual(Usuario.objects.count(), total)
 
-    @patch('gestion.views.send_mail', side_effect=SMTPException('caído'))
+    @patch('documentos.correos.EmailMultiAlternatives.send', side_effect=SMTPException('caído'))
     def test_fallo_del_correo_igual_crea_el_usuario(self, _mock):
-        with self.assertLogs('gestion.views', level='ERROR'):
+        with self.assertLogs('documentos.correos', level='ERROR'):
             response = self._crear()
         self.assertRedirects(response, self.url_usuarios)
         self.assertTrue(Usuario.objects.filter(email='nueva@test.cl').exists())

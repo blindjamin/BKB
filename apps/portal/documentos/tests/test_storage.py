@@ -61,7 +61,7 @@ class PrefijoTest(TestCase):
     def test_no_hay_funciones_para_listar_ni_borrar(self):
         publicas = [n for n, v in vars(storage).items() if callable(v) and not n.startswith('_')
                     and getattr(v, '__module__', None) == storage.__name__]
-        self.assertEqual(sorted(publicas), ['clave_para', 'post_subida', 'tamano_en_space', 'url_descarga'])
+        self.assertEqual(sorted(publicas), ['clave_para', 'leer', 'post_subida', 'tamano_en_space', 'url_descarga'])
 
 
 @AJUSTES
