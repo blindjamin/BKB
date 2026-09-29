@@ -249,9 +249,9 @@ Space con `storage.leer(clave)`) y enlaces si pasan de ese tamaño, más los bot
 enlaces firmados (`firmar_enlace`).
 
 **Criterios de aceptación:**
-- [ ] Con 20 MB o menos, el correo trae los archivos; con más, trae enlaces (M2).
-- [ ] Los botones apuntan a URLs firmadas distintas para aprobar y para rechazar.
-- [ ] Una modificación no se puede enviar dos veces.
+- [x] Con 20 MB o menos, el correo trae los archivos; con más, trae enlaces (M2).
+- [x] Los botones apuntan a URLs firmadas distintas para aprobar y para rechazar.
+- [x] Una modificación no se puede enviar dos veces.
 
 **Verificación:** `test` (con el Space simulado, igual que en `test_storage.py`).
 **Archivos:** `documentos/modificaciones.py`, `documentos/storage.py`, `templates/correos/modificacion.html` y `.txt`, pruebas.

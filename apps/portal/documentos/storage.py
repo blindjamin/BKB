@@ -1,6 +1,7 @@
 """Conexión con el Space: firma URLs y confirma objetos, siempre bajo SPACES_PREFIX.
 
 El contenido de los archivos nunca pasa por Django: viaja navegador <-> Space.
+Única excepción (M2): `leer` trae el objeto para adjuntarlo a un correo, solo al enviar una modificación.
 A propósito no hay funciones para listar ni borrar (docs/03, sección 8).
 """
 
@@ -74,3 +75,9 @@ def tamano_en_space(clave):
         if error.response['Error']['Code'] in ('404', 'NoSuchKey', 'NotFound'):
             return None
         raise
+
+
+def leer(clave):
+    """M2: contenido del objeto para adjuntarlo al correo (solo al enviar, tope de 20 MB)."""
+    _validar(clave)
+    return _cliente().get_object(Bucket=settings.SPACES_BUCKET, Key=clave)['Body'].read()

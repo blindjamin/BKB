@@ -1,0 +1,8 @@
+{% autoescape off %}{{ m.respondida_por.nombre|default:m.respondida_por.email }} {{ m.get_estado_display|lower }} la modificación «{{ m.titulo }}» del proyecto {{ proyecto.nombre }} de {{ proyecto.empresa.nombre }} el {{ m.respondida_en|date:"d-m-Y H:i" }}.
+IP: {{ m.ip|default:"sin dato" }}
+{% if m.motivo_rechazo %}
+Motivo:
+{{ m.motivo_rechazo }}
+{% endif %}
+Ver proyecto: {{ url }}
+{% endautoescape %}

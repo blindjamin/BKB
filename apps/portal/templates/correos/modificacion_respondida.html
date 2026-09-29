@@ -1,0 +1,10 @@
+{% extends 'correos/base.html' %}
+{% block contenido %}
+<p>{{ m.respondida_por.nombre|default:m.respondida_por.email }} <strong>{{ m.get_estado_display|lower }}</strong> la modificación «{{ m.titulo }}» del proyecto <strong>{{ proyecto.nombre }}</strong> de {{ proyecto.empresa.nombre }} el {{ m.respondida_en|date:"d-m-Y H:i" }}.</p>
+<p>IP: {{ m.ip|default:"sin dato" }}</p>
+{% if m.motivo_rechazo %}
+<p>Motivo:</p>
+<p style="border-left:3px solid #C2410C;padding-left:12px;margin-left:0">{{ m.motivo_rechazo|linebreaksbr }}</p>
+{% endif %}
+{% endblock %}
+{% block boton %}Ver proyecto{% endblock %}
