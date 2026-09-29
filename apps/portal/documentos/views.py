@@ -25,7 +25,6 @@ from .permisos import (
     archivos_visibles_para,
     puede_subir,
     puede_borrar,
-    puede_gestionar_hitos,
     puede_editar_proyecto,
     puede_responder_cliente,
     ve_archivos,
@@ -192,9 +191,25 @@ def editar_hitos(request, pk):
     return render(request, 'hitos_form.html', {'proyecto': proyecto, 'formset': formset})
 
 
+def _hitos_con_actual(proyecto):
+    """Los hitos en orden; el primero pendiente lleva `es_actual` (línea de hitos)."""
+    hitos = list(proyecto.hitos.select_related('cumplido_por'))
+    actual = next((h for h in hitos if not h.cumplido), None)
+    for h in hitos:
+        h.es_actual = h is actual
+    return hitos
+
+
 @login_required
 def detalle_proyecto(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    if not ve_archivos(request.user, proyecto):  # A7, A8: el cliente en curso ve solo el avance
+        return render(request, 'avance.html', {
+            'proyecto': proyecto,
+            'hitos': _hitos_con_actual(proyecto),
+            'revision': proyecto.revision_por_responder() if puede_responder_cliente(request.user, proyecto) else None,
+            'rechazos': proyecto.rechazos_revision.select_related('usuario'),
+        })
 
     carpeta_activa = None
     carpeta_id = request.GET.get('carpeta')
@@ -227,14 +242,12 @@ def detalle_proyecto(request, pk):
     for c in carpetas:
         c.n_archivos = conteo.get(c.pk, 0)
 
-    gestiona_hitos = puede_gestionar_hitos(request.user)
     edita = puede_editar_proyecto(request.user, proyecto)  # E3
-    hitos = list(proyecto.hitos.select_related('cumplido_por'))
+    hitos = _hitos_con_actual(proyecto)
 
     context = {
         'proyecto': proyecto,
         'hitos': hitos,
-        'puede_gestionar_hitos': gestiona_hitos,
         'puede_editar': edita,
         'puede_avanzar': edita and any(not h.cumplido and not h.es_revision for h in hitos),
         'puede_retroceder': edita and not proyecto.finalizado and any(h.cumplido for h in hitos),

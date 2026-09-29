@@ -14,7 +14,6 @@ from documentos.permisos import (
     proyectos_visibles,
     puede_borrar,
     puede_editar_proyecto,
-    puede_gestionar_hitos,
     puede_subir,
     ve_archivos,
 )
@@ -307,29 +306,6 @@ class MatrizA8ArchivosSegunFinalizacionTests(TestCase):
         self.assertEqual(self.ve(self.cliente_ajeno), (False, False))
         finalizar(self.proyecto)
         self.assertEqual(self.ve(self.cliente_ajeno), (False, False))
-
-
-class PuedeGestionarHitosTests(TestCase):
-    def setUp(self):
-        self.personal = Usuario.objects.create_user('pers_hitos@bkb.cl', rol=Rol.PERSONAL)
-        self.jefe = Usuario.objects.create_user('jefe_hitos@bkb.cl', rol=Rol.JEFE)
-        self.admin = Usuario.objects.create_superuser('admin_hitos@bkb.cl')
-        self.cliente = Usuario.objects.create_user('cli_hitos@emp.cl', rol=Rol.CLIENTE)
-
-    def test_personal_jefe_y_admin_pueden_gestionar_hitos(self):
-        self.assertTrue(puede_gestionar_hitos(self.personal))
-        self.assertTrue(puede_gestionar_hitos(self.jefe))
-        self.assertTrue(puede_gestionar_hitos(self.admin))
-
-    def test_cliente_no_puede_gestionar_hitos(self):
-        self.assertFalse(puede_gestionar_hitos(self.cliente))
-
-    def test_inactivo_y_anonimo_no_pueden_gestionar_hitos(self):
-        inactivo_pers = Usuario.objects.create_user('inact_pers@bkb.cl', rol=Rol.PERSONAL, is_active=False)
-        inactivo_jefe = Usuario.objects.create_user('inact_jefe@bkb.cl', rol=Rol.JEFE, is_active=False)
-        self.assertFalse(puede_gestionar_hitos(inactivo_pers))
-        self.assertFalse(puede_gestionar_hitos(inactivo_jefe))
-        self.assertFalse(puede_gestionar_hitos(AnonymousUser()))
 
 
 class HitoYRechazoRevisionModelosYAdminTests(TestCase):

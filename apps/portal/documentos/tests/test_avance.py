@@ -304,3 +304,63 @@ class ArchivosOcultosHastaFinalizarTests(Base):
         finalizar(self.proyecto)
         despues = self.client.get(reverse('documentos:lista_proyectos')).context['proyectos']
         self.assertEqual([p.archivos_count for p in despues], [1])
+
+
+class VistaDelClienteTests(Base):
+    """A7: el cliente con el proyecto en curso ve solo el avance."""
+
+    def setUp(self):
+        super().setUp()
+        from documentos.models import Archivo, Carpeta, EstadoArchivo
+        self.carpeta = Carpeta.objects.create(proyecto=self.proyecto, nombre='Planos', creado_por=self.personal)
+        self.archivo = Archivo.objects.create(
+            proyecto=self.proyecto, carpeta=self.carpeta, nombre_original='secreto.pdf',
+            clave_space='portal-dev/secreto.pdf', tamano=1, tipo='application/pdf',
+            estado=EstadoArchivo.DISPONIBLE, subido_por=self.personal)
+        self.url = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])
+        self.personal.nombre = 'Ana Terreno'
+        self.personal.save()
+
+    def test_el_cliente_en_curso_ve_solo_el_avance(self):  # A7
+        self.cumplir(1)
+        self.client.force_login(self.cliente)
+        for params in ({}, {'carpeta': self.carpeta.pk}):
+            with self.subTest(params=params):
+                r = self.client.get(self.url, params)
+                self.assertTemplateUsed(r, 'avance.html')
+                for texto in ('Proyecto Alfa', 'Empresa Alfa', '01 Ene 2026', '31 Dic 2026',
+                              'Cliente Uno', 'mailto:cli1@empresa.cl', 'Ana Terreno', *HITOS_ESTANDAR):
+                    self.assertContains(r, texto)
+                for texto in ('archivo-input', 'Planos', 'class="filtros"', 'secreto.pdf'):
+                    self.assertNotContains(r, texto)
+
+    def test_el_formulario_de_la_revision_solo_cuando_corresponde(self):  # A5, A7
+        self.client.force_login(self.cliente)
+        self.cumplir(5)
+        self.assertNotContains(self.client.get(self.url), 'name="motivo"')
+        self.cumplir(6)
+        r = self.client.get(self.url)
+        self.assertContains(r, 'name="motivo"')
+        self.assertContains(r, reverse('documentos:responder_revision', args=[self.proyecto.pk]))
+        self.assertContains(r, 'data-confirmar="Al aceptar, el proyecto queda finalizado."')
+
+    def test_el_historial_de_rechazos_se_muestra(self):  # A5, A7
+        from documentos.models import RechazoRevision
+        RechazoRevision.objects.create(proyecto=self.proyecto, usuario=self.cliente, motivo='Falta el tablero 3')
+        self.client.force_login(self.cliente)
+        self.assertContains(self.client.get(self.url), 'Falta el tablero 3')
+
+    def test_el_personal_sigue_en_archivos(self):  # A7
+        self.client.force_login(self.personal)
+        r = self.client.get(self.url)
+        self.assertTemplateUsed(r, 'archivos.html')
+        self.assertContains(r, 'Ana Terreno')  # encargados BKB en la cabecera
+
+    def test_el_cliente_finalizado_ve_los_archivos_y_la_linea_de_hitos(self):  # A8
+        finalizar(self.proyecto)
+        self.client.force_login(self.cliente)
+        r = self.client.get(self.url, {'carpeta': self.carpeta.pk})
+        self.assertTemplateUsed(r, 'archivos.html')
+        self.assertContains(r, 'secreto.pdf')
+        self.assertContains(r, 'Compras')
+        self.assertNotContains(r, 'Marcar siguiente hito')

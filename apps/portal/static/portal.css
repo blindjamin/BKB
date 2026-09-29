@@ -2455,3 +2455,76 @@ h1, h2, h3,
         grid-template-columns: 1fr 8rem auto;
     }
 }
+
+/* Avance del proyecto para el cliente (A7) y datos del proyecto */
+.proyecto-datos,
+.avance-fechas {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem 1.5rem;
+    margin: 1rem 0 0;
+}
+
+.proyecto-datos div,
+.avance-fechas div {
+    display: flex;
+    flex-direction: column;
+}
+
+.proyecto-datos dt,
+.avance-fechas dt {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.proyecto-datos dd,
+.avance-fechas dd {
+    margin: 0;
+    color: var(--text-main);
+    overflow-wrap: anywhere;
+}
+
+.avance-fechas {
+    margin: 1.5rem 0;
+}
+
+.avance-fechas dd {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.avance-encargado {
+    margin: 0 0 1.5rem;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.revision-final form + form {
+    margin-top: 1.25rem;
+}
+
+.revision-rechazo textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0.75rem;
+}
+
+.rechazos-lista {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+}
+
+.rechazos-lista p {
+    margin: 0.25rem 0 0;
+    color: var(--text-main);
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 640px) {
+    .avance-fechas {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

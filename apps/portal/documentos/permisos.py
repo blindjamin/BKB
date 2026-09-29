@@ -109,11 +109,6 @@ def puede_borrar(usuario, archivo):
     )
 
 
-def puede_gestionar_hitos(usuario):
-    """Solo el personal y el jefe pueden avanzar o retroceder hitos."""
-    return _es_personal(usuario)
-
-
 def puede_editar_proyecto(usuario, proyecto):
     """E3: el jefe o un encargado BKB del proyecto; el resto del personal solo mira."""
     return es_jefe(usuario) or (_es_personal(usuario) and proyecto.encargados_bkb.filter(pk=usuario.pk).exists())

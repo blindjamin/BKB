@@ -38,6 +38,14 @@
                     <a href="{% url 'documentos:editar_hitos' proyecto.pk %}" class="btn-link">Editar hitos</a>
                 {% endif %}
             </div>
+            {% if not carpeta_activa %}
+            <dl class="proyecto-datos">
+                <div><dt>Inicio</dt><dd>{{ proyecto.fecha_inicio|date:"d M Y" }}</dd></div>
+                <div><dt>Término</dt><dd>{{ proyecto.fecha_termino|date:"d M Y" }}</dd></div>
+                <div><dt>Encargado cliente</dt><dd>{{ proyecto.encargado.nombre|default:proyecto.encargado.email }} · <a href="mailto:{{ proyecto.encargado.email }}">{{ proyecto.encargado.email }}</a></dd></div>
+                <div><dt>Encargados BKB</dt><dd>{% for u in proyecto.encargados_bkb.all %}{{ u.nombre|default:u.email }}{% if not forloop.last %}, {% endif %}{% empty %}Sin asignar{% endfor %}</dd></div>
+            </dl>
+            {% endif %}
         </div>
 
         {% if puede_subir %}
@@ -64,26 +72,9 @@
     </section>
     {% endif %}
 
-    {% if puede_gestionar_hitos %}
     <section class="hitos">
         <h2 class="seccion-title">Hitos</h2>
-        {% if hitos %}
-            <ol class="hitos-lista">
-                {% for hito in hitos %}
-                    <li class="hito{% if hito.cumplido %} is-cumplido{% endif %}">
-                        <svg class="icono hito-icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#{% if hito.cumplido %}cumplido{% else %}pendiente{% endif %}"></use></svg>
-                        <span class="hito-nombre">{{ hito.nombre }}</span>
-                        {% if hito.cumplido %}
-                            <span class="hito-detalle">{{ hito.cumplido_en|date:"d M Y, H:i" }} · {{ hito.cumplido_por.nombre|default:hito.cumplido_por.email }}</span>
-                        {% else %}
-                            <span class="hito-detalle">Pendiente</span>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ol>
-        {% else %}
-            <p class="view-subtitle">Este proyecto no tiene hitos.</p>
-        {% endif %}
+        {% include "includes/linea_hitos.html" %}
         <div class="hitos-acciones">
             {% if puede_avanzar %}
             <form action="{% url 'documentos:avanzar_hito' proyecto.pk %}" method="post">
@@ -99,7 +90,6 @@
             {% endif %}
         </div>
     </section>
-    {% endif %}
 
     <section class="carpetas">
         {% if carpeta_activa %}

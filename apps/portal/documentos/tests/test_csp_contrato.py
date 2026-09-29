@@ -141,6 +141,7 @@ class ContratoCSPTests(TestCase):
         self.assertNotIn('aviso.js', html)
 
     def test_detalle_archivos_cliente_cumple_contrato(self):
+        finalizar(self.proyecto)  # A8: sin finalizar el cliente ve avance.html
         self.client.force_login(self.cliente)
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
         self._verificar_contrato_csp_y_html(response)
@@ -149,6 +150,7 @@ class ContratoCSPTests(TestCase):
     def test_vista_de_carpeta_cumple_contrato(self):
         carpeta = self.proyecto.carpetas.get()
         url = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])
+        finalizar(self.proyecto)  # A8
         for usuario in (self.personal, self.cliente):
             with self.subTest(usuario=usuario.email):
                 self.client.force_login(usuario)
@@ -164,6 +166,16 @@ class ContratoCSPTests(TestCase):
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
         self._verificar_contrato_csp_y_html(response)
         self.assertIn('Finalizado', response.content.decode('utf-8'))
+
+    def test_avance_del_cliente_con_la_revision_cumple_contrato(self):  # A7
+        self.proyecto.hitos.all().delete()
+        self.proyecto.crear_hitos_estandar()
+        self.proyecto.hitos.filter(es_revision=False).update(cumplido_en=timezone.now(), cumplido_por=self.personal)
+        self.client.force_login(self.cliente)
+        response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+        self.assertTemplateUsed(response, 'avance.html')
+        self.assertContains(response, 'name="motivo"')
+        self._verificar_contrato_csp_y_html(response)
 
     def test_gestion_de_usuarios_cumple_contrato(self):
         jefe = Usuario.objects.create_user('jefe@bkb.cl', 'Clave123!', rol=Rol.JEFE)

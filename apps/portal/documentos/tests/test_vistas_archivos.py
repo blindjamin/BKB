@@ -188,7 +188,8 @@ class ArchivosYFlujoTests(TestCase):
             with self.subTest(params=params):
                 response = self._ver(self.cliente, **params)
                 self.assertEqual(response.status_code, 200)
-                self.assertContains(response, 'Informes')  # ve el nombre de la carpeta, no su contenido
+                self.assertTemplateUsed(response, 'avance.html')  # A7: solo el avance
+                self.assertNotContains(response, 'Informes')
                 self.assertNotContains(response, 'en-raiz.pdf')
                 self.assertNotContains(response, 'en-carpeta.pdf')
                 self.assertNotContains(response, 'descargar')
