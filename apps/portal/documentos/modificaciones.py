@@ -4,16 +4,18 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponseBadRequest, HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 
 from . import correos
 from .forms import ModificacionForm
-from .models import EstadoArchivo, Modificacion
-from .permisos import modificaciones_visibles, proyectos_visibles, puede_editar_proyecto
+from .models import DescargaLog, EstadoArchivo, EstadoModificacion, Modificacion
+from .permisos import leer_enlace, modificaciones_visibles, proyectos_visibles, puede_editar_proyecto
+from .storage import url_descarga
 from .subidas import EXTENSIONES_PERMITIDAS
-from .views import _preparar_archivo
+from .views import _get_client_ip, _preparar_archivo
 
 
 @login_required
@@ -63,9 +65,43 @@ def enviar_modificacion(request, pk):
     return redirect('documentos:detalle_modificacion', pk=m.pk)
 
 
-def responder_modificacion(request, token):  # T18
-    raise NotImplementedError
+@require_http_methods(['GET', 'POST'])
+def responder_modificacion(request, token):
+    """M3 a M5, M7: sin login (el enlace firmado es el acceso) y con CSRF; solo el POST responde."""
+    m, usuario = leer_enlace(token)
+    if m.estado != EstadoModificacion.PENDIENTE:
+        return render(request, 'modificacion_respondida.html', {'m': m})  # M4
+    ctx = {'m': m, 'usuario': usuario, 'token': token, 'accion': request.GET.get('accion'),
+           'adjuntos': m.adjuntos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True)}
+    if request.method == 'GET':  # M3: abrir el enlace nunca responde
+        return render(request, 'modificacion_responder.html', ctx)
+    respuesta = request.POST.get('respuesta')
+    if respuesta not in ('aprobar', 'rechazar'):
+        return HttpResponseBadRequest('Respuesta no válida.')
+    motivo = request.POST.get('motivo', '').strip()
+    if respuesta == 'rechazar' and not motivo:
+        ctx.update(error='Escribe el motivo del rechazo.', accion='rechazar', motivo=motivo)
+        return render(request, 'modificacion_responder.html', ctx)
+    rechaza = respuesta == 'rechazar'
+    # M7: la respuesta es definitiva; el UPDATE condicional gana una sola vez
+    hechas = Modificacion.objects.filter(pk=m.pk, estado=EstadoModificacion.PENDIENTE).update(
+        estado=EstadoModificacion.RECHAZADA if rechaza else EstadoModificacion.APROBADA,
+        respondida_por=usuario, respondida_en=timezone.now(),
+        motivo_rechazo=motivo if rechaza else '', ip=_get_client_ip(request))
+    if hechas:
+        m.refresh_from_db()
+        base = request.build_absolute_uri('/').rstrip('/')
+        correos._avisar_si_falla(request, correos.avisar_modificacion_respondida(m, base), 'aviso a ingeniería')  # T19
+        messages.success(request, 'Registramos tu respuesta.')
+    return redirect(request.path)  # PRG: el GET muestra "ya respondida"
 
 
-def descargar_adjunto_enlace(request, token, archivo_pk):  # T18
-    raise NotImplementedError
+def descargar_adjunto_enlace(request, token, archivo_pk):
+    """M8: los correos grandes y los recordatorios llevan enlaces; el destinatario puede no tener sesión."""
+    if request.method != 'GET':
+        return HttpResponseNotAllowed(['GET'])
+    m, usuario = leer_enlace(token)
+    archivo = get_object_or_404(
+        m.adjuntos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True), pk=archivo_pk)
+    DescargaLog.objects.create(usuario=usuario, archivo=archivo, ip=_get_client_ip(request))
+    return redirect(url_descarga(archivo.clave_space, archivo.nombre_original))

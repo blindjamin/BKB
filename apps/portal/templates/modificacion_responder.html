@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Responder modificación - {{ m.proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <nav class="breadcrumbs" aria-label="Navegación secundaria">
+        <a href="{% url 'documentos:lista_proyectos' %}" class="btn-volver">&larr; Ir al portal</a>
+    </nav>
+
+    <div class="form-container">
+        <h1 class="proyectos-title">{{ m.titulo }}</h1>
+        <p class="view-subtitle">{{ m.proyecto.nombre }} · {{ m.proyecto.empresa.nombre }}</p>
+        <p>{{ m.descripcion|linebreaksbr }}</p>
+
+        {% if adjuntos %}
+        <div class="modificacion-adjuntos">
+            {% for a in adjuntos %}
+            <a href="{% url 'documentos:descargar_adjunto_enlace' token a.pk %}" class="btn-link">{{ a.nombre_original }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <p class="view-subtitle">Respondes como {{ usuario.nombre|default:usuario.email }}.</p>
+
+        {% if error %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}
+
+        {# Sin data-confirmar: el diálogo de base.html solo existe con sesión y esta página ya es el paso de confirmación #}
+        <form method="post" class="form-card">
+            {% csrf_token %}
+            <input type="hidden" name="respuesta" value="aprobar">
+            <button type="submit" class="btn-primary">Aprobar la modificación</button>
+        </form>
+
+        <form method="post" class="form-card">
+            {% csrf_token %}
+            <input type="hidden" name="respuesta" value="rechazar">
+            <div class="form-group">
+                <label for="motivo">Motivo del rechazo</label>
+                <textarea id="motivo" name="motivo" rows="4" required{% if accion == 'rechazar' %} autofocus{% endif %}>{{ motivo }}</textarea>
+            </div>
+            <button type="submit" class="btn-secondary">Rechazar la modificación</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

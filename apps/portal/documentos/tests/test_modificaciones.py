@@ -1,16 +1,18 @@
 """Módulo modificaciones: reglas M1 a M9 (docs/11-spec-avance-y-modificaciones.md)."""
 
 import json
+import time
 from unittest.mock import patch
 
 from django.core import mail
-from django.test import override_settings
+from django.test import Client, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from documentos.models import Archivo, EstadoArchivo, Modificacion
+from documentos.models import Archivo, DescargaLog, EstadoArchivo, EstadoModificacion, Modificacion
 from documentos.permisos import archivos_visibles, firmar_enlace, modificaciones_visibles
 from documentos.tests.test_avance import Base
+from documentos.tests.test_avisos import CAIDO
 
 ING = ['ing1@bkb.test', 'ing2@bkb.test']
 
@@ -159,3 +161,106 @@ class EnvioTests(ModificacionBase):
         m = self.crear_mod(enviada=False)
         self.assertEqual(self.enviar(m, self.otro_personal).status_code, 403)
         self.assertEqual(len(mail.outbox), 0)
+
+
+class ResponderTests(ModificacionBase):
+    def url(self, m=None, usuario=None, sufijo=''):
+        token = firmar_enlace(m or self.m, usuario or self.cliente)
+        return reverse('documentos:responder_modificacion', args=[token]) + sufijo
+
+    def setUp(self):
+        super().setUp()
+        self.m = self.crear_mod()
+        self.anonimo = Client()
+
+    def test_get_nunca_responde(self):  # M3
+        for accion in ('', '?accion=aprobar', '?accion=rechazar'):
+            r = self.anonimo.get(self.url(sufijo=accion))
+            self.assertEqual(r.status_code, 200)
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.estado, EstadoModificacion.PENDIENTE)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_post_sin_token_csrf_da_403_y_con_token_responde(self):  # M3
+        c = Client(enforce_csrf_checks=True)
+        url = self.url()
+        self.assertEqual(c.post(url, {'respuesta': 'aprobar'}).status_code, 403)
+        c.get(url)
+        r = c.post(url, {'respuesta': 'aprobar', 'csrfmiddlewaretoken': c.cookies['csrftoken'].value})
+        self.assertEqual(r.status_code, 302)
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.estado, EstadoModificacion.APROBADA)
+
+    def test_enlace_alterado_vencido_ajeno_o_borrador_da_404(self):  # M4
+        token = firmar_enlace(self.m, self.cliente)
+        alterado = token[:-1] + ('A' if token[-1] != 'A' else 'B')
+        self.assertEqual(self.anonimo.get(reverse('documentos:responder_modificacion', args=[alterado])).status_code, 404)
+        url = self.url()  # firmado ahora; se abre 31 días después
+        with patch('django.core.signing.time.time', return_value=time.time() + 31 * 86400):
+            self.assertEqual(self.anonimo.get(url).status_code, 404)
+        self.assertEqual(self.anonimo.get(self.url(usuario=self.ajeno)).status_code, 404)
+        borrador = self.crear_mod(enviada=False)
+        self.assertEqual(self.anonimo.get(self.url(borrador)).status_code, 404)
+
+    def test_ya_respondida_muestra_quien_y_cuando(self):  # M4
+        self.anonimo.post(self.url(), {'respuesta': 'aprobar'})
+        r = self.anonimo.get(self.url())
+        self.assertContains(r, 'ya fue aprobada')
+        self.assertContains(r, timezone.localtime().strftime('%d-%m-%Y'))
+
+    def test_aprobar_guarda_todo_y_avisa_a_ingenieria(self):  # M7
+        self.anonimo.post(self.url(), {'respuesta': 'aprobar'}, REMOTE_ADDR='127.0.0.1')
+        self.m.refresh_from_db()
+        self.assertEqual((self.m.estado, self.m.respondida_por, self.m.ip),
+                         (EstadoModificacion.APROBADA, self.cliente, '127.0.0.1'))
+        self.assertIsNotNone(self.m.respondida_en)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual((mail.outbox[0].to, mail.outbox[0].cc), (ING, []))
+
+    def test_rechazar_sin_motivo_no_cambia_nada(self):  # M7
+        r = self.anonimo.post(self.url(), {'respuesta': 'rechazar', 'motivo': '  '})
+        self.assertContains(r, 'Escribe el motivo')
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.estado, EstadoModificacion.PENDIENTE)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_rechazar_con_motivo_lo_lleva_al_correo(self):  # M7
+        self.anonimo.post(self.url(), {'respuesta': 'rechazar', 'motivo': 'Muy caro'})
+        self.m.refresh_from_db()
+        self.assertEqual((self.m.estado, self.m.motivo_rechazo), (EstadoModificacion.RECHAZADA, 'Muy caro'))
+        self.assertIn('Muy caro', mail.outbox[0].body)
+
+    def test_segunda_respuesta_no_cambia_nada(self):  # M7
+        self.anonimo.post(self.url(), {'respuesta': 'aprobar'})
+        self.anonimo.post(self.url(), {'respuesta': 'rechazar', 'motivo': 'x'})
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.estado, EstadoModificacion.APROBADA)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_respuesta_invalida_da_400(self):  # M7
+        self.assertEqual(self.anonimo.post(self.url(), {'respuesta': 'otra'}).status_code, 400)
+
+    def test_correo_caido_deja_la_respuesta_guardada(self):  # M7
+        with CAIDO, self.assertLogs('documentos.correos', 'ERROR'):
+            self.anonimo.post(self.url(), {'respuesta': 'aprobar'})
+        self.m.refresh_from_db()
+        self.assertEqual(self.m.estado, EstadoModificacion.APROBADA)
+
+    def test_dos_modificaciones_se_responden_por_separado(self):  # M9
+        otra = self.crear_mod(titulo='Otra')
+        self.anonimo.post(self.url(), {'respuesta': 'aprobar'})
+        self.anonimo.post(self.url(otra), {'respuesta': 'rechazar', 'motivo': 'No'})
+        self.m.refresh_from_db()
+        otra.refresh_from_db()
+        self.assertEqual((self.m.estado, otra.estado), (EstadoModificacion.APROBADA, EstadoModificacion.RECHAZADA))
+
+    def test_descarga_por_enlace_registra_y_redirige(self):  # M8
+        a = self.adjunto(self.m)
+        token = firmar_enlace(self.m, self.cliente)
+        with patch('documentos.modificaciones.url_descarga', return_value='https://space/x'):
+            r = self.anonimo.get(reverse('documentos:descargar_adjunto_enlace', args=[token, a.pk]))
+        self.assertRedirects(r, 'https://space/x', fetch_redirect_response=False)
+        self.assertEqual(DescargaLog.objects.get().usuario, self.cliente)
+        otro = self.adjunto(self.crear_mod(titulo='Otra'), nombre='otro.jpg')
+        r = self.anonimo.get(reverse('documentos:descargar_adjunto_enlace', args=[token, otro.pk]))
+        self.assertEqual(r.status_code, 404)

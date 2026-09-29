@@ -264,10 +264,10 @@ alterado o vencido (30 días), da 404. La misma lógica funciona con sesión ini
 el de la empresa (M5).
 
 **Criterios de aceptación:**
-- [ ] **Un GET nunca cambia el estado** (M3).
-- [ ] Un enlace alterado, vencido o de otra modificación da 404 (M4).
-- [ ] La respuesta es definitiva: un segundo POST no la cambia (M7).
-- [ ] La página funciona sin sesión y la protección CSRF sigue activa.
+- [x] **Un GET nunca cambia el estado** (M3).
+- [x] Un enlace alterado, vencido o de otra modificación da 404 (M4).
+- [x] La respuesta es definitiva: un segundo POST no la cambia (M7).
+- [x] La página funciona sin sesión y la protección CSRF sigue activa.
 
 **Verificación:** `test`.
 **Archivos:** `documentos/modificaciones.py`, `documentos/urls.py`, `templates/modificacion_responder.html`, `templates/modificacion_respondida.html`, pruebas.
