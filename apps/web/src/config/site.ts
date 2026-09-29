@@ -9,7 +9,7 @@ export const SITE = {
   phones: PHONES,
   phoneDisplay: PHONES[0].display,
   phoneHref: PHONES[0].href,
-  email: 'contacto@bkb.cl',
+  email: 'ingenieria@empresabkb.cl',
   office: 'La Calera, Región de Valparaíso',
   officeAddress: 'El Parque 110, La Calera, Región de Valparaíso',
   coverage: 'Valparaíso y Región Metropolitana',
