@@ -48,19 +48,8 @@
     --contenedor: 1120px;
 }
 
-/* Tema claro del portal: grafito y naranjo. Fondo gris frío, tarjetas blancas y el naranjo BKB solo como acento.
-   El encabezado y el pie siempre van en grafito (data-theme="dark" en base.html). */
-[data-theme="light"] {
-    --page-bg: #F1F5F9;
-    --card-bg: #FFFFFF;
-    --card-border: #E2E8F0;
-    --text-main: #0F172A;
-    --text-muted: #475569;  /* 7.6:1 sobre blanco */
-    --text-subtle: #5B6778; /* 5.2:1 sobre el fondo */
-    --input-bg: #FFFFFF;
-    --input-border: #CBD5E1;
-}
-
+/* Tema claro grafito y naranjo (tokens/themes.css). El encabezado y el pie siempre van en grafito
+   (data-theme="dark" en base.html), con una línea naranja en el tema claro. */
 [data-theme="light"] .encabezado {
     border-bottom: 3px solid var(--bkb-salmon-500);
 }
