@@ -1,0 +1,29 @@
+{% load static %}
+            <div class="form-group">
+                <label for="{{ form.encargado_nombre.id_for_label }}">
+                    {{ form.encargado_nombre.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
+                {{ form.encargado_nombre }}
+                {% if form.encargado_nombre.errors %}
+                    <div class="field-error" id="{{ form.encargado_nombre.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.encargado_nombre.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.encargado_email.id_for_label }}">
+                    {{ form.encargado_email.label }}
+                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                </label>
+                {{ form.encargado_email }}
+                {% if form.encargado_email.help_text %}<small class="form-help" id="{{ form.encargado_email.id_for_label }}-help">{{ form.encargado_email.help_text }}</small>{% endif %}
+                {% if form.encargado_email.errors %}
+                    <div class="field-error" id="{{ form.encargado_email.id_for_label }}-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.encargado_email.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            </div>

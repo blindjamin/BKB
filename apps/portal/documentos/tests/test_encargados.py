@@ -51,6 +51,18 @@ class VisibilidadEncargadosTests(TestCase):
         self.assertEqual(self.client.get(reverse('documentos:detalle_proyecto', args=[proyecto.pk])).status_code, 404)
         self.assertEqual(self.client.get(reverse('documentos:detalle_empresa', args=[empresa.pk])).status_code, 404)
 
+    def test_encargado_inactivo_no_ve_nada(self):  # E1
+        empresa = crear_empresa(encargado=self.cliente, nombre='Emp')
+        crear_proyecto(empresa, encargado=self.cliente, nombre='Uno')
+        self.cliente.is_active = False
+        self.assertFalse(proyectos_visibles(self.cliente).exists())
+        self.assertFalse(empresas_visibles(self.cliente).exists())
+
+    def test_encargado_cliente_no_edita_el_proyecto(self):  # E3
+        proyecto = crear_proyecto(crear_empresa(nombre='Emp'), encargado=self.cliente, nombre='Uno')
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.client.get(reverse('documentos:editar_proyecto', args=[proyecto.pk])).status_code, 403)
+
 
 class CrearEmpresaEncargadoTests(TestCase):
     """E4, E5, V6."""
