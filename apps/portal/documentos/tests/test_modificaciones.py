@@ -1,11 +1,14 @@
 """Módulo modificaciones: reglas M1 a M9 (docs/11-spec-avance-y-modificaciones.md)."""
 
+import io
 import json
 import re
 import time
+from datetime import datetime, timedelta, timezone as dt_timezone
 from unittest.mock import patch
 
 from django.core import mail
+from django.core.management import call_command
 from django.test import Client, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -322,3 +325,54 @@ class PanelYDescargaTests(ModificacionBase):
         a = self.adjunto(self.crear_mod())
         self.client.force_login(self.jefe)
         self.assertEqual(self.client.post(reverse('documentos:eliminar_archivo', args=[a.pk])).status_code, 403)
+
+
+class RecordatoriosTests(ModificacionBase):
+    BASE = datetime(2026, 10, 1, 15, 0, tzinfo=dt_timezone.utc)
+
+    def enviar_dia_0(self, titulo='Cambio'):
+        m = self.crear_mod(enviada=False, titulo=titulo)
+        with patch('django.utils.timezone.now', return_value=self.BASE):
+            self.client.force_login(self.personal)  # la sesión se crea con la hora simulada
+            self.client.post(reverse('documentos:enviar_modificacion', args=[m.pk]))
+        return m
+
+    def correr(self, dia):
+        with patch('django.utils.timezone.now', return_value=self.BASE + timedelta(days=dia, hours=-1)):
+            call_command('enviar_recordatorios', stdout=io.StringIO())
+
+    def test_correos_los_dias_0_2_4_6_y_8_y_un_solo_sin_respuesta(self):  # M6
+        m = self.enviar_dia_0()
+        por_dia = {}
+        for d in range(12):
+            antes = len(mail.outbox)
+            self.correr(d)
+            por_dia[d] = mail.outbox[antes:]
+        con_correo = [d for d, cs in por_dia.items() if cs]
+        self.assertEqual(con_correo, [2, 4, 6, 8])
+        todos = [c for cs in por_dia.values() for c in cs]
+        self.assertEqual(len(todos) + 1, 6)  # + el primero, que salió al enviar: 5 al cliente y 1 aviso a ingeniería
+        sin_respuesta = [c for c in todos if c.subject.startswith('Sin respuesta')]
+        self.assertEqual(len(sin_respuesta), 1)
+        self.assertIn(sin_respuesta[0], por_dia[8])
+        recordatorios = [c for c in todos if c.subject.startswith('Recordatorio')]
+        self.assertEqual(len(recordatorios), 4)
+        for c in recordatorios:
+            self.assertEqual((c.to, c.cc, c.attachments), ([self.cliente.email], ING, []))
+        m.refresh_from_db()
+        self.assertEqual(m.correos_enviados, 5)
+
+    def test_dos_corridas_el_mismo_dia_mandan_un_correo(self):  # M6
+        self.enviar_dia_0()
+        mail.outbox.clear()
+        self.correr(2)
+        self.correr(2)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_respondida_y_borrador_no_reciben(self):  # M6
+        m = self.enviar_dia_0()
+        Modificacion.objects.filter(pk=m.pk).update(estado=EstadoModificacion.APROBADA)
+        self.crear_mod(enviada=False, titulo='Borrador')
+        mail.outbox.clear()
+        self.correr(2)
+        self.assertEqual(len(mail.outbox), 0)

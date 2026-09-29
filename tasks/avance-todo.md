@@ -302,9 +302,9 @@ y manda `modificacion_recordatorio` (con enlaces, sin adjuntos). Si la cuenta ll
 `modificacion_sin_respuesta` a ingeniería.
 
 **Criterios de aceptación:**
-- [ ] Los correos salen los días 0, 2, 4, 6 y 8, y nunca un sexto (M6).
-- [ ] Correr el comando dos veces seguidas envía un solo correo.
-- [ ] Una modificación respondida no recibe más correos.
+- [x] Los correos salen los días 0, 2, 4, 6 y 8, y nunca un sexto (M6).
+- [x] Correr el comando dos veces seguidas envía un solo correo.
+- [x] Una modificación respondida no recibe más correos.
 
 **Verificación:** `test` (con el tiempo simulado).
 **Archivos:** `documentos/management/commands/enviar_recordatorios.py`, 2 plantillas, pruebas.
