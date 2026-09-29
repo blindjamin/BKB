@@ -164,3 +164,37 @@ class EditorDeHitosTests(Base):
         self.assertEqual(r.status_code, 302)
         self.assertEqual(self.nombres(), HITOS_ESTANDAR)
         self.assertRedirects(self.client.get(self.url()), reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+
+
+class AvanzarYDeshacerTests(Base):
+    def avanzar(self):
+        return self.client.post(reverse('documentos:avanzar_hito', args=[self.proyecto.pk]))
+
+    def retroceder(self):
+        return self.client.post(reverse('documentos:retroceder_hito', args=[self.proyecto.pk]))
+
+    def test_avanzar_deja_quien_y_cuando(self):  # A4
+        self.client.force_login(self.personal)
+        self.avanzar()
+        hito = self.proyecto.hitos.get(orden=1)
+        self.assertIsNotNone(hito.cumplido_en)
+        self.assertEqual(hito.cumplido_por, self.personal)
+
+    def test_avanzar_no_toca_la_revision_ni_muestra_el_boton(self):  # A5
+        self.cumplir(6)
+        self.client.force_login(self.personal)
+        self.avanzar()
+        self.assertFalse(self.proyecto.hitos.get(es_revision=True).cumplido)
+        r = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+        self.assertNotContains(r, 'Marcar siguiente hito')
+
+    def test_finalizado_no_se_deshace_y_tras_rechazo_si(self):  # A6
+        from documentos.models import RechazoRevision
+        self.cumplir(6)
+        self.client.force_login(self.personal)
+        RechazoRevision.objects.create(proyecto=self.proyecto, usuario=self.cliente, motivo='No')
+        self.retroceder()
+        self.assertEqual(self.proyecto.hitos.filter(cumplido_en__isnull=False).count(), 5)
+        finalizar(self.proyecto)
+        self.retroceder()
+        self.assertEqual(self.proyecto.hitos.filter(cumplido_en__isnull=False).count(), 5)

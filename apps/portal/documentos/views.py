@@ -241,8 +241,8 @@ def detalle_proyecto(request, pk):
         'hitos': hitos,
         'puede_gestionar_hitos': gestiona_hitos,
         'puede_editar': edita,
-        'puede_avanzar': edita and not all(h.cumplido for h in hitos),
-        'puede_retroceder': edita and any(h.cumplido for h in hitos) and not recibido,
+        'puede_avanzar': edita and any(not h.cumplido and not h.es_revision for h in hitos),
+        'puede_retroceder': edita and not proyecto.finalizado and any(h.cumplido for h in hitos),
         'estado': estado,
         'mostrar_aviso': not gestiona_hitos,  # el aviso es para el cliente (§12.1)
         'hito_actual': next((h for h in hitos if not h.cumplido), None),
@@ -306,7 +306,8 @@ def avanzar_hito(request, pk):
         raise PermissionDenied("No tienes permisos para marcar hitos.")  # E3
     with transaction.atomic():
         Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
-        hito = proyecto.hitos.filter(cumplido_en__isnull=True).order_by('orden').first()
+        # A5: la Revisión la responde el cliente
+        hito = proyecto.hitos.filter(cumplido_en__isnull=True, es_revision=False).order_by('orden').first()
         if hito:
             hito.cumplido_en = timezone.now()
             hito.cumplido_por = request.user
@@ -321,9 +322,9 @@ def retroceder_hito(request, pk):
     if not puede_editar_proyecto(request.user, proyecto):
         raise PermissionDenied("No tienes permisos para deshacer hitos.")  # E3
     with transaction.atomic():
-        Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa las operaciones de hitos del proyecto
-        if estado_proyecto(proyecto) == EstadoFlujoProyecto.RECIBIDO:
-            messages.error(request, 'El cliente ya confirmó la recepción; los hitos no se pueden deshacer.')
+        proyecto = Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa; lee finalizado_en ya bloqueado
+        if proyecto.finalizado:  # A6
+            messages.error(request, 'El proyecto está finalizado: los hitos no se pueden deshacer.')
             return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
         hito = proyecto.hitos.filter(cumplido_en__isnull=False).order_by('-orden').first()
         if hito:
