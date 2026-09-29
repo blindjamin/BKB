@@ -51,7 +51,7 @@ class EmpresaForm(CamposEncargado, forms.ModelForm):
         return self.cleaned_data.get('rut', '').strip()
 
 
-class ProyectoForm(forms.ModelForm):
+class ProyectoForm(CamposEncargado, forms.ModelForm):
     hitos_texto = forms.CharField(
         widget=forms.Textarea(attrs={
             'rows': 5,
@@ -64,7 +64,7 @@ class ProyectoForm(forms.ModelForm):
 
     class Meta:
         model = Proyecto
-        fields = ['empresa', 'nombre', 'estado', 'encargado', 'encargados_bkb']  # 'encargado' es puente: T3 lo quita
+        fields = ['empresa', 'nombre', 'estado', 'encargados_bkb']
         labels = {
             'empresa': 'Empresa / Cliente',
             'nombre': 'Nombre del proyecto',
@@ -76,6 +76,10 @@ class ProyectoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['encargados_bkb'].queryset = Usuario.objects.filter(
             rol__in=(Rol.PERSONAL, Rol.JEFE), is_active=True, is_superuser=False).order_by('nombre', 'email')  # E3
+
+        if self.instance.encargado_id:  # no .pk: el UUID ya trae valor antes de guardar
+            self.initial.setdefault('encargado_nombre', self.instance.encargado.nombre)
+            self.initial.setdefault('encargado_email', self.instance.encargado.email)
 
         if self.instance and self.instance.pk:
             hitos = self.instance.hitos.order_by('orden')

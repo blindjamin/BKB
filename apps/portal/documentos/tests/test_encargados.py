@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import Rol, Usuario
-from documentos.models import Empresa
+from documentos.models import Empresa, Proyecto
 from documentos.permisos import empresas_visibles, proyectos_visibles
 from documentos.tests.ayudantes import crear_empresa, crear_proyecto
 
@@ -96,3 +96,63 @@ class CrearEmpresaEncargadoTests(TestCase):
         r = self._crear('nuevo@cli.cl')
         self.assertTrue(Empresa.objects.filter(nombre='Nueva').exists())
         self.assertContains(r, 'No se pudo enviar la invitación')
+
+
+class ProyectoEncargadosTests(TestCase):
+    """E2, E3, E4, E5."""
+
+    def setUp(self):
+        self.personal = Usuario.objects.create_user('personal@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
+        self.jefe = Usuario.objects.create_user('jefe@bkb.cl', 'Clave123!', rol=Rol.JEFE)
+        self.dueno = Usuario.objects.create_user('dueno@cli.cl', 'Clave123!', rol=Rol.CLIENTE, nombre='Dueño')
+        self.empresa = crear_empresa(encargado=self.dueno, nombre='Emp')
+        self.client.force_login(self.jefe)
+        self.url = reverse('documentos:crear_proyecto')
+
+    def _datos(self, **extra):
+        datos = {'empresa': self.empresa.pk, 'nombre': 'Proy', 'estado': 'activo', 'hitos_texto': 'Uno',
+                 'encargado_nombre': 'Dueño', 'encargado_email': 'dueno@cli.cl',
+                 'encargados_bkb': [self.personal.pk]}
+        datos.update(extra)
+        return datos
+
+    def test_mismo_correo_que_la_empresa_no_invita(self):  # E2, E4
+        r = self.client.post(self.url, self._datos())
+        self.assertEqual(r.status_code, 302)
+        proyecto = Proyecto.objects.get(nombre='Proy')
+        self.assertEqual(proyecto.encargado, self.empresa.encargado)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(list(proyecto.encargados_bkb.all()), [self.personal])
+
+    def test_persona_nueva_recibe_invitacion(self):  # E4
+        self.client.post(self.url, self._datos(encargado_email='otra@cli.cl', encargado_nombre='Otra'))
+        self.assertEqual(Proyecto.objects.get(nombre='Proy').encargado.email, 'otra@cli.cl')
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_sin_encargados_bkb_se_rechaza(self):  # E3
+        r = self.client.post(self.url, self._datos(encargados_bkb=[]))
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('encargados_bkb', r.context['form'].errors)
+        self.assertFalse(Proyecto.objects.exists())
+
+    def test_encargado_con_correo_del_personal_se_rechaza(self):  # E5
+        r = self.client.post(self.url, self._datos(encargado_email='personal@bkb.cl'))
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('encargado_email', r.context['form'].errors)
+        self.assertFalse(Proyecto.objects.exists())
+
+    def test_editar_con_mismo_encargado_no_invita_y_con_otro_si(self):
+        proyecto = crear_proyecto(self.empresa, encargado=self.dueno, nombre='Proy')
+        proyecto.encargados_bkb.add(self.personal)
+        url = reverse('documentos:editar_proyecto', args=[proyecto.pk])
+        self.client.post(url, self._datos())
+        self.assertEqual(len(mail.outbox), 0)
+        self.client.post(url, self._datos(encargado_email='nuevo@cli.cl', encargado_nombre='Nuevo'))
+        proyecto.refresh_from_db()
+        self.assertEqual(proyecto.encargado.email, 'nuevo@cli.cl')
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_get_de_edicion_muestra_el_correo_del_encargado(self):
+        proyecto = crear_proyecto(self.empresa, encargado=self.dueno, nombre='Proy')
+        r = self.client.get(reverse('documentos:editar_proyecto', args=[proyecto.pk]))
+        self.assertContains(r, 'value="dueno@cli.cl"')

@@ -166,7 +166,8 @@ class VistasEmpresasYProyectosTests(TestCase):
             'nombre': 'Tableros Principales',
             'estado': 'activo',
             'hitos_texto': "1. Replanteo en faena\n2. Cableado y montaje\n3. Pruebas y recepcion",
-            'encargado': self.cliente.pk,
+            'encargado_nombre': 'Encargado',
+            'encargado_email': self.cliente.email,
             'encargados_bkb': [self.personal.pk],
         })
         self.assertEqual(post_resp.status_code, 302)
@@ -211,7 +212,8 @@ class VistasEmpresasYProyectosTests(TestCase):
             'nombre': 'Proyecto Alfa Modificado',
             'estado': 'cerrado',
             'hitos_texto': "Hito A1 Modificado\nHito A2 Modificado\nHito A3 Nuevo",
-            'encargado': self.cliente2.pk,
+            'encargado_nombre': 'Encargado',
+            'encargado_email': self.cliente2.email,
             'encargados_bkb': [self.personal.pk],
         })
         self.assertEqual(post_resp.status_code, 302)
@@ -248,6 +250,8 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertIn('empresa', f_proyecto.errors)
         self.assertIn('nombre', f_proyecto.errors)
         self.assertIn('hitos_texto', f_proyecto.errors)
+        self.assertIn('encargado_email', f_proyecto.errors)
+        self.assertIn('encargados_bkb', f_proyecto.errors)
 
     def test_editar_proyecto_no_permite_eliminar_hitos_cumplidos(self):
         h1 = Hito.objects.create(
@@ -264,7 +268,8 @@ class VistasEmpresasYProyectosTests(TestCase):
                 'nombre': self.proy_a1.nombre,
                 'estado': self.proy_a1.estado,
                 'hitos_texto': '',
-                'encargado': self.cliente.pk,
+                'encargado_nombre': 'Encargado',
+                'encargado_email': self.cliente.email,
                 'encargados_bkb': [self.personal.pk],
             }
         )
@@ -279,7 +284,8 @@ class VistasEmpresasYProyectosTests(TestCase):
                 'nombre': self.proy_a1.nombre,
                 'estado': self.proy_a1.estado,
                 'hitos_texto': hitos_texto,
-                'encargado': self.cliente.pk,
+                'encargado_nombre': 'Encargado',
+                'encargado_email': self.cliente.email,
                 'encargados_bkb': [self.personal.pk],
             }
         )
@@ -429,6 +435,8 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertContains(get_resp, 'for="id_nombre"')
         self.assertContains(get_resp, 'for="id_estado"')
         self.assertContains(get_resp, 'for="id_hitos_texto"')
+        self.assertContains(get_resp, 'for="id_encargado_nombre"')
+        self.assertContains(get_resp, 'for="id_encargado_email"')
         self.assertContains(get_resp, 'class="form-help"')
         self.assertContains(get_resp, 'class="checkbox-list"')
         self.assertContains(get_resp, 'class="checkbox-item"')

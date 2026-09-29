@@ -111,6 +111,10 @@ def detalle_empresa(request, pk):
     return render(request, 'empresa_detalle.html', context)
 
 
+def _encargados_por_empresa():
+    return {str(e.pk): [e.encargado.nombre, e.encargado.email] for e in Empresa.objects.select_related('encargado')}
+
+
 @login_required
 def crear_proyecto(request):
     if not puede_gestionar_estructura(request.user):
@@ -124,6 +128,8 @@ def crear_proyecto(request):
     if request.method == 'POST':
         form = ProyectoForm(request.POST)
         if form.is_valid():
+            form.instance.encargado, _ = obtener_o_invitar(
+                request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
             proyecto = form.save()
             return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
     else:
@@ -133,6 +139,7 @@ def crear_proyecto(request):
         'form': form,
         'titulo': 'Nuevo Proyecto',
         'accion': 'Crear Proyecto',
+        'encargados_empresa': _encargados_por_empresa(),
     })
 
 
@@ -146,6 +153,8 @@ def editar_proyecto(request, pk):
     if request.method == 'POST':
         form = ProyectoForm(request.POST, instance=proyecto)
         if form.is_valid():
+            form.instance.encargado, _ = obtener_o_invitar(
+                request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
             form.save()
             return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
     else:
@@ -156,6 +165,7 @@ def editar_proyecto(request, pk):
         'proyecto': proyecto,
         'titulo': f'Editar {proyecto.nombre}',
         'accion': 'Guardar Cambios',
+        'encargados_empresa': _encargados_por_empresa(),
     })
 
 
