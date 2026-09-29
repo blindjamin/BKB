@@ -25,4 +25,5 @@ export const PORTAL_URLS = {
   colaborador: LOGIN,
 } as const;
 
-export const QUOTE_ENDPOINT = import.meta.env.PUBLIC_QUOTE_ENDPOINT || '';
+// El sitio es estático: el formulario "Cotizar obra" lo recibe el portal y lo envía a ingeniería.
+export const QUOTE_ENDPOINT = import.meta.env.PUBLIC_QUOTE_ENDPOINT || `${PORTAL}/cotizar/`;

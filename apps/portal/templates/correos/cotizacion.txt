@@ -1,0 +1,14 @@
+{% autoescape off %}Llegó una solicitud de cotización desde el sitio web.
+
+Servicio requerido: {{ c.service }}
+
+Nombre: {{ c.name }}
+Empresa: {{ c.organization }}
+Correo: {{ c.email }}
+Teléfono: {{ c.tel }}
+
+Detalles del proyecto:
+{{ c.message }}
+
+Puedes responder este correo para escribirle directamente.
+{% endautoescape %}

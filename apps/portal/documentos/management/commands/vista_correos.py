@@ -26,6 +26,9 @@ MUESTRAS = {
     'revision_rechazada': {
         'proyecto': _proyecto, 'url': _url,
         'rechazo': SimpleNamespace(usuario=_cliente, fecha=_ahora, motivo='Falta el plano del tablero.\nRevisar la sección 3.')},
+    'cotizacion': {'c': {'name': 'Juan Pérez', 'organization': 'Empresa Alfa', 'email': 'juan@empresa.cl',
+                         'tel': '+56 9 1234 5678', 'service': 'Montaje de tablero de fuerza',
+                         'message': 'Planta en La Calera.\nPlazo estimado: 2 meses.'}},
 }
 
 

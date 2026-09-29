@@ -98,8 +98,6 @@ export const brands: BrandItem[] = [
   { img: shs, alt: 'SHS' }
 ];
 
-export const quoteOptions: string[] = ['Montaje TDF', 'Automatización', 'Trámite TE1', 'Mantención'];
-
 export interface TestimonialItem {
   quote: string;
   name: string;
