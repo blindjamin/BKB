@@ -53,7 +53,7 @@ def _preparar_archivo(usuario, archivo):
 
 
 def _tarjetas_de_proyecto(usuario, proyectos):
-    """Proyectos con conteo de archivos disponibles y última carga, cerrados al final (docs/09 §12.1)."""
+    """Proyectos con conteo de archivos disponibles y última carga, cerrados al final."""
     disponibles = Q(archivos__estado=EstadoArchivo.DISPONIBLE, archivos__eliminado_en__isnull=True,
                     archivos__modificacion__isnull=True)  # M1
     proyectos = proyectos.annotate(
@@ -251,7 +251,7 @@ def detalle_proyecto(request, pk):
 
     fotos = [a for a in todos if a.tipo.startswith('image/')]
     documentos = [a for a in todos if not a.tipo.startswith('image/')]
-    # Filtro por enlaces (docs/09 §5.3); cualquier otro valor muestra todos.
+    # Filtro por enlaces; cualquier otro valor muestra todos.
     tipo = request.GET.get('tipo')
     if tipo not in ('documentos', 'fotos'):
         tipo = None
@@ -420,7 +420,7 @@ def eliminar_archivo(request, pk):
         raise PermissionDenied("No tienes permisos para eliminar este archivo.")
 
     if request.method == 'GET':
-        # Confirmación sin JS (docs/09 §5.5): solo muestra la pregunta, nunca borra.
+        # Confirmación sin JS: solo muestra la pregunta, nunca borra.
         return render(request, 'confirmar_eliminar.html', {'archivo': archivo})
 
     archivo.eliminado_en = timezone.now()

@@ -225,7 +225,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 AXES_FAILURE_LIMIT = 5
-AXES_LOCKOUT_TEMPLATE = 'bloqueo.html'  # solo cambia la página del bloqueo (docs/09 §5.6)
+AXES_LOCKOUT_TEMPLATE = 'bloqueo.html'  # solo cambia la página del bloqueo
 
 # Rutas de autenticación
 LOGIN_URL = '/login/'

@@ -3,13 +3,13 @@
 > **Nota para IAs y diseñadores:**  
 > La única fuente de verdad cromática y tipográfica es el paquete `packages/tokens` (`@bkb/tokens`, versión 2.0.0). No inventar colores hexadecimales arbitrarios en componentes o vistas: usar siempre los tokens.
 >
-> La v1.0 (paleta cobre sobre papel) fue **reemplazada** por el handoff de Claude Design. Lo único que se conserva de ella es el semáforo normativo SEC.
+> El tema claro es **grafito y naranjo** (29-09-2026): fondo gris frío, tarjetas blancas y el naranjo BKB solo como acento. Reemplazó al claro salmón y papel.
 
 ---
 
 ## 1. Principios
-1. **Salmón como color de marca** (`--bkb-salmon-500` `#FA5A36`), para fondos grandes, acentos y texto sobre fondo oscuro.
-2. **Dos temas** con el atributo `data-theme="dark|light"` en `<html>`. La landing es **oscura por defecto**. El portal es **claro por defecto**, con conmutador a oscuro.
+1. **Naranjo BKB como color de marca** (`--bkb-salmon-500` `#FA5A36`; los tokens conservan el nombre `salmon`), para acentos y texto sobre fondo oscuro.
+2. **Dos temas** con el atributo `data-theme="dark|light"` en `<html>`. La landing y el portal son **oscuros por defecto**, con conmutador; la elección se guarda en `localStorage['bkb-theme']`.
 3. **Superficies nocturnas fijas** (`--bkb-night-*`) para lo que siempre es oscuro sin importar el tema: hero, tarjeta de guardia, maqueta del portal y footer.
 4. **Todo sale de variables CSS.** Los componentes usan variables como `--page-bg` y `--text-main`, nunca colores fijos, para que el tema cambie solo.
 5. **Foco visible:** `outline: 3px solid var(--bkb-salmon-500)` con `outline-offset: 2px`.
@@ -19,7 +19,7 @@
 
 ## 2. Paleta
 
-### Marca salmón
+### Marca (naranjo, tokens `salmon`)
 | Token | Hex | Uso |
 |---|---|---|
 | `--bkb-salmon-300` | `#FFA580` | Acentos pequeños sobre oscuro |
@@ -37,13 +37,13 @@
 | `--bkb-night-800` | `#0F172A` | Tarjetas oscuras |
 | `--bkb-night-700` | `#162035` | Barra de la maqueta y degradado de guardia |
 
-### Tinta y neutros cálidos (tema claro)
+### Tinta y neutros cálidos (heredados; el tema claro ya no los usa)
 `--bkb-ink-900` `#1A1513` · `--bkb-sand-600` `#7D6F64` · `--bkb-sand-500` `#9A8F86` · `--bkb-sand-300` `#F5D9C7` · `--bkb-paper-100` `#FAF6F2`
 
 ### Semánticos
 `--bkb-success` `#10B981` · `--bkb-warning` `#F59E0B` · `--bkb-danger` `#EF4444` · `--bkb-locked` `#7F7269`
 
-### Semáforo normativo SEC (lo usará el portal)
+### Semáforo normativo SEC
 | Estado | Texto | Fondo | Borde |
 |---|---|---|---|
 | Vigente (`ok`) | `#1E6B47` | `#E6F4EC` | `#C3E6D2` |
@@ -62,17 +62,17 @@ Variables por tema (definidas en `src/themes.css`):
 
 | Variable | Oscuro | Claro |
 |---|---|---|
-| `--page-bg` | `#080C14` | `#FFF4EE` |
+| `--page-bg` | `#080C14` | `#F1F5F9` |
 | `--card-bg` | `#0F172A` | `#FFFFFF` |
-| `--card-border` | `rgba(255,255,255,0.09)` | `#F5D9C7` |
-| `--text-main` | `#F8FAFC` | `#1A1513` |
-| `--text-muted` | `#94A3B8` | `#7D6F64` |
-| `--text-subtle` | `#8391A7` | `#7D6F64` |
-| `--input-bg` | `rgba(255,255,255,0.04)` | `#FAF6F2` |
-| `--input-border` | `rgba(255,255,255,0.16)` | `#F5D9C7` |
+| `--card-border` | `rgba(255,255,255,0.09)` | `#E2E8F0` |
+| `--text-main` | `#F8FAFC` | `#0F172A` |
+| `--text-muted` | `#94A3B8` | `#475569` |
+| `--text-subtle` | `#8391A7` | `#5B6778` |
+| `--input-bg` | `rgba(255,255,255,0.04)` | `#FFFFFF` |
+| `--input-border` | `rgba(255,255,255,0.16)` | `#CBD5E1` |
 | `--accent-text` | `--bkb-salmon-500` | `--bkb-salmon-700` |
 
-**Reglas de contraste (decisión D3 del rediseño):**
+**Reglas de contraste (decisión D3):**
 - El texto blanco sobre `salmon-500` (3,19:1) **no cumple AA** en tamaños normales. Para botones y texto pequeño usar `salmon-700`.
 - El texto salmón pequeño en tema claro usa `salmon-700` (`--accent-text` ya lo hace).
 - Cualquier valor nuevo se verifica con una herramienta de contraste antes de fijarlo.

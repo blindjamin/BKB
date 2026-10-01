@@ -2,7 +2,7 @@
 
 Portal donde el **personal de BKB sube documentos y fotos de cada proyecto** y los **clientes los consultan y descargan**, cada uno solo en los proyectos que se le asignan. Monolito Django con plantillas en servidor.
 
-> **Estado (25-09-2026):** funcionalidad y diseño completos en local (tareas 1 a 28 y pasos de diseño A a D); el código está listo para App Platform (tarea 15). Falta la puesta en marcha en DigitalOcean (tarea 16), que requiere decisiones y credenciales del usuario. La especificación está en [`docs/03-portal-django.md`](../../docs/03-portal-django.md), el plan en [`tasks/plan.md`](../../tasks/plan.md) y las tareas en [`tasks/todo.md`](../../tasks/todo.md).
+> **Estado (01-10-2026):** completo en local y fusionado en `desarrollo` y `main`: portal base (tareas 0 a 28 y diseño) más los 4 módulos de `docs/11` (encargados, avance, avisos y modificaciones). Falta la puesta en marcha en DigitalOcean (tarea 16) y el piloto. Especificación: [`docs/03-portal-django.md`](../../docs/03-portal-django.md) y [`docs/11-spec-avance-y-modificaciones.md`](../../docs/11-spec-avance-y-modificaciones.md). Pendientes: [`tasks/todo.md`](../../tasks/todo.md).
 
 ## Qué hace
 1. **Tipos de usuario:** personal (ve todos los proyectos y sube archivos), jefe (además da de alta usuarios en `/gestion/`) y cliente (solo ve y descarga los proyectos que se le asignan). El superusuario es una cuenta técnica.
@@ -59,7 +59,7 @@ La especificación está en [`.do/app.yaml`](../../.do/app.yaml), en la raíz de
 - **Límite de "¿Olvidaste tu contraseña?":** vive en la caché en memoria de cada proceso; con 2 workers, el límite efectivo es de 10 pedidos por IP cada 15 minutos.
 - **Validación del spec:** `doctl apps spec validate .do/app.yaml` queda para la tarea 16 (necesita una sesión de DigitalOcean).
 
-Pendientes de decisión del usuario antes de la tarea 16 (ver `tasks/todo.md`): la IP real del cliente para axes detrás del proxy, el arranque sin `EMAIL_HOST` con `DEBUG=False`, y verificar que el chequeo de salud no choque con la redirección HTTPS o con `ALLOWED_HOSTS`.
+Pendientes de decisión del usuario antes de la tarea 16 (ver `tasks/todo.md` §1): la IP real del cliente para axes detrás del proxy, el arranque sin `EMAIL_HOST` con `DEBUG=False`, y verificar que el chequeo de salud no choque con la redirección HTTPS o con `ALLOWED_HOSTS`.
 
 ## Actualizar tokens de diseño
 El portal usa los estilos de `packages/tokens`; `static/tokens/` es una copia y no se edita a mano. Para sincronizar (desde `apps/portal/`):
