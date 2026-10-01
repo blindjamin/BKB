@@ -28,7 +28,7 @@ bkb-platform/
 
 ## Pendientes
 
-Lista única y ordenada en [tasks/todo.md](tasks/todo.md): decidir 3 alertas de seguridad, verificación manual, despliegue del portal (tarea 16), piloto (tarea 17) y contenido de la landing.
+Lista única y ordenada en [tasks/todo.md](tasks/todo.md): la alerta de correo en espera, verificación manual, despliegue del portal (tarea 16), piloto (tarea 17) y contenido de la landing.
 
 ## Guía Rápida de Comandos
 

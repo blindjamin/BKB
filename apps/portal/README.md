@@ -59,7 +59,7 @@ La especificación está en [`.do/app.yaml`](../../.do/app.yaml), en la raíz de
 - **Límite de "¿Olvidaste tu contraseña?":** vive en la caché en memoria de cada proceso; con 2 workers, el límite efectivo es de 10 pedidos por IP cada 15 minutos.
 - **Validación del spec:** `doctl apps spec validate .do/app.yaml` queda para la tarea 16 (necesita una sesión de DigitalOcean).
 
-Pendientes de decisión del usuario antes de la tarea 16 (ver `tasks/todo.md` §1): la IP real del cliente para axes detrás del proxy, el arranque sin `EMAIL_HOST` con `DEBUG=False`, y verificar que el chequeo de salud no choque con la redirección HTTPS o con `ALLOWED_HOSTS`.
+IP real y chequeo de salud: resueltos (`docs/04` §6). Queda en espera qué hacer si falta `EMAIL_HOST` con `DEBUG=False`, hasta tener las cuentas de correo de la empresa.
 
 ## Actualizar tokens de diseño
 El portal usa los estilos de `packages/tokens`; `static/tokens/` es una copia y no se edita a mano. Para sincronizar (desde `apps/portal/`):

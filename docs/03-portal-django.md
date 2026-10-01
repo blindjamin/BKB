@@ -476,7 +476,7 @@ Estado verificado en el código al 25-09-2026. Cada punto cita el archivo o la p
 
 ### 15.2 Alertas pendientes de decisión del usuario
 
-Detalle en `docs/04` §6. Resumen: axes detrás del proxy de App Platform, arranque sin `EMAIL_HOST` con `DEBUG=False`, y chequeo de salud frente a `SECURE_SSL_REDIRECT`/`ALLOWED_HOSTS`. Las tres bloquean o condicionan la tarea 16.
+Detalle en `docs/04` §6. IP real detrás del proxy y chequeo de salud: resueltos (01-10-2026). Arranque sin `EMAIL_HOST` con `DEBUG=False`: en espera de las cuentas de correo de la empresa.
 
 ### 15.3 Seguimiento posterior a la v1
 

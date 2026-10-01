@@ -25,6 +25,7 @@
 - README principal, `docs/00`, `01`, `02`, `03`, READMEs del portal, de la web y de tokens al día con el estado actual.
 - Se borraron los planes ya cumplidos: `docs/08` (rediseño de la landing), `docs/09` (diseño del portal), `docs/10` (arriendo), `docs/design/handoff-landing/`, `tasks/plan.md`, `tasks/avance-*` y `tasks/arriendo-*`. `docs/03` §12 apunta a `docs/11`.
 - `tasks/todo.md` pasa a ser la lista única de pendientes.
+- **Alertas de seguridad:** resueltas la IP real (`DO-Connecting-IP`, también en axes) y el chequeo de salud (`config.middleware.salud`). La del correo queda en espera de las cuentas de la empresa. 365 pruebas en verde.
 
 ### Punto de partida
-`tasks/todo.md` §1: decidir las 3 alertas de seguridad; después, la verificación manual y la tarea 16.
+Conseguir las cuentas de correo; mientras tanto, la verificación manual de `tasks/todo.md` §2.

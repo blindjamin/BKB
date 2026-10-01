@@ -52,4 +52,4 @@ Son dos aplicaciones con objetivos distintos y técnicamente desacopladas:
 - **Despliegue continuo:** GitHub Action que publica el sitio estático en GitHub Pages (`https://blindjamin.github.io/BKB/`) con cada push a `desarrollo`.
 
 ### Pendientes abiertos
-La lista única y ordenada está en [`tasks/todo.md`](../tasks/todo.md): decidir 3 alertas de seguridad, verificación manual, despliegue (tarea 16), piloto (tarea 17) y contenido de la landing.
+La lista única y ordenada está en [`tasks/todo.md`](../tasks/todo.md): la alerta de correo en espera, verificación manual, despliegue (tarea 16), piloto (tarea 17) y contenido de la landing.

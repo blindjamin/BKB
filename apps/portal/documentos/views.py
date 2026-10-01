@@ -40,10 +40,9 @@ from .subidas import EXTENSIONES_PERMITIDAS
 
 
 def _get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        return x_forwarded_for.split(',')[-1].strip()
-    return request.META.get('REMOTE_ADDR')
+    # App Platform pone la IP del cliente en DO-Connecting-IP; REMOTE_ADDR y X-Forwarded-For traen
+    # la de su ingress. En local no viene el header y se usa REMOTE_ADDR. Lo usa también axes.
+    return request.META.get('HTTP_DO_CONNECTING_IP') or request.META.get('REMOTE_ADDR')
 
 
 def _preparar_archivo(usuario, archivo):

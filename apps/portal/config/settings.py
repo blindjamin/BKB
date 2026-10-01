@@ -55,6 +55,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'accounts.Usuario'
 
 MIDDLEWARE = [
+    'config.middleware.salud',  # /health/ sin chequeo de Host ni HTTPS
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'csp.middleware.CSPMiddleware',
@@ -225,6 +226,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 AXES_FAILURE_LIMIT = 5
+AXES_CLIENT_IP_CALLABLE = 'documentos.views._get_client_ip'  # IP real detrás del proxy de App Platform
 AXES_LOCKOUT_TEMPLATE = 'bloqueo.html'  # solo cambia la página del bloqueo
 
 # Rutas de autenticación

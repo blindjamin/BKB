@@ -2,11 +2,11 @@
 
 Todo lo implementado (portal tareas 0 a 28, módulos 1 a 4 de `docs/11`, landing y `/arriendo`) está fusionado en `desarrollo` y `main`. Los planes y listas cumplidos se borraron; quedan en el historial de git. Aquí solo va lo que falta, en orden.
 
-## 1. Decidir las 3 alertas de seguridad (bloquean la tarea 16)
-Detalle en `docs/04` §6. **Preguntar al usuario antes de tocar código.**
-- [ ] axes detrás del proxy de App Platform: hoy usa `REMOTE_ADDR` (la IP del proxy), así que 5 logins fallidos de cualquiera bloquean a todos. Alinear también `_get_client_ip` (límite de "¿Olvidaste tu contraseña?" y de `/cotizar/`).
-- [ ] Con `DEBUG=False` y sin `EMAIL_HOST`, el arranque debería fallar: hoy cae al backend de consola y los enlaces de invitación quedarían en los logs.
-- [ ] El chequeo de salud podría llegar por HTTP interno o con un `Host` fuera de `ALLOWED_HOSTS` y recibir 301 o 400 por `SECURE_SSL_REDIRECT`. Se verifica en la tarea 16.
+## 1. Alertas de seguridad
+Detalle en `docs/04` §6.
+- [x] IP real detrás del proxy: `DO-Connecting-IP` para axes, "olvidé mi contraseña", `/cotizar/` y los registros (01-10-2026).
+- [x] Chequeo de salud: `/health/` responde antes de los chequeos de Host y HTTPS (01-10-2026).
+- [ ] **En espera:** conseguir las cuentas de correo de la empresa (enviar y recibir). Después, decidir qué pasa si falta `EMAIL_HOST` con `DEBUG=False` (propuesta: que no arranque).
 
 ## 2. Verificación manual en local
 - [ ] Recorrido como personal y como cliente: crear empresa y proyecto con encargados (invitaciones en consola), avanzar hitos, aceptar y rechazar la Revisión, ver archivos al finalizar.

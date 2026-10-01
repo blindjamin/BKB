@@ -78,10 +78,10 @@ Cada control cita el setting, el archivo o la prueba que lo demuestra (rutas rel
 | [x] | El jefe nunca ve ni escribe contraseñas | `gestion/forms.py` (solo nombre, correo y tipo) |
 | [ ] | Timeout por inactividad de 30 minutos | No implementado (planificado, ver sección 2) |
 
-## 6. Alertas pendientes de decisión del usuario (antes de la tarea 16)
+## 6. Alertas de seguridad para producción (revisadas el 01-10-2026)
 
-| Alerta | Riesgo | Propuesta |
+| Alerta | Riesgo | Decisión |
 |---|---|---|
-| axes detrás del proxy de App Platform | axes usa `REMOTE_ADDR`, que en producción es la IP del proxy: 5 logins fallidos de cualquiera bloquearían a todos | Configurar la IP real del cliente para axes y alinear `_get_client_ip` con la misma regla. Bloquea la tarea 16 |
-| Arranque sin `EMAIL_HOST` con `DEBUG=False` | Cae al backend de consola: los enlaces de invitación y recuperación quedarían en los logs de App Platform | Que el arranque falle, igual que sin `SECRET_KEY`. Bloquea la tarea 16 |
-| Chequeo de salud de App Platform | Si llega por HTTP interno o con un `Host` fuera de `ALLOWED_HOSTS`, `SECURE_SSL_REDIRECT` respondería 301 o Django 400, y el servicio quedaría "no saludable" | Verificar en la tarea 16; si falla, eximir `health/` de la redirección o agregar el host interno (toca seguridad: requiere al usuario) |
+| IP real detrás del proxy de App Platform | `REMOTE_ADDR` y `X-Forwarded-For` traen la IP del ingress de DigitalOcean: 5 logins fallidos de cualquiera bloquearían a todos, y los topes de "olvidé mi contraseña" y `/cotizar/` serían globales | **Resuelta.** `documentos.views._get_client_ip` lee `DO-Connecting-IP` (la IP del cliente, según DigitalOcean) y, si no viene, `REMOTE_ADDR`. axes usa la misma función (`AXES_CLIENT_IP_CALLABLE`). Pruebas: `test_login.py::test_bloqueo_detras_del_proxy_es_por_ip_del_cliente`, `test_contrasena.py::test_cuenta_la_ip_de_do_connecting_ip` |
+| Arranque sin `EMAIL_HOST` con `DEBUG=False` | Cae al backend de consola: los enlaces de invitación y recuperación quedarían en los logs de App Platform | **En espera:** primero hay que conseguir las cuentas de correo de la empresa para enviar y recibir. Se decide antes de la tarea 16 |
+| Chequeo de salud de App Platform | Por HTTP interno o con un `Host` fuera de `ALLOWED_HOSTS`, Django respondería 301 o 400 y el servicio quedaría "no saludable" | **Resuelta.** `config.middleware.salud`, primero en `MIDDLEWARE`, responde `/health/` con 200 sin mirar Host ni HTTPS; el resto del sitio sigue igual. Pruebas: `test_produccion.py::SaludTests` |
