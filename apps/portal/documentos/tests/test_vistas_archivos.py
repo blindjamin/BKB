@@ -249,7 +249,7 @@ class ArchivosYFlujoTests(TestCase):
 
     def test_un_solo_boton_principal_fuera_del_aviso(self):
         html = self._ver(self.personal).content.decode()
-        # Los diálogos (aviso y confirmación) cuentan aparte (docs/09 §3.2)
+        # Los diálogos (aviso y confirmación) cuentan aparte
         fuera_de_dialogos = re.sub(r'<dialog.*?</dialog>', '', html, flags=re.S)
         self.assertEqual(fuera_de_dialogos.count('btn-primary'), 1)
 

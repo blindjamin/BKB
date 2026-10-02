@@ -65,7 +65,7 @@ class BorrarArchivoTests(TestCase):
         response = self.client.get(url_descarga)
         self.assertEqual(response.status_code, 404)
 
-    # GET a eliminar/: página de confirmación sin JS (docs/09 §5.5). Nunca borra.
+    # GET a eliminar/: página de confirmación sin JS. Nunca borra.
 
     def test_autor_ve_la_confirmacion_y_nada_se_borra(self):
         self.client.force_login(self.personal_autor)

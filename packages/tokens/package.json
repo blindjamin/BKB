@@ -1,7 +1,7 @@
 {
   "name": "@bkb/tokens",
   "version": "2.0.0",
-  "description": "Sistema de diseño y tokens CSS oficiales de BKB (v2 con paleta salmón y temas)",
+  "description": "Sistema de diseño y tokens CSS oficiales de BKB (tema oscuro y tema claro grafito y naranjo)",
   "main": "src/index.css",
   "style": "src/index.css",
   "files": [

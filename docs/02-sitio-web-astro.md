@@ -1,7 +1,7 @@
 # 02 · Sitio Web Público (Astro)
 
 > **Nota para IAs y desarrolladores frontend:**  
-> Describe la arquitectura, las rutas y los componentes de `apps/web` después del rediseño según el handoff de Claude Design. La referencia visual está en `docs/design/handoff-landing/` y el plan de ejecución en `08-plan-rediseno-landing.md`.
+> Describe la arquitectura, las rutas y los componentes de `apps/web`. El handoff de diseño y el plan de rediseño ya se cumplieron y se borraron (quedan en el historial de git).
 
 ---
 
@@ -48,10 +48,10 @@ styles/global.css      Tailwind + tokens + keyframes
 - **WhatsApp (`WhatsAppButton.astro`):** botón flotante abajo a la derecha que abre un chat con el teléfono principal.
 - **Teléfonos:** `SITE.phones` en `config/site.ts` tiene los dos confirmados, +56 9 6191 1593 (principal, llamadas y WhatsApp) y +56 9 6662 6540 (secundario). El +56 9 8975 3095 se eliminó el 2026-09-28. `SITE.phoneDisplay` y `SITE.phoneHref` son el principal. La tarjeta de contacto y el pie muestran los dos.
 - **Contacto (`QuoteSection.astro`):** formulario más una tarjeta de la oficina central (El Parque 110, La Calera) con teléfonos, correo y mapa. El mapa de Google se carga solo al hacer clic en "Ver mapa", para no cargar cookies de Google sin que la persona lo pida.
-- El tema se guarda en `localStorage['bkb-theme']` y un script `is:inline` lo aplica antes de pintar, para evitar el parpadeo. La landing es oscura por defecto.
+- El tema se guarda en `localStorage['bkb-theme']` y un script `is:inline` lo aplica antes de pintar, para evitar el parpadeo. La landing es oscura por defecto; el claro es grafito y naranjo.
 - `config/site.ts` lee `PUBLIC_PORTAL_URL` (por defecto `https://portal.empresabkb.cl`) y `PUBLIC_QUOTE_ENDPOINT`. La plantilla está en `apps/web/.env.example`. En local, `apps/web/.env` con `PUBLIC_PORTAL_URL=http://localhost:8000` hace que los botones lleven al portal local.
 - Todos los enlaces al portal (`PORTAL_URLS`) llevan a `/login/`. Clientes y colaboradores entran por el mismo login.
-- **Formulario de cotización:** usa `method="POST"` con `action` igual a `PUBLIC_QUOTE_ENDPOINT`. Sin endpoint, el botón queda deshabilitado con un aviso. Nunca debe existir un `<form>` sin `method`, porque enviaría datos personales por la URL.
+- **Formulario de cotización:** usa `method="POST"` con `action` igual a `QUOTE_ENDPOINT` (`PUBLIC_QUOTE_ENDPOINT` o, por defecto, `/cotizar/` del portal). El portal valida, aplica honeypot y un tope de 5 envíos por hora por IP, y envía la solicitud a `COTIZACION_CORREO` (`ingenieria@empresabkb.cl`) con Reply-To al cliente. La landing muestra si se envió o no. Nunca debe existir un `<form>` sin `method`, porque enviaría datos personales por la URL.
 - Los enlaces al portal salen de `PORTAL_URLS`; no escribir `https://portal.empresabkb.cl` a mano.
 - **Hero y carrusel de clientes:** `index.astro` los envuelve en un `div.relative`. El hero mide `100svh` y `ClientsMarquee` va `absolute bottom-0` encima, sin fondo. El hero deja `pb-[200px]` libres para que el contenido no quede tapado por la franja. El hero ya no tiene la tarjeta de acceso al portal: solo la información y el carrusel.
 - **Servicios (`Services.astro`):** carrusel manual e infinito, con tarjetas de foto de fondo y texto centrado. El script clona las tarjetas a cada lado (`[copia][originales][copia]`) y, cuando el scroll se detiene (120 ms), salta un ancho de set para volver al tramo original. El `reveal` va en el contenedor y no en las tarjetas, porque el `IntersectionObserver` no ve las tarjetas recortadas por el scroll horizontal.
@@ -73,11 +73,7 @@ styles/global.css      Tailwind + tokens + keyframes
 ---
 
 ## 5. Pendientes conocidos
-- El botón de envío del formulario de cotización usa `bg-salmon-500` con texto blanco (3,19:1), por debajo del mínimo AA. Corresponde `salmon-700` según D3.
-- Validar el contenido de la lista D7 y verificar las fases 8 a 10 de `08-plan-rediseno-landing.md`.
-- **Contenido sin respaldo** (no aparece en el sitio verificado `empresabkb.cl`): mercados, obras del portafolio y menciones a SEC TE1/Clase A. Ver `06-bitacora-avances.md`, sesión 5. Las métricas (150+, 40+, 100 %) se quitaron el 25-09-2026.
-- **Testimonios provisorios:** el texto de `testimonials` en `data/landing.ts` es inventado (marcado con `TODO`). Reemplazar por reseñas reales antes de publicar.
-- "Soy cliente" no carga en la landing publicada hasta que el portal esté en `portal.empresabkb.cl` (Tarea 16 del portal).
-- Reemplazar por fotos reales de cada servicio las fotos de faena repetidas de las tarjetas de "Qué hacemos" (marcadas con `TODO` en `data/landing.ts`).
-- Validar con BKB los textos de uso de `data/arriendo.ts`.
+- Contenido por validar con BKB y contraste del botón de envío: ver `tasks/todo.md` §5.
+- **Fuente verificada:** `https://empresabkb.cl/` (sitio antiguo) es información real. No respaldados por él: mercados, obras del portafolio, guardia 24/7 y SEC TE1/Clase A.
+- "Soy cliente" y el formulario de cotización no funcionan en la landing publicada hasta que el portal esté en `portal.empresabkb.cl` (tarea 16).
 - La lista de servicios del footer aún menciona "Obras Civiles" y "Mantención 24/7".

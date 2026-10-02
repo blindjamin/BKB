@@ -1,6 +1,6 @@
 # 03 · Portal de Archivos BKB (`apps/portal`): especificación
 
-> **Estado:** IMPLEMENTADA en local (25-09-2026): tareas 0 a 28, diseño DS-0 a DS-7 y tarea 15, con 304 pruebas en verde. Pendientes: despliegue (tarea 16) y piloto (tarea 17). Desviaciones y seguimiento en la sección 15. Especificación APROBADA v1.2 (22-09-2026), sobre la v1.1 (21-09-2026). Plan de implementación: [`tasks/plan.md`](../tasks/plan.md). Tareas: [`tasks/todo.md`](../tasks/todo.md).
+> **Estado:** IMPLEMENTADA en local y fusionada en `desarrollo` y `main` (01-10-2026), junto con los 4 módulos de `docs/11`. Pendientes: despliegue (tarea 16) y piloto (tarea 17), en [`tasks/todo.md`](../tasks/todo.md). Desviaciones y seguimiento en la sección 15. Especificación APROBADA v1.2 (22-09-2026), sobre la v1.1 (21-09-2026); la sección 12 la reemplaza `docs/11`.
 > **Sustituye** al diseño anterior de este documento, que quedó desactualizado.
 > **Origen:** entrevista de intención con el usuario (20-09-2026).
 > **Cambios de la v1.1 (21-09-2026):** BKB indicó que el cliente **no puede subir archivos**, solo verlos. Por eso: (1) los roles pasan de tres a dos, (2) se elimina la marca interno/compartido, (3) todo el personal ve todos los proyectos, y (4) el personal puede borrar lo que él subió (el administrador, cualquier archivo).
@@ -151,7 +151,6 @@ apps/portal/
 | `Archivo` | `id`, `proyecto`, `carpeta` (opcional, v1.3), `nombre_original`, `clave_space`, `tamano`, `tipo`, `subido_por`, `estado` (`pendiente`/`disponible`), `subido_en`, `eliminado_en`, `eliminado_por` |
 | `DescargaLog` | `usuario`, `archivo`, `fecha`, `ip` |
 | `Hito` (v1.2) | `id`, `proyecto`, `orden`, `nombre`, `cumplido_en`, `cumplido_por`. Único por (`proyecto`, `orden`) |
-| `RespuestaRecepcion` (v1.2) | `id`, `proyecto`, `usuario` (el cliente que responde), `nombre_revisor`, `conforme` (sí/no), `fecha`, `ip`. Nunca se edita ni se borra desde el portal *(Histórico: reemplazado por docs/11, 29-09-2026.)* |
 
 **Rutas**
 
@@ -171,7 +170,6 @@ apps/portal/
 | `/proyectos/nuevo/` (v1.2) | Personal y Jefe | Crear proyecto: empresa, nombre, hitos y clientes asignados |
 | `/proyectos/<uuid>/editar/` (v1.2) | Personal y Jefe | Cambiar nombre, clientes e hitos aún no cumplidos |
 | `POST /proyectos/<uuid>/hitos/avanzar/` y `/retroceder/` (v1.2) | Personal y Jefe | Marca el siguiente hito o desmarca el último marcado |
-| `POST /proyectos/<uuid>/recepcion/` (v1.2) | Cliente asignado | Confirma ("conforme") o rechaza ("no conforme") y envía el correo *(Histórico: reemplazado por docs/11, 29-09-2026.)* |
 | `/gestion/usuarios/`, `/gestion/usuarios/nuevo/`, `/gestion/usuarios/<uuid>/` (v1.2) | Jefe | Listar, crear, editar, desactivar o reactivar usuarios y reenviar la invitación |
 | `/contrasena/crear/<uidb64>/<token>/` (v1.2) | Quien recibe el enlace | Crear o restablecer la contraseña (vista estándar de Django) |
 | `/contrasena/olvide/` (v1.2) | Todos | Pedir el enlace por correo. La respuesta es la misma exista o no el correo |
@@ -303,10 +301,8 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 | 2 | ¿Se crea una clave de acceso del Space dedicada al portal (no la personal)? | Sí, guardada solo en las variables de App Platform |
 | 3 | ¿Quién puede borrar? | **Resuelta (21-09-2026):** el personal borra lo que él subió y el administrador cualquier archivo |
 | 4 | (v1.2) Si hay varios clientes asignados, ¿basta la confirmación de uno para desbloquear a todos? | **Resuelta (22-09-2026):** sí. La recepción es del proyecto y queda el nombre de quien revisó |
-| 5 | (v1.2) ¿Qué direcciones reciben los correos? | **Resuelta (22-09-2026):** el correo del jefe. Va en la variable `AVISO_RECEPCION_CORREOS`, no en el código. **Mientras tanto (pruebas):** el jefe y el destinatario son dos correos del desarrollador, definidos solo en el `.env` local *(Histórico: reemplazado por docs/11, 29-09-2026.)* |
 | 6 | (v1.2) ¿Desde qué cuenta se envían los correos? | **Resuelta (22-09-2026):** `instrumentacion@empresabkb.cl` (Google Workspace, `smtp.gmail.com:587` con STARTTLS y una contraseña de aplicación). **Por ahora los correos salen por consola** (`EMAIL_HOST` vacío), también en las pruebas manuales. Conectar la cuenta queda pendiente: requiere verificación en dos pasos y una contraseña de aplicación. **Verificar que App Platform permita SMTP saliente por el puerto 587**; si no, se necesita un proveedor con API (dependencia nueva: preguntar) |
 | 7 | (v1.2) ¿Quién crea las empresas y las cuentas? | **Resuelta (22-09-2026):** el **jefe**, desde la pantalla Gestión del portal (sección 13). El personal solo elige empresas y clientes que ya existen |
-| 8 | (v1.2) ¿Qué pasa con un proyecto que ya tiene recepción conforme y luego se le agregan archivos o hitos? | **Resuelta (22-09-2026), por ahora:** sigue desbloqueado. En la v1 no se agregan hitos después de la recepción *(Histórico: reemplazado por docs/11, 29-09-2026.)* |
 
 ---
 
@@ -322,67 +318,9 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 
 ---
 
-## 12. Hitos del proyecto y recepción del cliente (v1.2)
+## 12. Hitos y recepción del cliente
 
-> Reemplazada por docs/11 (29-09-2026); se conserva como historial.
-
-**Por qué:** BKB quiere que el cliente vea en qué va su proyecto y que, al terminarlo, **deje constancia de que lo recibió y revisó** antes de seguir usando los archivos. El personal recibe esa confirmación por correo, sin tener que entrar al portal a revisar.
-
-### 12.1 Flujo
-
-```
-Login → Mis proyectos → clic en un proyecto
-                          │
-                          ├─ Personal: panel de hitos con casillas (sin aviso) + archivos
-                          │
-                          └─ Cliente: AVISO con la lista de hitos y el actual
-                                ├─ En curso (falta marcar hitos): "Cerrar" → ve los archivos
-                                ├─ Esperando recepción (todos marcados, sin conforme):
-                                │     no se puede cerrar ni ver archivos
-                                │     [Nombre de quien revisó] [✓ Recepcionado y revisado]
-                                │     (Confirmar)   (No conforme)
-                                └─ Recibido: aviso informativo, "Cerrar" → ve los archivos
-```
-
-### 12.2 Estados del proyecto (se calculan, no se guardan)
-
-| Estado | Condición | Cliente ve archivos |
-|---|---|---|
-| **En curso** | Queda al menos un hito sin marcar | Sí |
-| **Esperando recepción** | Todos los hitos marcados y no hay `RespuestaRecepcion` conforme | **No** |
-| **Recibido** | Hay una `RespuestaRecepcion` conforme | Sí |
-
-- El estado **se deriva** de `Hito` y `RespuestaRecepcion`, sin campo propio. Así no hay dos fuentes que puedan contradecirse.
-- El campo actual `Proyecto.estado` (`activo`/`cerrado`) se mantiene como está y no interviene en el bloqueo.
-- Todo proyecto tiene **al menos un hito**. El formulario lo exige.
-
-### 12.3 Reglas
-
-1. **Crear proyecto (personal, en el portal):** empresa (de una lista existente), nombre, hitos en orden (texto libre, uno por línea o con "agregar hito") y clientes asignados (solo de tipo cliente). Crear empresas y cuentas sigue siendo del administrador en `/admin/`.
-2. **Editar:** el personal renombra, reordena, agrega o quita hitos **aún no marcados**, y cambia los clientes asignados. Los hitos ya marcados no se editan.
-3. **Marcar hitos:** solo el siguiente sin marcar (`avanzar`) y solo el último marcado (`retroceder`). Se registra quién y cuándo. No se retrocede si ya hay recepción conforme.
-4. **Aviso al cliente:** sale **cada vez** que abre el proyecto. Es un `<dialog>` nativo con JS externo (compatible con la CSP, sin estilos ni manejadores en línea). Sin JS, el mismo contenido se ve arriba de la página.
-5. **Bloqueo:** en "esperando recepción", `permisos.archivos_visibles` devuelve **vacío para el cliente**. Por eso la lista sale vacía y la descarga da **404**, también por enlace directo. **El bloqueo es del servidor, no del aviso.**
-6. **Confirmar:** exige el nombre del revisor y la casilla "Recepcionado y revisado". Crea `RespuestaRecepcion(conforme=True)`, desbloquea para **todos** los clientes del proyecto y envía el correo de conforme.
-7. **No conforme:** exige el nombre de quien revisó. Crea `RespuestaRecepcion(conforme=False)` y envía un correo que dice que la recepción no se hizo y que el cliente será contactado para solucionarlo. **El bloqueo sigue** y el cliente puede confirmar más tarde.
-8. **Correo:** con `django.core.mail.send_mail` (sin dependencias nuevas) a `AVISO_RECEPCION_CORREOS`. Incluye proyecto, empresa, resultado, nombre del revisor, correo del cliente y fecha. Si el envío falla, **la respuesta se guarda igual** y el error queda en el log: el cliente no pierde su confirmación por un problema de correo.
-9. **Permisos nuevos en `permisos.py`:** `estado_proyecto(proyecto)`, `puede_gestionar_hitos(usuario)` (personal y jefe) y `puede_responder_recepcion(usuario, proyecto)` (cliente asignado, proyecto esperando recepción). Las vistas no deciden con ifs propios.
-10. El personal, el jefe y el superusuario **nunca** quedan bloqueados.
-
-### 12.4 Qué cambia respecto de la v1.1
-
-| Área | v1.1 | v1.2 |
-|---|---|---|
-| Crear proyectos | Solo el administrador en `/admin/` | El personal y el jefe, desde el portal |
-| Empresas y usuarios | El administrador en `/admin/` | El jefe, en la pantalla Gestión (sección 13) |
-| Qué ve el cliente | Todos los archivos de sus proyectos | Todos, salvo mientras el proyecto espera su recepción |
-| Correo | Fuera de alcance | Al confirmar o rechazar la recepción, y para las invitaciones y la recuperación de contraseña |
-| Modelos | 5 | 7 (`Hito`, `RespuestaRecepcion`) |
-| Pantallas | ≈ 5 | ≈ 7 (formulario de proyecto y aviso) |
-
-### 12.5 Fuera de alcance (v1.2)
-
-Plantillas de hitos reutilizables (se agregan si repiten siempre la misma lista), fechas estimadas por hito, comentarios del cliente en el portal (el "no conforme" se resuelve por teléfono o correo), correo al cliente cuando avanza un hito, y firma electrónica de la recepción.
+Reemplazada por [`11-spec-avance-y-modificaciones.md`](11-spec-avance-y-modificaciones.md) (29-09-2026): encargados, 7 hitos estándar, Revisión aceptada o rechazada por el cliente, archivos ocultos hasta finalizar, avisos y modificaciones. La versión anterior está en el historial de git.
 
 ---
 
@@ -512,7 +450,7 @@ Login → [ / ]
 
 ## 15. Implementación y desviaciones (25-09-2026)
 
-Estado verificado en el código de la rama `benjamin/2026-09-25-portal-prod`. Cada punto cita el archivo o la prueba que lo demuestra.
+Estado verificado en el código al 25-09-2026. Cada punto cita el archivo o la prueba que lo demuestra.
 
 ### 15.1 Desviaciones respecto de la spec
 
@@ -521,10 +459,7 @@ Estado verificado en el código de la rama `benjamin/2026-09-25-portal-prod`. Ca
 | Eliminar carpeta | §14.3: solo carpetas vacías | Elimina también con archivos; esos archivos vuelven a la raíz (`SET_NULL`) | Criterio aprobado en la tarea 23 (§14.2.2) | `documentos/tests/test_carpetas.py` (`EliminarCarpetaTests`) |
 | Destino de la subida | §14.4: selector de carpeta destino | Va a la carpeta **activa** (`data-carpeta-id`); sin selector | Más simple en terreno; se sube desde dentro de la carpeta | `documentos/subidas.py`, `test_carpetas.py` (`SubidaACarpetaTests`) |
 | Nombre de carpeta | §14.2: único por proyecto | Único sin distinguir mayúsculas | Evita "Informes" e "informes" | `documentos/views.py::crear_carpeta` (`nombre__iexact`) |
-| Editar hitos | §12.3.2: los hitos marcados no se editan | `ProyectoForm` rechaza editar, quitar o reordenar cumplidos, y cualquier cambio en un proyecto recibido | Mismo invariante que avanzar/retroceder | `documentos/forms.py`, `test_vistas_empresas.py` (`test_editar_proyecto_*`) |
-| Hito nuevo en espera | — | Agregar un hito mientras se espera la recepción devuelve el proyecto a "en curso" | Equivale a retroceder, que está permitido antes de una conforme | `documentos/permisos.py::estado_proyecto` *(Histórico: reemplazado por docs/11, 29-09-2026.)* |
 | Concurrencia | — | Avanzar, retroceder y responder la recepción bloquean la fila del proyecto (`select_for_update`) | Evita saltos de hitos y dobles respuestas | `documentos/views.py` |
-| Correo de recepción | §12.3.8 | Se envía después de guardar, fuera de la transacción; con `AVISO_RECEPCION_CORREOS` vacío no se envía y queda un `warning`; `DEFAULT_FROM_EMAIL` usa `portal@empresabkb.cl` por defecto | Un fallo del correo nunca pierde la respuesta | `documentos/avisos.py`, `config/settings.py`, `test_recepcion.py` *(Histórico: reemplazado por docs/11, 29-09-2026.)* |
 | Gestión: rutas | §5: `/gestion/usuarios/<uuid>/` | Desactivar, reactivar y reenviar son subrutas POST | Nunca cambios por GET | `gestion/urls.py` |
 | Gestión: correo | §13.2 | El correo no se edita | Fuera de alcance (§13.5) | `gestion/forms.py`, `gestion/tests.py` |
 | Gestión: destinos prohibidos | §8 | El jefe (él mismo, otro jefe) o un superusuario como destino da **404** | Una sola consulta (`_gestionables`) | `gestion/views.py`, `gestion/tests.py::test_superusuario_y_el_propio_jefe_dan_404` |
@@ -534,23 +469,23 @@ Estado verificado en el código de la rama `benjamin/2026-09-25-portal-prod`. Ca
 | Límite de "olvidé" | 5 por IP cada 15 min | Contador en `LocMemCache`, por proceso: con 2 workers el efectivo es 10 | Sin dependencias nuevas | `accounts/views.py`, `test_contrasena.py::LimitePorIpTests` |
 | 403 | — | Las vistas HTML usan `PermissionDenied` y muestran `403.html` (mismo código); las respuestas JSON de subida siguen en JSON | Página propia sin cambiar el resultado | `documentos/tests/test_errores.py`, `test_subida.py` |
 | Borrado de archivo | §5 | GET muestra una página de confirmación sin JS (nunca borra); GET y POST buscan con `archivos_visibles_para`: 404 si no lo ve, 403 si lo ve pero no puede borrarlo | "404 cuando no debe saber que existe" | `documentos/views.py::eliminar_archivo`, `test_borrar.py` |
-| Filtro de archivos | `docs/09` §5.3: Documentos y Fotos | Además "Todos", por defecto | Una página muestra todo lo visible | `test_vistas_archivos.py::test_filtro_por_tipo_en_el_servidor` |
+| Filtro de archivos | Plan de diseño: Documentos y Fotos | Además "Todos", por defecto | Una página muestra todo lo visible | `test_vistas_archivos.py::test_filtro_por_tipo_en_el_servidor` |
 | Conteos | — | Los conteos de archivos y la última carga respetan el bloqueo del cliente | Salen de `permisos.py` | `test_vistas_proyectos.py::ConteoProyectoBloqueadoTests`, `test_vistas_archivos.py` |
 | Estáticos | §3 | Manifiesto de WhiteNoise solo con `DEBUG=False` | Las pruebas no corren `collectstatic` | `config/settings.py`, `test_produccion.py` |
-| Ayuda | — | Se muestran +56 9 6191 1593 y +56 9 6662 6540 | Aprobados por el usuario (`docs/09` §12.1) | `templates/base.html`, `test_csp_contrato.py::BaseComunTests` |
+| Ayuda | — | Se muestran +56 9 6191 1593 y +56 9 6662 6540 | Aprobados por el usuario | `templates/base.html`, `test_csp_contrato.py::BaseComunTests` |
 
 ### 15.2 Alertas pendientes de decisión del usuario
 
-Detalle en `docs/04` §6. Resumen: axes detrás del proxy de App Platform, arranque sin `EMAIL_HOST` con `DEBUG=False`, y chequeo de salud frente a `SECURE_SSL_REDIRECT`/`ALLOWED_HOSTS`. Las tres bloquean o condicionan la tarea 16.
+Detalle en `docs/04` §6. IP real detrás del proxy y chequeo de salud: resueltos (01-10-2026). Arranque sin `EMAIL_HOST` con `DEBUG=False`: en espera de las cuentas de correo de la empresa.
 
 ### 15.3 Seguimiento posterior a la v1
 
-De `tasks/plan.md`: subida o solicitud de documentos por el cliente, marca interno/compartido, ClamAV, miniaturas y previsualización, avisos por correo al subir, limpieza de subidas pendientes, Google SSO y 2FA, panel de administración propio y migración de archivos antiguos. Además:
-- **Revisión de UI/UX pendiente**, planificada en el brief `brief-uiux.md` del equipo de agentes (no se hizo en esta ronda).
+Fuera de la v1: subida o solicitud de documentos por el cliente, marca interno/compartido, ClamAV, miniaturas y previsualización, avisos por correo al subir, limpieza de subidas pendientes, Google SSO y 2FA, panel de administración propio y migración de archivos antiguos. Además:
+- **Revisión de UI/UX pendiente.**
 - Editar nombre y RUT de una empresa desde `/gestion/` (§13.2).
 - Caché compartida (Redis o base de datos) para el límite de "olvidé mi contraseña" si hay más de un worker.
 - Limpieza de `Archivo` pendientes huérfanos (subidas cortadas y reintentos).
-- Cruzar el tipo MIME declarado con la extensión al subir (`docs/09` §11).
+- Cruzar el tipo MIME declarado con la extensión al subir.
 - Desbloquear axes al recuperar la contraseña.
 - Versión vectorial del logo.
 - Texto de privacidad en el pie: requiere un texto confirmado por el usuario.

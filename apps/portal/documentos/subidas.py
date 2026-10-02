@@ -11,7 +11,7 @@ from .permisos import puede_editar_proyecto, puede_subir, proyectos_visibles
 from .models import Archivo, Carpeta, EstadoArchivo, Modificacion
 from .storage import post_subida, clave_para, tamano_en_space
 
-# Una sola fuente: la plantilla la pasa al navegador para la validación previa (docs/09 §5.4).
+# Una sola fuente: la plantilla la pasa al navegador para la validación previa.
 EXTENSIONES_PERMITIDAS = {'.pdf', '.jpg', '.jpeg', '.png', '.heic', '.doc', '.docx', '.xls', '.xlsx', '.dwg', '.dxf'}
 
 @login_required

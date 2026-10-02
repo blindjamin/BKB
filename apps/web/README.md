@@ -3,7 +3,8 @@
 Aplicación web estática construida con **Astro 5+**, diseñada con cero JavaScript por defecto en el cliente, alta accesibilidad (WCAG 2.2 AA) y rendimiento superior (Lighthouse ≥ 95).
 
 ## Estructura de Páginas
-- `src/pages/index.astro`: Landing de una página con anclas (`#mercados`, `#servicios`, `#obras`, `#cotizar`): hero con carrusel de clientes, "Qué hacemos" (carrusel de servicios), métricas, mercados, portafolio y cotización.
+- `src/pages/index.astro`: Landing de una página con anclas (`#mercados`, `#servicios`, `#obras`, `#cotizar`): hero con carrusel de clientes, "Qué hacemos" (carrusel de servicios), mercados, portafolio, testimonios y contacto con el formulario "Cotizar obra" (publica en `/cotizar/` del portal).
+- `src/pages/arriendo.astro`: Arriendo de equipos con técnico BKB; se eligen varios y se cotizan en un solo mensaje de WhatsApp.
 - `src/pages/trabaja-con-nosotros.astro`: Vacantes laborales y recepción de CV con consentimiento explícito bajo Ley 21.719.
 - `src/pages/privacidad.astro`: Política de Privacidad de datos personales (Ley 21.719).
 - `src/pages/terminos.astro`: Términos del servicio.
