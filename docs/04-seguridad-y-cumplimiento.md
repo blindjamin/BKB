@@ -3,7 +3,7 @@
 > **Nota para IAs y auditores de seguridad:**  
 > La seguridad de esta plataforma sigue el estándar OWASP ASVS 5.0 Nivel 2 y las normativas chilenas vigentes (Ley 21.719 de Protección de Datos y Ley 21.663 Marco de Ciberseguridad).
 
-> **Estado (25-09-2026):** el portal está implementado en local y listo para App Platform; falta el despliegue (tarea 16). La sección 5 marca los controles hechos con su evidencia y la sección 6 lista las alertas pendientes de decisión del usuario. El timeout por inactividad de 30 minutos, el honeypot y Turnstile no están implementados en el portal.
+> **Estado (25-09-2026):** el portal está implementado en local y publicado en el Droplet (`portal.empresabkb.cl`) como vista previa, sin datos reales. La sección 5 marca los controles hechos con su evidencia y la sección 6 lista las alertas pendientes de decisión del usuario. El timeout por inactividad de 30 minutos, el honeypot y Turnstile no están implementados en el portal.
 
 ---
 
@@ -35,7 +35,7 @@
 ## 3. Seguridad en la Infraestructura
 - **Aislamiento por Subdominios:** El sitio estático (`www.empresabkb.cl`) y el portal transaccional (`portal.empresabkb.cl`) no comparten cookies ni estado.
 - **Base de Datos Privada:** PostgreSQL no cuenta con IP pública; solo acepta conexiones autorizadas provenientes de los servidores de la aplicación en la VPC de DigitalOcean.
-- **Secretos:** Gestionados como variables de entorno cifradas en DigitalOcean App Platform, nunca comprometidas en el repositorio Git.
+- **Secretos:** En `/srv/BKB-2026/portal.env` del Droplet (fuera del repo), nunca comprometidas en el repositorio Git.
 
 ---
 
@@ -46,7 +46,7 @@ Detalle completo en [`03-portal-django.md`](03-portal-django.md).
 - **Descarga:** URL prefirmada de 60 segundos, siempre como adjunto, con registro de usuario, archivo, fecha e IP.
 - **Subida:** solo el personal. POST prefirmado con límite de tamaño impuesto por el Space. Lista de extensiones permitidas (sin `zip` ni ejecutables) y máximo de 50 MB. El servidor Django nunca procesa el contenido de los archivos.
 - **Sin antivirus en la v1:** solo el personal de BKB sube archivos, no el público. Se sirven siempre como adjunto y solo con extensiones de una lista permitida. ClamAV queda como mejora opcional.
-- **Claves del Space:** una clave dedicada al portal, guardada solo en variables de entorno de App Platform y en el `.env` local (nunca versionado).
+- **Claves del Space:** una clave dedicada al portal, guardada solo en `portal.env` del servidor y en el `.env` local (nunca versionado).
 - **Borrado:** el personal borra lo que él subió y el administrador cualquier archivo; el cliente nunca. Es lógico: oculta el archivo al instante para todos, registra quién lo hizo y el objeto permanece en el Space.
 
 ---
@@ -82,6 +82,6 @@ Cada control cita el setting, el archivo o la prueba que lo demuestra (rutas rel
 
 | Alerta | Riesgo | Decisión |
 |---|---|---|
-| IP real detrás del proxy de App Platform | `REMOTE_ADDR` y `X-Forwarded-For` traen la IP del ingress de DigitalOcean: 5 logins fallidos de cualquiera bloquearían a todos, y los topes de "olvidé mi contraseña" y `/cotizar/` serían globales | **Resuelta.** `documentos.views._get_client_ip` lee `DO-Connecting-IP` (la IP del cliente, según DigitalOcean) y, si no viene, `REMOTE_ADDR`. axes usa la misma función (`AXES_CLIENT_IP_CALLABLE`). Pruebas: `test_login.py::test_bloqueo_detras_del_proxy_es_por_ip_del_cliente`, `test_contrasena.py::test_cuenta_la_ip_de_do_connecting_ip` |
-| Arranque sin `EMAIL_HOST` con `DEBUG=False` | Cae al backend de consola: los enlaces de invitación y recuperación quedarían en los logs de App Platform | **En espera:** primero hay que conseguir las cuentas de correo de la empresa para enviar y recibir. Se decide antes de la tarea 16 |
-| Chequeo de salud de App Platform | Por HTTP interno o con un `Host` fuera de `ALLOWED_HOSTS`, Django respondería 301 o 400 y el servicio quedaría "no saludable" | **Resuelta.** `config.middleware.salud`, primero en `MIDDLEWARE`, responde `/health/` con 200 sin mirar Host ni HTTPS; el resto del sitio sigue igual. Pruebas: `test_produccion.py::SaludTests` |
+| IP real detrás del proxy | Detrás de nginx, `REMOTE_ADDR` es siempre `127.0.0.1`: 5 logins fallidos de cualquiera bloquearían a todos, y los topes de "olvidé mi contraseña" y `/cotizar/` serían globales | **Resuelta.** `documentos.views._get_client_ip` lee `X-Real-IP`, que nginx fija con `$remote_addr` (pisa lo que mande el cliente; gunicorn solo escucha en 127.0.0.1), y si no viene, `REMOTE_ADDR`. axes usa la misma función (`AXES_CLIENT_IP_CALLABLE`). Pruebas: `test_login.py::test_bloqueo_detras_del_proxy_es_por_ip_del_cliente`, `test_contrasena.py::test_cuenta_la_ip_de_x_real_ip` |
+| Arranque sin `EMAIL_HOST` con `DEBUG=False` | Cae al backend de consola: los enlaces de invitación y recuperación quedarían en `journalctl` del servidor | **En espera:** primero hay que conseguir las cuentas de correo de la empresa para enviar y recibir. Se decide antes de la tarea 16 |
+| Chequeo de salud | Por HTTP interno o con un `Host` fuera de `ALLOWED_HOSTS`, Django respondería 301 o 400 y el servicio quedaría "no saludable" | **Resuelta.** `config.middleware.salud`, primero en `MIDDLEWARE`, responde `/health/` con 200 sin mirar Host ni HTTPS; el resto del sitio sigue igual. Pruebas: `test_produccion.py::SaludTests` |

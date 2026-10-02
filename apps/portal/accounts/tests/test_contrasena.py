@@ -101,14 +101,14 @@ class LimitePorIpTests(OlvideContrasenaTests):
 
         self.assertEqual(self._pedir('cliente@test.cl', REMOTE_ADDR='10.0.0.2').status_code, 302)
 
-    def test_cuenta_la_ip_de_do_connecting_ip(self):
+    def test_cuenta_la_ip_de_x_real_ip(self):
         # Detrás del proxy todos llegan con la misma REMOTE_ADDR: cuenta la IP del cliente.
         for _ in range(5):
-            self._pedir('nadie@test.cl', REMOTE_ADDR='10.0.0.9', HTTP_DO_CONNECTING_IP='1.1.1.1')
+            self._pedir('nadie@test.cl', REMOTE_ADDR='127.0.0.1', HTTP_X_REAL_IP='1.1.1.1')
         self.assertEqual(
-            self._pedir('nadie@test.cl', REMOTE_ADDR='10.0.0.9', HTTP_DO_CONNECTING_IP='1.1.1.1').status_code, 429)
+            self._pedir('nadie@test.cl', REMOTE_ADDR='127.0.0.1', HTTP_X_REAL_IP='1.1.1.1').status_code, 429)
         self.assertEqual(
-            self._pedir('nadie@test.cl', REMOTE_ADDR='10.0.0.9', HTTP_DO_CONNECTING_IP='2.2.2.2').status_code, 302)
+            self._pedir('nadie@test.cl', REMOTE_ADDR='127.0.0.1', HTTP_X_REAL_IP='2.2.2.2').status_code, 302)
 
     def test_la_ventana_dura_15_minutos_y_luego_se_libera(self):
         with patch('accounts.views.cache.add', wraps=cache.add) as add:

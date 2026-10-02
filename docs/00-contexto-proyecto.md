@@ -24,13 +24,13 @@ Son dos aplicaciones con objetivos distintos y técnicamente desacopladas:
    - **Objetivo:** vender la empresa y generar confianza en futuros clientes corporativos, recibir solicitudes de cotización y postulaciones (CV), y posicionarse en buscadores.
    - **Tecnología:** Astro 5 (salida estática), Tailwind CSS v4 y `@bkb/tokens`. Sin servidor: el formulario "Cotizar obra" publica en `/cotizar/` del portal.
    - **Estado:** landing de una página y `/arriendo` terminadas; falta validar contenido con BKB (ver `tasks/todo.md` §5).
-   - **Hosting:** hoy se previsualiza en GitHub Pages; el destino es DigitalOcean App Platform (sitio estático).
+   - **Hosting:** nginx en el Droplet de DigitalOcean (`/srv/BKB-2026/landing`); vista previa en GitHub Pages.
 
 2. **Portal de Proyectos (`portal.empresabkb.cl`):**
    - **Objetivo:** que el cliente siga el avance de su proyecto, apruebe o rechace la Revisión final y las modificaciones que BKB le propone, y descargue los documentos y fotos al finalizar. **Es el propósito principal de la plataforma.**
    - **Tecnología:** Django 5.2 LTS, plantillas en servidor, PostgreSQL y los archivos en un DigitalOcean Space privado (`bkb-space`).
    - **Estado:** completo en local (spec base `03-portal-django.md` más los 4 módulos de `11-spec-avance-y-modificaciones.md`). Falta el despliegue (tarea 16) y el piloto (tarea 17).
-   - **Hosting:** DigitalOcean App Platform, una sola instancia, más PostgreSQL gestionado (`.do/app.yaml`).
+   - **Hosting:** el mismo Droplet: gunicorn detrás de nginx con HTTPS y SQLite (ver `apps/portal/README.md`).
 
 ---
 

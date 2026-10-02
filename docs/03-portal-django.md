@@ -66,7 +66,7 @@ Confirmadas por el usuario el 20-09-2026 y ajustadas el 21-09-2026 (las 6 y 8 ca
 | Capa | Elección |
 |---|---|
 | Lenguaje / framework | Python 3.12 · Django 5.2 LTS |
-| Servidor | Gunicorn + WhiteNoise, en DigitalOcean App Platform |
+| Servidor | Gunicorn + WhiteNoise detrás de nginx, en un Droplet de DigitalOcean (decisión del 01-10-2026; antes App Platform) |
 | Base de datos | SQLite en local; PostgreSQL gestionado en producción vía `DATABASE_URL` (`dj-database-url`) |
 | Archivos | DigitalOcean Space `bkb-space`, privado, con `django-storages`/`boto3` solo para firmar URLs |
 | Seguridad | Argon2id, `django-axes` (bloqueo por fuerza bruta), `django-csp`, cookies seguras |
@@ -78,7 +78,7 @@ Confirmadas por el usuario el 20-09-2026 y ajustadas el 21-09-2026 (las 6 y 8 ca
 - No hay `AUTH_USER_MODEL` propio. **Debe definirse antes del primer `migrate`.** El `db.sqlite3` local no versionado se descarta.
 - `DEBUG` es `True` por defecto y `SECRET_KEY` tiene un valor inseguro por defecto. Debe pasar a `DEBUG=False` por defecto, y sin `SECRET_KEY` real el servidor debe negarse a arrancar (salvo con `DEBUG=True` en local).
 - `settings.py` no lee el archivo `.env` (falta `load_dotenv()`), así que un `.env` local no tendría efecto.
-- Detrás del proxy de App Platform, `SECURE_SSL_REDIRECT=True` sin `SECURE_PROXY_SSL_HEADER` causa una redirección infinita.
+- Detrás de nginx, `SECURE_SSL_REDIRECT=True` sin `SECURE_PROXY_SSL_HEADER` causa una redirección infinita.
 - La base de datos está fija en SQLite. `dj-database-url` se conecta en la tarea de despliegue; no bloquea el desarrollo local.
 - `axes` está comentado: hay que activarlo (aplicación, middleware y backend de autenticación). `django-htmx`, `rules` y `django-allauth` salen de `requirements.txt` y de `pyproject.toml` (no se usan en la v1).
 - `pyproject.toml` lista `django-rules`, un paquete distinto y abandonado; desaparece al quitar `rules`.
@@ -136,7 +136,6 @@ apps/portal/
 ├── templates/              base, login, proyectos, archivos
 ├── static/portal.css       estilos con las variables de packages/tokens
 └── .env.example
-.do/app.yaml                especificación de App Platform (raíz del monorepo)
 ```
 
 **Modelo de datos** (identificadores UUID, nunca correlativos):
@@ -273,7 +272,7 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 6. Las pruebas demuestran que ninguna clave generada queda fuera del prefijo `portal/`.
    - **Estado (25-09-2026):** [x] `documentos/tests/test_storage.py` (`test_es_prefijo_mas_uuids`, `test_toda_operacion_rechaza_claves_fuera_del_prefijo`).
 7. Tras 5 intentos fallidos el login queda bloqueado, y el mensaje de error no revela si el correo existe.
-   - **Estado (25-09-2026):** [x] `accounts/tests/test_login.py` (`test_bloqueo_fuerza_bruta`, `test_error_generico`). Ojo: detrás del proxy de App Platform falta configurar la IP real (sección 15.2).
+   - **Estado (25-09-2026):** [x] `accounts/tests/test_login.py` (`test_bloqueo_fuerza_bruta`, `test_error_generico`). Detrás de nginx usa `X-Real-IP` (`test_bloqueo_detras_del_proxy_es_por_ip_del_cliente`).
 8. `python manage.py check --deploy` sin advertencias con variables de producción.
    - **Estado (25-09-2026):** [ ] Sin prueba automática: se ejecutó a mano con variables ficticias en la tarea 15, sin advertencias. Se repite en producción (tarea 16).
 9. Desplegado en `portal.empresabkb.cl` con HTTPS, `/health/` respondiendo y un piloto completo (login → el personal sube → el cliente ve y descarga → el personal borra) con un proyecto de prueba.
@@ -298,10 +297,10 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 | # | Pregunta | Propuesta por defecto |
 |---|---|---|
 | 1 | ¿Quién administra el DNS? | **Resuelta (21-09-2026):** el único dominio es `empresabkb.cl`, con DNS en DigitalOcean. El portal será `portal.empresabkb.cl` |
-| 2 | ¿Se crea una clave de acceso del Space dedicada al portal (no la personal)? | Sí, guardada solo en las variables de App Platform |
+| 2 | ¿Se crea una clave de acceso del Space dedicada al portal (no la personal)? | Sí, guardada solo en `/srv/BKB-2026/portal.env` del servidor |
 | 3 | ¿Quién puede borrar? | **Resuelta (21-09-2026):** el personal borra lo que él subió y el administrador cualquier archivo |
 | 4 | (v1.2) Si hay varios clientes asignados, ¿basta la confirmación de uno para desbloquear a todos? | **Resuelta (22-09-2026):** sí. La recepción es del proyecto y queda el nombre de quien revisó |
-| 6 | (v1.2) ¿Desde qué cuenta se envían los correos? | **Resuelta (22-09-2026):** `instrumentacion@empresabkb.cl` (Google Workspace, `smtp.gmail.com:587` con STARTTLS y una contraseña de aplicación). **Por ahora los correos salen por consola** (`EMAIL_HOST` vacío), también en las pruebas manuales. Conectar la cuenta queda pendiente: requiere verificación en dos pasos y una contraseña de aplicación. **Verificar que App Platform permita SMTP saliente por el puerto 587**; si no, se necesita un proveedor con API (dependencia nueva: preguntar) |
+| 6 | (v1.2) ¿Desde qué cuenta se envían los correos? | **Resuelta (22-09-2026):** `instrumentacion@empresabkb.cl` (Google Workspace, `smtp.gmail.com:587` con STARTTLS y una contraseña de aplicación). **Por ahora los correos salen por consola** (`EMAIL_HOST` vacío), también en las pruebas manuales. Conectar la cuenta queda pendiente: requiere verificación en dos pasos y una contraseña de aplicación. **Verificar que el Droplet permita SMTP saliente por el puerto 587** (DigitalOcean lo bloquea por defecto en cuentas nuevas); si no, se necesita un proveedor con API (dependencia nueva: preguntar) |
 | 7 | (v1.2) ¿Quién crea las empresas y las cuentas? | **Resuelta (22-09-2026):** el **jefe**, desde la pantalla Gestión del portal (sección 13). El personal solo elige empresas y clientes que ya existen |
 
 ---
@@ -310,7 +309,7 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 
 | | A · CSS propio con tokens (recomendada) | B · Tailwind v4 |
 |---|---|---|
-| Build en el despliegue | Ninguno | Hay que compilar; App Platform con Python no trae Node, así que se compila en local y se versiona el CSS |
+| Build en el despliegue | Ninguno | Hay que compilar; el servidor del portal no trae Node, así que se compila en local y se versiona el CSS |
 | Riesgo | Ninguno | Olvidar recompilar y publicar un CSS desactualizado |
 | Coherencia con la landing | Total, viene de los tokens | Total, viene de los tokens |
 | Pantallas de la v1 | ≈ 5 (login, proyectos, archivos, subida, error): caben en un CSS corto | Sobra para 5 pantallas |

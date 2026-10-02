@@ -58,7 +58,7 @@ class DescargaTests(TestCase):
         self.assertEqual(DescargaLog.objects.count(), 0)
 
     @patch('documentos.views.url_descarga')
-    def test_descarga_registra_la_ip_de_do_connecting_ip(self, mock_url_descarga):
+    def test_descarga_registra_la_ip_de_x_real_ip(self, mock_url_descarga):
         mock_url_descarga.return_value = 'http://test-space.com/descarga.pdf'
 
         self.client.force_login(self.cliente)
@@ -66,8 +66,8 @@ class DescargaTests(TestCase):
 
         self.client.get(
             url_descarga,
-            HTTP_DO_CONNECTING_IP='198.51.100.1',
-            HTTP_X_FORWARDED_FOR='10.0.0.1',  # el ingress de App Platform: se ignora
+            HTTP_X_REAL_IP='198.51.100.1',
+            HTTP_X_FORWARDED_FOR='10.0.0.1',  # lo puede inventar el cliente: se ignora
         )
 
         log = DescargaLog.objects.latest('fecha')
