@@ -85,14 +85,14 @@ class LoginTests(TestCase):
         self.assertEqual(response_correcto.status_code, 429)
 
     def test_bloqueo_detras_del_proxy_es_por_ip_del_cliente(self):
-        """En App Platform todos llegan con la REMOTE_ADDR del ingress: axes bloquea por DO-Connecting-IP."""
-        proxy = {'REMOTE_ADDR': '10.0.0.9'}
+        """Detrás de nginx todos llegan con REMOTE_ADDR 127.0.0.1: axes bloquea por X-Real-IP."""
+        proxy = {'REMOTE_ADDR': '127.0.0.1'}
         for _ in range(5):
             self.client.post(self.login_url, {'username': 'test@bkb.cl', 'password': 'PasswordMala123!'},
-                             HTTP_DO_CONNECTING_IP='1.1.1.1', **proxy)
+                             HTTP_X_REAL_IP='1.1.1.1', **proxy)
         datos = {'username': 'test@bkb.cl', 'password': 'PasswordSegura123!'}
-        self.assertEqual(self.client.post(self.login_url, datos, HTTP_DO_CONNECTING_IP='1.1.1.1', **proxy).status_code, 429)
-        self.assertEqual(self.client.post(self.login_url, datos, HTTP_DO_CONNECTING_IP='2.2.2.2', **proxy).status_code, 302)
+        self.assertEqual(self.client.post(self.login_url, datos, HTTP_X_REAL_IP='1.1.1.1', **proxy).status_code, 429)
+        self.assertEqual(self.client.post(self.login_url, datos, HTTP_X_REAL_IP='2.2.2.2', **proxy).status_code, 302)
 
     def test_login_elementos_institucionales_y_telefonos_soporte(self):
         """Verifica elementos institucionales DS-2: eslogan, teléfonos oficiales y exclusión del número antiguo."""

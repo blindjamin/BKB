@@ -13,7 +13,6 @@ bkb-platform/
 │   └── tokens/     # Sistema de diseño y tokens CSS (tema claro grafito y naranjo, tema oscuro)
 ├── docs/           # Memoria técnica y contexto para IAs y desarrolladores
 ├── tasks/todo.md   # Pendientes actuales, en orden
-└── .do/app.yaml    # Especificación de DigitalOcean App Platform para el portal
 ```
 
 ## Estado actual (01-10-2026)
@@ -23,7 +22,8 @@ bkb-platform/
   1. **Encargados:** encargado cliente por empresa y proyecto, encargados BKB; solo ellos y el jefe editan.
   2. **Avance:** 7 hitos estándar con fechas; el cliente acepta o rechaza la Revisión y ve los archivos solo al finalizar.
   3. **Avisos:** correos HTML de inicio, término y rechazo (`manage.py vista_correos` para verlos).
-  4. **Modificaciones:** se envían al cliente con adjuntos o enlaces, se responden desde un enlace firmado y tienen recordatorios (`manage.py enviar_recordatorios`, job diario en `.do/app.yaml`).
+  4. **Modificaciones:** se envían al cliente con adjuntos o enlaces, se responden desde un enlace firmado y tienen recordatorios (`manage.py enviar_recordatorios`, cron diario en el servidor).
+- **Producción:** Droplet de DigitalOcean con la landing (`empresabkb.cl`) y el portal (`portal.empresabkb.cl`); se publica `main` con `/srv/BKB-2026/deploy.sh` (ver `apps/portal/README.md`).
 - **Ramas:** todo lo anterior está fusionado en `desarrollo` y en `main` (PR #21).
 
 ## Pendientes

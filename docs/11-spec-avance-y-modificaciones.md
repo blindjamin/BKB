@@ -218,7 +218,7 @@ sirva una sola vez.
 - El comando `python manage.py enviar_recordatorios` se puede correr varias veces sin enviar correos de más. Toma las
   modificaciones pendientes con `correos_enviados < 5` y `ultimo_correo_en` de hace 2 días o más (por fecha, no por hora: el trabajo corre a hora fija y así salen los días 0, 2, 4, 6 y 8), envía el
   recordatorio y suma 1 al contador. Si el contador llega a 5, envía el aviso de M6 a ingeniería.
-- Corre **una vez al día** como trabajo programado de App Platform (`kind: SCHEDULED`, en `.do/app.yaml`). Hay que
+- Corre **una vez al día** como cron del Droplet. Hay que
   confirmar que la cuenta lo tiene disponible en la tarea de despliegue. Si no, la alternativa es un cron externo que
   llame al mismo comando.
 
@@ -283,8 +283,8 @@ tiene al menos una prueba que falla si se rompe. Casos obligatorios:
 
 - **Siempre:** correr `manage.py test` antes de cada commit; hacer ramas cortas desde `desarrollo` con PR de vuelta;
   mantener las reglas de acceso solo en `permisos.py`; usar correos de prueba solo del `.env`.
-- **Preguntar antes:** agregar dependencias (por ejemplo, un proveedor de correo con API si App Platform bloquea el
-  puerto 587); crear el editor global de hitos; cambiar `.do/app.yaml` fuera del trabajo programado.
+- **Preguntar antes:** agregar dependencias (por ejemplo, un proveedor de correo con API si el Droplet tiene bloqueado el
+  puerto 587); crear el editor global de hitos; cambiar la configuración del servidor fuera del cron.
 - **Nunca:** poner en un correo un enlace que apruebe con un GET; enviar correos reales a clientes desde local;
   borrar archivos del Space.
 
@@ -319,6 +319,6 @@ tiene al menos una prueba que falla si se rompe. Casos obligatorios:
 ## Pendientes fuera de esta spec
 
 - **Correos HTML:** revisar con el usuario las muestras de `vista_correos` antes de conectarlos.
-- **SMTP:** conectar `instrumentacion@empresabkb.cl` y verificar el puerto 587 en App Platform; sin eso no sale
+- **SMTP:** conectar `instrumentacion@empresabkb.cl` y verificar el puerto 587 en el Droplet; sin eso no sale
   ningún correo en producción.
-- **Trabajo programado:** confirmar en el despliegue que App Platform permite `kind: SCHEDULED`.
+- **Trabajo programado:** cron diario en el Droplet (01-10-2026).

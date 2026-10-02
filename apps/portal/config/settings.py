@@ -90,7 +90,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Base de datos: PostgreSQL desde DATABASE_URL (App Platform ya incluye sslmode=require);
+# Base de datos: PostgreSQL desde DATABASE_URL;
 # sin DATABASE_URL, SQLite local de respaldo.
 DATABASES = {
     'default': dj_database_url.config(
@@ -125,7 +125,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
-# Producción: comprimidos y con versión en el nombre (collectstatic va en el build de App Platform).
+# Producción: comprimidos y con versión en el nombre (collectstatic lo corre deploy.sh).
 # ponytail: sin manifiesto con DEBUG=True; correr las pruebas con DJANGO_DEBUG=False exige un collectstatic previo.
 STORAGES = {
     'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
@@ -208,7 +208,7 @@ CONTENT_SECURITY_POLICY = {
 
 # Parámetros estrictos de producción activables vía SSL
 if not DEBUG:
-    # App Platform termina el HTTPS en su proxy: sin esto, SECURE_SSL_REDIRECT redirige sin fin.
+    # nginx termina el HTTPS: sin esto, SECURE_SSL_REDIRECT redirige sin fin.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     # Prefijo __Host-: el navegador solo lo acepta con Secure, Path=/ y sin Domain (docs/04).
     SESSION_COOKIE_NAME = '__Host-sessionid'
@@ -226,7 +226,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 AXES_FAILURE_LIMIT = 5
-AXES_CLIENT_IP_CALLABLE = 'documentos.views._get_client_ip'  # IP real detrás del proxy de App Platform
+AXES_CLIENT_IP_CALLABLE = 'documentos.views._get_client_ip'  # IP real detrás de nginx (X-Real-IP)
 AXES_LOCKOUT_TEMPLATE = 'bloqueo.html'  # solo cambia la página del bloqueo
 
 # Rutas de autenticación

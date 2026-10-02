@@ -4,7 +4,7 @@ Todo lo implementado (portal tareas 0 a 28, módulos 1 a 4 de `docs/11`, landing
 
 ## 1. Alertas de seguridad
 Detalle en `docs/04` §6.
-- [x] IP real detrás del proxy: `DO-Connecting-IP` para axes, "olvidé mi contraseña", `/cotizar/` y los registros (01-10-2026).
+- [x] IP real detrás de nginx: `X-Real-IP` para axes, "olvidé mi contraseña", `/cotizar/` y los registros (01-10-2026).
 - [x] Chequeo de salud: `/health/` responde antes de los chequeos de Host y HTTPS (01-10-2026).
 - [ ] **En espera:** conseguir las cuentas de correo de la empresa (enviar y recibir). Después, decidir qué pasa si falta `EMAIL_HOST` con `DEBUG=False` (propuesta: que no arranque).
 
@@ -15,14 +15,13 @@ Detalle en `docs/04` §6.
 - [ ] Formulario "Cotizar obra" de la landing contra el portal local (`PUBLIC_PORTAL_URL=http://localhost:8000`).
 - [ ] `/arriendo`: claro, oscuro, 375 px y 1280 px, teclado, y el mensaje de WhatsApp con 1 y 3 equipos.
 
-## 3. Tarea 16 · Puesta en marcha en DigitalOcean (requiere al usuario)
-- [ ] PostgreSQL gestionado y la app en **NYC3** (región del Space).
-- [ ] `doctl apps spec validate .do/app.yaml` (incluye el job diario `enviar_recordatorios`; si la cuenta no tiene jobs `SCHEDULED`, usar un cron externo).
-- [ ] Variables en App Platform, prefijo `portal/` y una clave del Space **nueva para producción** (Limited, solo `bkb-space`).
-- [ ] Dominio `portal.empresabkb.cl` con HTTPS y CORS del Space con ese origen.
-- [ ] Primer superusuario desde la consola y jefe designado en `/admin/`.
-- [ ] SMTP real con `instrumentacion@empresabkb.cl` (contraseña de aplicación). Si App Platform bloquea el 587, detenerse y decidir.
-- [ ] Comprobar: `/health/` responde, sin redirecciones infinitas, cookies seguras, login, una subida y una descarga reales, y un correo real de invitación.
+## 3. Tarea 16 · Producción en el Droplet
+La landing y el portal ya corren en el Droplet (`/srv/BKB-2026`, ver `apps/portal/README.md`). Se descartó App Platform (01-10-2026).
+- [ ] Clave del Space **nueva para producción** (Limited, solo `bkb-space`) en `portal.env`, con `SPACES_PREFIX=portal/`, y CORS del Space con `https://portal.empresabkb.cl`. Sin esto no se suben archivos.
+- [ ] Primer superusuario (`manage.py createsuperuser` como `bkb`) y jefe designado en `/admin/`.
+- [ ] SMTP real con `instrumentacion@empresabkb.cl` (en espera de las cuentas). DigitalOcean bloquea el 587 en Droplets nuevos: puede requerir un ticket de soporte o un proveedor con API.
+- [ ] Respaldo periódico de `/srv/BKB-2026/data/portal.sqlite3` (o pasar a PostgreSQL) antes de cargar datos reales.
+- [ ] Comprobar: login, una subida y una descarga reales, y un correo real de invitación.
 
 ## 4. Tarea 17 · Piloto
 - [ ] Un proyecto de prueba con un usuario del personal y un cliente de confianza: alta por el jefe → subida → avance de hitos → Revisión aceptada → el cliente descarga → una modificación respondida.

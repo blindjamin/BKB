@@ -87,6 +87,6 @@ Cada vez que se vaya a realizar una modificación o avance, se debe crear una ra
 El repositorio cuenta con la acción `.github/workflows/deploy-pages.yml` activa:
 - Cada push o merge a la rama `desarrollo` compila automáticamente el sitio Astro con `GITHUB_PAGES=true` y lo publica en:
   **`https://blindjamin.github.io/BKB/`**
-- Solo publica el sitio estático (`apps/web`). El portal Django se despliega aparte en DigitalOcean App Platform (ver `docs/03-portal-django.md`).
+- Solo publica el sitio estático (`apps/web`). Producción (landing y portal) vive en un Droplet y se publica desde `main` con `/srv/BKB-2026/deploy.sh` (ver `apps/portal/README.md`).
 - Permite disponer de un enlace público funcional en cualquier momento sin costo de infraestructura mientras no se configure DigitalOcean.
 

@@ -40,9 +40,9 @@ from .subidas import EXTENSIONES_PERMITIDAS
 
 
 def _get_client_ip(request):
-    # App Platform pone la IP del cliente en DO-Connecting-IP; REMOTE_ADDR y X-Forwarded-For traen
-    # la de su ingress. En local no viene el header y se usa REMOTE_ADDR. Lo usa también axes.
-    return request.META.get('HTTP_DO_CONNECTING_IP') or request.META.get('REMOTE_ADDR')
+    # nginx del Droplet pone la IP del cliente en X-Real-IP (y pisa la que mande el cliente); gunicorn
+    # solo escucha en 127.0.0.1, así que REMOTE_ADDR es siempre nginx. En local se usa REMOTE_ADDR. Lo usa también axes.
+    return request.META.get('HTTP_X_REAL_IP') or request.META.get('REMOTE_ADDR')
 
 
 def _preparar_archivo(usuario, archivo):

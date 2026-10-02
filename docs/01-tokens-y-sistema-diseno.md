@@ -96,4 +96,4 @@ Variables por tema (definidas en `src/themes.css`):
 
 ## 5. Cómo usarlo
 - **Sitio (`apps/web`):** `global.css` importa `@import "@bkb/tokens";` y mapea las variables a utilidades de Tailwind con `@theme inline` (`bg-page`, `text-main`, `bg-salmon-500`…).
-- **Portal (`apps/portal`):** CSS propio, sin Tailwind. Como App Platform despliega solo `apps/portal`, los tokens se **copian** a `apps/portal/static/tokens/` con un comando documentado en su README, y se versionan.
+- **Portal (`apps/portal`):** CSS propio, sin Tailwind. Los tokens se **copian** a `apps/portal/static/tokens/` con un comando documentado en su README, y se versionan.
