@@ -165,6 +165,11 @@ class CrearContrasenaTests(GestionTests):
         self.enlace = re.search(r'http://testserver(/contrasena/crear/\S+/)', mail.outbox[-1].body).group(1)
         self.client.logout()
 
+    def test_correo_html_trae_el_boton_con_el_enlace(self):
+        html = mail.outbox[-1].alternatives[0][0]
+        self.assertIn(f'href="http://testserver{self.enlace}"', html)
+        self.assertIn('Crear mi contraseña', html)
+
     def _fijar(self, clave1, clave2=None):
         response = self.client.get(self.enlace)
         self.assertEqual(response.status_code, 302)  # Django guarda el token en la sesión y redirige a set-password

@@ -14,6 +14,8 @@ from django.urls import reverse
 
 from documentos import correos
 from documentos.models import HITOS_ESTANDAR, Proyecto, RechazoRevision
+
+ANTES_DE_REVISION = len(HITOS_ESTANDAR) - 1  # hitos que cumple BKB; el último lo responde el cliente
 from documentos.tests.ayudantes import encargar_empresa
 from documentos.tests.test_avance import Base
 
@@ -84,7 +86,7 @@ class InicioTests(Base):
         self.client.force_login(self.jefe)
         with CAIDO, self.assertLogs('documentos.correos', 'ERROR'):
             r = self.client.post(reverse('documentos:crear_proyecto'), self.datos(), follow=True)
-        self.assertEqual(Proyecto.objects.get(nombre='Nuevo').hitos.count(), 7)
+        self.assertEqual(Proyecto.objects.get(nombre='Nuevo').hitos.count(), len(HITOS_ESTANDAR))
         self.assertContains(r, 'No se pudo enviar el correo de inicio')
 
 
@@ -95,7 +97,7 @@ class RevisionTests(Base):
                                 {'respuesta': respuesta, **extra}, follow=True)
 
     def test_aceptar_envia_termino_a_los_dos_encargados(self):  # V3
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.cliente)
         self.responder()
         self.assertEqual(len(mail.outbox), 1)
@@ -105,13 +107,13 @@ class RevisionTests(Base):
 
     def test_termino_sin_repetir_destinatario(self):  # V3
         encargar_empresa(self.empresa, self.cliente)
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.cliente)
         self.responder()
         self.assertEqual(mail.outbox[0].to, [self.cliente.email])
 
     def test_rechazo_avisa_a_ingenieria(self):  # V4
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.cliente)
         self.responder('rechazar', motivo='Falta el plano')
         m = mail.outbox[0]
@@ -126,7 +128,7 @@ class RevisionTests(Base):
         self.assertEqual(mail.outbox, [])
 
     def test_termino_que_falla_deja_el_proyecto_finalizado(self):  # V6
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.cliente)
         with CAIDO, self.assertLogs('documentos.correos', 'ERROR'):
             r = self.responder()
@@ -135,7 +137,7 @@ class RevisionTests(Base):
         self.assertContains(r, 'No se pudo enviar el correo de término')
 
     def test_rechazo_que_falla_deja_el_rechazo_guardado(self):  # V6
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.cliente)
         with CAIDO, self.assertLogs('documentos.correos', 'ERROR'):
             self.responder('rechazar', motivo='Falta el plano')

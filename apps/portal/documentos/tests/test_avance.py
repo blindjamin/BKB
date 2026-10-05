@@ -6,6 +6,8 @@ from django.urls import reverse
 
 from accounts.models import Rol
 from documentos.models import HITOS_ESTANDAR, Proyecto
+
+ANTES_DE_REVISION = len(HITOS_ESTANDAR) - 1  # hitos que cumple BKB; el último lo responde el cliente
 from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
 
 Usuario = get_user_model()
@@ -38,13 +40,13 @@ class FechasEHitosEstandarTests(Base):
         d.update(extra)
         return d
 
-    def test_crear_proyecto_deja_7_hitos_con_la_revision_al_final(self):  # A1
+    def test_crear_proyecto_deja_los_hitos_estandar_con_la_revision_al_final(self):  # A1
         self.client.force_login(self.personal)
         r = self.client.post(reverse('documentos:crear_proyecto'), self.datos())
         self.assertEqual(r.status_code, 302)
         hitos = list(Proyecto.objects.get(nombre='Nuevo').hitos.all())
         self.assertEqual([h.nombre for h in hitos], HITOS_ESTANDAR)
-        self.assertEqual([h.es_revision for h in hitos], [False] * 6 + [True])
+        self.assertEqual([h.es_revision for h in hitos], [False] * ANTES_DE_REVISION + [True])
 
     def test_admin_tambien_crea_los_hitos(self):  # A1
         admin = Usuario.objects.create_superuser('root@bkb.cl', 'Clave123!')
@@ -54,7 +56,7 @@ class FechasEHitosEstandarTests(Base):
             'encargado': self.cliente.pk, 'encargados_bkb': [self.personal.pk],
             'fecha_inicio': '2026-01-01', 'fecha_termino': '2026-06-30'}, secure=True)
         self.assertEqual(r.status_code, 302)
-        self.assertEqual(Proyecto.objects.get(nombre='Desde admin').hitos.count(), 7)
+        self.assertEqual(Proyecto.objects.get(nombre='Desde admin').hitos.count(), len(HITOS_ESTANDAR))
 
     def test_termino_anterior_al_inicio_no_crea_proyecto(self):  # A3
         self.client.force_login(self.personal)
@@ -104,7 +106,7 @@ class EditorDeHitosTests(Base):
         filas[0]['posicion'], filas[1]['posicion'] = 2, 1
         self.assertEqual(self.post(filas).status_code, 302)
         self.assertEqual(self.nombres()[:2], ['Armado', 'Compras 2'])
-        self.assertEqual(list(self.proyecto.hitos.values_list('orden', flat=True)), list(range(1, 8)))
+        self.assertEqual(list(self.proyecto.hitos.values_list('orden', flat=True)), list(range(1, len(HITOS_ESTANDAR) + 1)))
 
     def test_agregar_y_quitar_pendiente_deja_la_revision_ultima(self):  # A2
         self.client.force_login(self.personal)
@@ -134,7 +136,7 @@ class EditorDeHitosTests(Base):
         r = self.post(filas)
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, 'Un hito cumplido no se puede quitar.')
-        self.assertEqual(self.proyecto.hitos.count(), 7)
+        self.assertEqual(self.proyecto.hitos.count(), len(HITOS_ESTANDAR))
 
     def test_cumplido_despues_de_un_pendiente_da_error(self):  # A2, A4
         self.client.force_login(self.personal)
@@ -183,7 +185,7 @@ class AvanzarYDeshacerTests(Base):
         self.assertEqual(hito.cumplido_por, self.personal)
 
     def test_avanzar_no_toca_la_revision_ni_muestra_el_boton(self):  # A5
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.personal)
         self.avanzar()
         self.assertFalse(self.proyecto.hitos.get(es_revision=True).cumplido)
@@ -192,14 +194,14 @@ class AvanzarYDeshacerTests(Base):
 
     def test_finalizado_no_se_deshace_y_tras_rechazo_si(self):  # A6
         from documentos.models import RechazoRevision
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.personal)
         RechazoRevision.objects.create(proyecto=self.proyecto, usuario=self.cliente, motivo='No')
         self.retroceder()
-        self.assertEqual(self.proyecto.hitos.filter(cumplido_en__isnull=False).count(), 5)
+        self.assertEqual(self.proyecto.hitos.filter(cumplido_en__isnull=False).count(), ANTES_DE_REVISION - 1)
         finalizar(self.proyecto)
         self.retroceder()
-        self.assertEqual(self.proyecto.hitos.filter(cumplido_en__isnull=False).count(), 5)
+        self.assertEqual(self.proyecto.hitos.filter(cumplido_en__isnull=False).count(), ANTES_DE_REVISION - 1)
 
 
 class RevisionDelClienteTests(Base):
@@ -208,7 +210,7 @@ class RevisionDelClienteTests(Base):
                                 {'respuesta': respuesta, **extra})
 
     def test_el_encargado_del_proyecto_acepta_y_finaliza(self):  # A5
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.cliente)
         self.assertEqual(self.responder().status_code, 302)
         self.proyecto.refresh_from_db()
@@ -218,14 +220,14 @@ class RevisionDelClienteTests(Base):
         self.assertEqual(revision.cumplido_en, self.proyecto.finalizado_en)
 
     def test_el_encargado_de_la_empresa_tambien_puede(self):  # A5, M5
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.cliente2)
         self.responder()
         self.proyecto.refresh_from_db()
         self.assertTrue(self.proyecto.finalizado)
 
     def test_rechazar_sin_motivo_no_crea_nada(self):  # A5
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.cliente)
         r = self.responder('rechazar', motivo='   ')
         self.assertRedirects(r, reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]), fetch_redirect_response=False)
@@ -233,7 +235,7 @@ class RevisionDelClienteTests(Base):
         self.assertContains(self.client.get(r.url), 'Escribe el motivo del rechazo.')
 
     def test_rechazar_con_motivo_deja_la_revision_pendiente_y_luego_se_puede_aceptar(self):  # A5
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         self.client.force_login(self.cliente)
         self.responder('rechazar', motivo='Falta un tablero')
         rechazo = self.proyecto.rechazos_revision.get()
@@ -246,7 +248,7 @@ class RevisionDelClienteTests(Base):
         self.assertTrue(self.proyecto.finalizado)
 
     def test_antes_de_cumplir_los_hitos_anteriores_no_cambia_nada(self):  # A5
-        self.cumplir(5)
+        self.cumplir(ANTES_DE_REVISION - 1)
         self.client.force_login(self.cliente)
         self.responder()
         self.responder('rechazar', motivo='x')
@@ -255,7 +257,7 @@ class RevisionDelClienteTests(Base):
         self.assertEqual(self.proyecto.rechazos_revision.count(), 0)
 
     def test_quien_no_responde(self):  # A5
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         for usuario in (self.personal, self.jefe):
             self.client.force_login(usuario)
             self.assertEqual(self.responder().status_code, 403)
@@ -338,9 +340,9 @@ class VistaDelClienteTests(Base):
 
     def test_el_formulario_de_la_revision_solo_cuando_corresponde(self):  # A5, A7
         self.client.force_login(self.cliente)
-        self.cumplir(5)
+        self.cumplir(ANTES_DE_REVISION - 1)
         self.assertNotContains(self.client.get(self.url), 'name="motivo"')
-        self.cumplir(6)
+        self.cumplir(ANTES_DE_REVISION)
         r = self.client.get(self.url)
         self.assertContains(r, 'name="motivo"')
         self.assertContains(r, reverse('documentos:responder_revision', args=[self.proyecto.pk]))
@@ -366,3 +368,26 @@ class VistaDelClienteTests(Base):
         self.assertContains(r, 'secreto.pdf')
         self.assertContains(r, 'Compras')
         self.assertNotContains(r, 'Marcar siguiente hito')
+
+
+class AvisoHitoTests(Base):
+    """Aviso flotante del hito en curso: solo personal y jefe, y desaparece al finalizar."""
+
+    def pagina(self, usuario):
+        self.client.force_login(usuario)
+        return self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+
+    def test_personal_y_jefe_ven_el_hito_en_curso(self):
+        self.cumplir(1)
+        for usuario in (self.personal, self.otro_personal, self.jefe):
+            r = self.pagina(usuario)
+            self.assertContains(r, 'id="aviso-hito"')
+            self.assertContains(r, f'Hito en curso · 2 de {len(HITOS_ESTANDAR)}')
+            self.assertContains(r, 'aviso_hito.js')
+
+    def test_cliente_no_ve_el_aviso(self):
+        self.assertNotContains(self.pagina(self.cliente), 'id="aviso-hito"')
+
+    def test_proyecto_finalizado_no_muestra_el_aviso(self):
+        finalizar(self.proyecto)
+        self.assertNotContains(self.pagina(self.personal), 'id="aviso-hito"')

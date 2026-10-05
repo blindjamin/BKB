@@ -24,7 +24,7 @@ _mod = SimpleNamespace(
 _adjuntos = [SimpleNamespace(nombre_original='foto.jpg', tamano=123)]
 
 MUESTRAS = {
-    'invitacion': {'usuario': _cliente, 'enlace': 'http://localhost:8000/contrasena/crear/MQ/muestra-token/'},
+    'invitacion': {'usuario': _cliente, 'url': 'http://localhost:8000/contrasena/crear/MQ/muestra-token/'},
     'recuperar_contrasena': {'protocol': 'http', 'domain': 'localhost:8000', 'uid': 'MQ', 'token': 'muestra-token',
                              'user': _cliente},
     'inicio': {'proyecto': _proyecto, 'hitos': [SimpleNamespace(nombre=n) for n in HITOS_ESTANDAR], 'url': _url},

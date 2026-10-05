@@ -1,8 +1,10 @@
 <section class="hitos" id="modificaciones">
-    <h2 class="seccion-title">Modificaciones</h2>
-    {% if puede_editar %}
-    <a href="{% url 'documentos:crear_modificacion' proyecto.pk %}" class="btn-link">Añadir modificación</a>
-    {% endif %}
+    <div class="carpetas-header">
+        <h2 class="seccion-title">Modificaciones</h2>
+        {% if puede_editar %}
+        <a href="{% url 'documentos:crear_modificacion' proyecto.pk %}" class="btn-link btn-naranjo">Añadir modificación</a>
+        {% endif %}
+    </div>
     <div class="modificaciones-lista">
         {% for m in modificaciones %}
         <article class="modificacion">

@@ -2532,3 +2532,91 @@ a[href^="mailto:"] {
     gap: var(--space-2);
     margin-bottom: var(--space-3, 12px);
 }
+
+/* Acciones principales con el mismo naranjo que "Subir archivos" (.btn-primary), sin cambiar su forma */
+.btn-secondary.btn-naranjo,
+.btn-link.btn-naranjo {
+    background-color: var(--bkb-salmon-700);
+    border-color: var(--bkb-salmon-700);
+    color: white;
+}
+.btn-secondary.btn-naranjo:hover,
+.btn-link.btn-naranjo:hover {
+    background-color: var(--bkb-salmon-800);
+    border-color: var(--bkb-salmon-800);
+    color: white;
+}
+[data-theme="dark"] .btn-secondary.btn-naranjo,
+[data-theme="dark"] .btn-link.btn-naranjo {
+    background-color: var(--bkb-salmon-600);
+    border-color: var(--bkb-salmon-600);
+}
+[data-theme="dark"] .btn-secondary.btn-naranjo:hover,
+[data-theme="dark"] .btn-link.btn-naranjo:hover {
+    background-color: var(--bkb-salmon-500);
+    border-color: var(--bkb-salmon-500);
+}
+
+/* Separación entre la lista de archivos y las secciones que la siguen (Modificaciones, Hitos) */
+.archivos-lista + .hitos,
+.archivos-empty + .hitos {
+    margin-top: 2rem;
+}
+
+/* Aviso flotante del hito en curso (personal y jefe; lo maneja aviso_hito.js) */
+.aviso-hito {
+    position: fixed;
+    left: max(20px, env(safe-area-inset-left, 0px));
+    bottom: max(20px, env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    width: min(340px, calc(100vw - 40px));
+    box-sizing: border-box;
+    padding: var(--space-5, 20px);
+    padding-right: 3rem;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    box-shadow: 0 16px 36px -16px rgba(15, 23, 42, 0.35);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.aviso-hito.is-open { opacity: 1; transform: none; }
+.aviso-hito p { margin: 0; }
+/* Franja de cuenta regresiva (15 s); se pausa con el mouse o el foco encima */
+.aviso-hito-franja {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--bkb-salmon-500), rgba(250, 90, 54, 0.15));
+    transform-origin: left;
+}
+.aviso-hito.is-open .aviso-hito-franja { animation: aviso-hito-cuenta 15s linear forwards; }
+.aviso-hito:hover .aviso-hito-franja,
+.aviso-hito:focus-within .aviso-hito-franja { animation-play-state: paused; }
+@keyframes aviso-hito-cuenta { to { transform: scaleX(0); } }
+.aviso-hito-cerrar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.aviso-hito-cerrar:hover { color: var(--text-main); background: rgba(127, 127, 127, 0.12); }
+.aviso-hito-etiqueta { font-size: 0.8rem; font-weight: 600; color: var(--bkb-salmon-700); }
+[data-theme="dark"] .aviso-hito-etiqueta { color: var(--bkb-salmon-300); }
+.aviso-hito-nombre { font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-top: 0.15rem !important; }
+.aviso-hito-texto { font-size: 0.9rem; color: var(--text-muted); margin: 0.25rem 0 0.9rem !important; }
+@media (prefers-reduced-motion: reduce) {
+    /* Sin animación no hay cuenta regresiva: queda hasta que lo cierren */
+    .aviso-hito { transition: none; }
+    .aviso-hito.is-open .aviso-hito-franja { animation: none; }
+}

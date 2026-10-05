@@ -47,11 +47,11 @@ def proyectos_visibles(usuario):
 def empresas_visibles(usuario):
     """Empresas visibles para el usuario (§14.3).
 
-    - Personal y jefe: empresas con proyectos vigentes (activos).
+    - Personal y jefe: todas, también las sin proyectos activos (recién creadas o con todo cerrado).
     - Cliente: empresas a su cargo o con algún proyecto a su cargo.
     """
     if _es_personal(usuario):
-        return Empresa.objects.filter(proyectos__estado=EstadoProyecto.ACTIVO).distinct()
+        return Empresa.objects.all()
     if _activo(usuario):
         return Empresa.objects.filter(Q(encargado=usuario) | Q(proyectos__encargado=usuario)).distinct()
     return Empresa.objects.none()

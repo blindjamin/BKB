@@ -22,7 +22,7 @@ class Empresa(models.Model):
         return self.nombre
 
 
-HITOS_ESTANDAR = ['Compras', 'Armado', 'Cableado', 'Pruebas', 'Envío', 'Recepción', 'Revisión']  # A1
+HITOS_ESTANDAR = ['Compras', 'Armado', 'Cableado', 'Pruebas', 'Entrega', 'Revisión']  # A1
 
 
 class EstadoProyecto(models.TextChoices):

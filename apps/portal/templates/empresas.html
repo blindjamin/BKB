@@ -7,7 +7,7 @@
     <div class="view-header">
         <div>
             <h1 class="proyectos-title">Empresas</h1>
-            <p class="view-subtitle">Clientes con proyectos vigentes en BKB</p>
+            <p class="view-subtitle">Clientes de BKB</p>
         </div>
         <div>
             <a href="{% url 'documentos:crear_empresa' %}" class="btn-action">+ Nueva Empresa</a>
@@ -37,7 +37,7 @@
         </div>
     {% else %}
         <div class="proyectos-empty">
-            <p class="proyectos-empty-text">No hay empresas con proyectos activos actualmente.</p>
+            <p class="proyectos-empty-text">Aún no hay empresas registradas.</p>
             <div class="empty-cta-wrapper">
                 <a href="{% url 'documentos:crear_empresa' %}" class="btn-action">+ Nueva empresa</a>
             </div>

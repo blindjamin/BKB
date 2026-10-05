@@ -46,7 +46,7 @@ class VistasEmpresasYProyectosTests(TestCase):
         encargar(self.proy_a2, self.cliente2)
         encargar(self.proy_b1, self.cliente)
 
-    def test_personal_y_jefe_ven_empresas_con_proyectos_vigentes_en_inicio(self):
+    def test_personal_y_jefe_ven_todas_las_empresas_en_inicio(self):
         for usuario in (self.personal, self.jefe):
             with self.subTest(usuario=usuario.email):
                 self.client.force_login(usuario)
@@ -59,9 +59,11 @@ class VistasEmpresasYProyectosTests(TestCase):
                 self.assertContains(response, 'Empresa Alfa')
                 self.assertContains(response, 'Empresa Beta')
 
-                # Empresas sin proyectos activos no aparecen en el inicio vigente
-                self.assertNotContains(response, 'Empresa Vacia')
-                self.assertNotContains(response, 'Empresa Cerrada')
+                # También las sin proyectos activos, después de las activas
+                self.assertContains(response, 'Empresa Vacia')
+                self.assertContains(response, 'Empresa Cerrada')
+                html = response.content.decode()
+                self.assertLess(html.index('Empresa Beta'), html.index('Empresa Cerrada'))
 
                 # Botón de nueva empresa disponible
                 self.assertContains(response, reverse('documentos:crear_empresa'))
@@ -300,12 +302,13 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertNotContains(response, '82491403')
 
     def test_empresas_empty_state_registrar_empresa_y_telefonos(self):
-        # Desactivar todos los proyectos para ver estado vacío en inicio de personal
-        Proyecto.objects.all().update(estado=EstadoProyecto.CERRADO)
+        # Sin empresas se ve el estado vacío en el inicio del personal
+        Proyecto.objects.all().delete()
+        Empresa.objects.all().delete()
         self.client.force_login(self.personal)
         response = self.client.get(reverse('documentos:lista_proyectos'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'No hay empresas con proyectos activos actualmente.')
+        self.assertContains(response, 'Aún no hay empresas registradas.')
         self.assertContains(response, '+ Nueva empresa')
         self.assertContains(response, reverse('documentos:crear_empresa'))
         self.assertContains(response, 'tel:+56961911593')
