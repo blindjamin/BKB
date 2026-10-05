@@ -7,7 +7,7 @@ export function initThemeToggle() {
   }
 
   // Inicializar estado de botones
-  const currentTheme = document.documentElement.dataset.theme || 'dark';
+  const currentTheme = document.documentElement.dataset.theme || 'light';
   updateAriaLabels(currentTheme);
 
   toggles.forEach(toggle => {

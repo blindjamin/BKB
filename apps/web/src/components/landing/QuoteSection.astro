@@ -4,7 +4,7 @@ import { getPath } from '../../utils/paths';
 import SectionHeading from '../ui/SectionHeading.astro';
 
 const isEndpointAvailable = Boolean(QUOTE_ENDPOINT);
-const mapQuery = encodeURIComponent(`${SITE.officeAddress}, Chile`);
+const mapQuery = SITE.officeCoords;
 const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
 const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 ---
