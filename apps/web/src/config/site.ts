@@ -11,7 +11,9 @@ export const SITE = {
   phoneHref: PHONES[0].href,
   email: 'ingenieria@empresabkb.cl',
   office: 'La Calera, Región de Valparaíso',
-  officeAddress: 'El Parque 110, La Calera, Región de Valparaíso',
+  officeAddress: 'Panamericana Norte 476, Artificio, La Calera',
+  // 32°46'25.5"S 71°11'11.6"W
+  officeCoords: '-32.773750,-71.186556',
   coverage: 'Valparaíso y Región Metropolitana',
 } as const;
 

@@ -48,7 +48,7 @@ def enviar_invitacion(request, usuario):
         urlsafe_base64_encode(force_bytes(usuario.pk)),
         default_token_generator.make_token(usuario),
     ]))
-    return enviar('Invitación al Portal BKB', 'invitacion', {'usuario': usuario, 'enlace': enlace},
+    return enviar('Invitación al Portal BKB', 'invitacion', {'usuario': usuario, 'url': enlace},
                   [usuario.email], cc=False)  # V1: la invitación no va con copia
 
 

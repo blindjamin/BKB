@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import faenaHero from '../../assets/landing/faena-hero.jpg';
+import { getPath } from '../../utils/paths';
 ---
 
 <section class="relative w-full min-h-[100svh] overflow-hidden flex items-center bg-night-900" aria-label="Hero">
@@ -15,7 +16,7 @@ import faenaHero from '../../assets/landing/faena-hero.jpg';
     <div class="absolute inset-0 bg-gradient-to-br from-night-900/90 via-night-900/70 to-night-900/50"></div>
   </div>
 
-  <div class="relative z-10 mx-auto w-full px-4 sm:px-10 pt-[96px] pb-[200px] grid grid-cols-1 gap-14 items-start" style="max-width: var(--bkb-container);">
+  <div class="relative z-10 mx-auto w-full px-4 sm:px-10 pt-[96px] pb-[200px] grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 lg:gap-14 items-center" style="max-width: var(--bkb-container);">
 
     <div class="flex flex-col gap-6 pt-5">
       <div class="hero-in inline-flex self-start items-center gap-2 bg-salmon-500/15 border border-salmon-500/40 text-salmon-300 text-[13px] font-semibold tracking-[0.02em] px-4 py-[9px] rounded-pill">
@@ -34,7 +35,12 @@ import faenaHero from '../../assets/landing/faena-hero.jpg';
       </p>
     </div>
 
-    
+    <img
+      src={getPath('/assets/bkb-logo-final.png')}
+      alt="BKB Ingeniería Eléctrica & Servicios"
+      width="640" height="640"
+      class="hero-in order-first lg:order-none w-[120px] sm:w-[160px] lg:w-[340px] h-auto drop-shadow-[0_12px_40px_rgba(250,90,54,0.25)]"
+    />
   </div>
 </section>
 

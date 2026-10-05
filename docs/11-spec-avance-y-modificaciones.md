@@ -74,7 +74,7 @@ class Proyecto(models.Model):
 ### Reglas
 
 - **A1.** Al crearse, todo proyecto recibe los hitos estándar en este orden: **Compras, Armado, Cableado, Pruebas,
-  Envío, Recepción, Revisión**. La lista vive en una constante (`HITOS_ESTANDAR`).
+  Entrega, Revisión** (desde el 05-10-2026; antes eran Envío y Recepción por separado). La lista vive en una constante (`HITOS_ESTANDAR`).
 - **A2.** Un encargado BKB o el jefe puede cambiar el nombre de un hito, agregarlo, quitarlo o reordenarlo en su
   proyecto. **Revisión siempre es el último hito y no se puede quitar**, porque es el que acepta el cliente.
 - **A3.** El proyecto tiene `fecha_inicio` y `fecha_termino`, obligatorias desde que se crea. Son informativas: no

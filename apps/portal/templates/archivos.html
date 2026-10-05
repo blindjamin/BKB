@@ -69,29 +69,6 @@
     </section>
     {% endif %}
 
-    <section class="hitos">
-        <h2 class="seccion-title">Hitos</h2>
-        {% include "includes/linea_hitos.html" %}
-        <div class="hitos-acciones">
-            {% if puede_avanzar %}
-            <form action="{% url 'documentos:avanzar_hito' proyecto.pk %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn-secondary">Marcar siguiente hito</button>
-            </form>
-            {% endif %}
-            {% if puede_retroceder %}
-            <form action="{% url 'documentos:retroceder_hito' proyecto.pk %}" method="post" data-confirmar="¿Deshacer el último hito marcado?" data-confirmar-titulo="Deshacer hito" data-confirmar-accion="Deshacer">
-                {% csrf_token %}
-                <button type="submit" class="btn-link">Deshacer último</button>
-            </form>
-            {% endif %}
-        </div>
-    </section>
-
-    {% if not carpeta_activa %}
-    {% include "includes/modificaciones.html" %}
-    {% endif %}
-
     <section class="carpetas">
         {% if carpeta_activa %}
             <div class="carpeta-activa-acciones">
@@ -112,7 +89,7 @@
                 <form action="{% url 'documentos:crear_carpeta' proyecto.pk %}" method="post" class="form-carpeta form-group">
                     {% csrf_token %}
                     <input type="text" name="nombre" maxlength="100" required placeholder="Nombre de la carpeta" aria-label="Nombre de la carpeta">
-                    <button type="submit" class="btn-secondary">+ Nueva carpeta</button>
+                    <button type="submit" class="btn-secondary btn-naranjo">+ Nueva carpeta</button>
                 </form>
                 {% endif %}
             </div>
@@ -155,10 +132,49 @@
                 {% endif %}
         </div>
     {% endif %}
+
+    {% if not carpeta_activa %}
+    {% include "includes/modificaciones.html" %}
+    {% endif %}
+
+    <section class="hitos" id="hitos">
+        <h2 class="seccion-title">Hitos</h2>
+        {% include "includes/linea_hitos.html" %}
+        <div class="hitos-acciones">
+            {% if puede_avanzar %}
+            <form action="{% url 'documentos:avanzar_hito' proyecto.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn-secondary btn-naranjo">Marcar siguiente hito</button>
+            </form>
+            {% endif %}
+            {% if puede_retroceder %}
+            <form action="{% url 'documentos:retroceder_hito' proyecto.pk %}" method="post" data-confirmar="¿Deshacer el último hito marcado?" data-confirmar-titulo="Deshacer hito" data-confirmar-accion="Deshacer">
+                {% csrf_token %}
+                <button type="submit" class="btn-link">Deshacer último</button>
+            </form>
+            {% endif %}
+        </div>
+    </section>
 </div>
+
+{% if aviso_hito %}
+{# Aviso temporal del hito en curso (como el de emergencias del landing): se cierra solo y no vuelve en la sesión #}
+<aside id="aviso-hito" class="aviso-hito" data-clave="bkb-aviso-hito-{{ proyecto.pk }}" aria-label="Hito en curso" hidden>
+    <div class="aviso-hito-franja" aria-hidden="true"></div>
+    <button type="button" class="aviso-hito-cerrar" data-cerrar aria-label="Cerrar aviso del hito">
+<span aria-hidden="true">&times;</span></button>
+    <p class="aviso-hito-etiqueta">Hito en curso · {{ aviso_hito_n }} de {{ hitos|length }}</p>
+    <p class="aviso-hito-nombre">{{ aviso_hito.nombre }}</p>
+    <p class="aviso-hito-texto">{% if aviso_hito.es_revision %}Falta la revisión del cliente.{% else %}Recuerda marcarlo cuando se cumpla.{% endif %}</p>
+    <a href="#hitos" class="btn-secondary btn-naranjo" data-cerrar>Ver hitos</a>
+</aside>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
+{% if aviso_hito %}
+<script src="{% static 'aviso_hito.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endif %}
 {% if puede_subir %}
 <script src="{% static 'subir.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endif %}

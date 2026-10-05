@@ -455,6 +455,7 @@ Estado verificado en el código al 25-09-2026. Cada punto cita el archivo o la p
 
 | Tema | La spec dice | El código hace | Por qué | Evidencia |
 |---|---|---|---|---|
+| Empresas en el inicio | §14.3: personal y jefe ven solo empresas con proyectos vigentes | Ven todas; primero las con proyectos activos | Pedido del usuario (05-10-2026): las empresas recién creadas no aparecían | `documentos/tests/test_vistas_empresas.py` |
 | Eliminar carpeta | §14.3: solo carpetas vacías | Elimina también con archivos; esos archivos vuelven a la raíz (`SET_NULL`) | Criterio aprobado en la tarea 23 (§14.2.2) | `documentos/tests/test_carpetas.py` (`EliminarCarpetaTests`) |
 | Destino de la subida | §14.4: selector de carpeta destino | Va a la carpeta **activa** (`data-carpeta-id`); sin selector | Más simple en terreno; se sube desde dentro de la carpeta | `documentos/subidas.py`, `test_carpetas.py` (`SubidaACarpetaTests`) |
 | Nombre de carpeta | §14.2: único por proyecto | Único sin distinguir mayúsculas | Evita "Informes" e "informes" | `documentos/views.py::crear_carpeta` (`nombre__iexact`) |

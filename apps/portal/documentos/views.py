@@ -79,7 +79,7 @@ def lista_proyectos(request):
     if _es_personal(request.user):
         empresas = empresas_visibles(request.user).annotate(
             proyectos_activos_count=Count('proyectos', filter=Q(proyectos__estado=EstadoProyecto.ACTIVO))
-        )
+        ).order_by('-proyectos_activos_count', 'nombre')  # primero las con proyectos activos
         return render(request, 'empresas.html', {'empresas': empresas})
 
     proyectos = _tarjetas_de_proyecto(request.user, proyectos_visibles(request.user).select_related('empresa'))
@@ -266,10 +266,14 @@ def detalle_proyecto(request, pk):
 
     edita = puede_editar_proyecto(request.user, proyecto)  # E3
     hitos = _hitos_con_actual(proyecto)
+    actual = next((h for h in hitos if h.es_actual), None)
 
     context = {
         'proyecto': proyecto,
         'hitos': hitos,
+        # Aviso flotante del hito en curso: solo personal y jefe, y en la vista raíz del proyecto
+        'aviso_hito': actual if puede_subir(request.user) and not carpeta_activa and not proyecto.finalizado else None,
+        'aviso_hito_n': hitos.index(actual) + 1 if actual else 0,
         'puede_editar': edita,
         'puede_avanzar': edita and any(not h.cumplido and not h.es_revision for h in hitos),
         'puede_retroceder': edita and not proyecto.finalizado and any(h.cumplido for h in hitos),
