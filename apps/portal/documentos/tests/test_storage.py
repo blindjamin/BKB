@@ -58,10 +58,10 @@ class PrefijoTest(TestCase):
                         llamar(clave)
             cliente.assert_not_called()
 
-    def test_no_hay_funciones_para_listar_ni_borrar(self):
+    def test_no_hay_funcion_para_borrar(self):  # listar y copiar: solo para importar_antiguos
         publicas = [n for n, v in vars(storage).items() if callable(v) and not n.startswith('_')
                     and getattr(v, '__module__', None) == storage.__name__]
-        self.assertEqual(sorted(publicas), ['clave_para', 'leer', 'post_subida', 'tamano_en_space', 'url_descarga'])
+        self.assertEqual(sorted(publicas), ['clave_para', 'copiar', 'leer', 'listar_antiguos', 'post_subida', 'tamano_en_space', 'url_descarga'])
 
 
 @AJUSTES

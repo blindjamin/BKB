@@ -2,7 +2,7 @@
 
 El contenido de los archivos nunca pasa por Django: viaja navegador <-> Space.
 Única excepción (M2): `leer` trae el objeto para adjuntarlo a un correo, solo al enviar una modificación.
-A propósito no hay funciones para listar ni borrar (docs/03, sección 8).
+A propósito no hay función para borrar. Los archivos antiguos solo se listan y copian, al importarlos (comando importar_antiguos).
 """
 
 from urllib.parse import quote
@@ -81,3 +81,20 @@ def leer(clave):
     """M2: contenido del objeto para adjuntarlo al correo (solo al enviar, tope de 20 MB)."""
     _validar(clave)
     return _cliente().get_object(Bucket=settings.SPACES_BUCKET, Key=clave)['Body'].read()
+
+
+def listar_antiguos(raiz):
+    """Importación: `(clave, tamaño)` de cada archivo bajo una carpeta antigua. Solo lectura, nunca bajo SPACES_PREFIX."""
+    if not raiz.endswith('/') or raiz.startswith(settings.SPACES_PREFIX):
+        raise ValueError(f'Carpeta antigua no válida: {raiz!r}')
+    for pagina in _cliente().get_paginator('list_objects_v2').paginate(Bucket=settings.SPACES_BUCKET, Prefix=raiz):
+        for objeto in pagina.get('Contents', []):
+            if not objeto['Key'].endswith('/'):  # marcadores de carpeta
+                yield objeto['Key'], objeto['Size']
+
+
+def copiar(origen, destino):
+    """Importación: copia dentro del Space (no pasa por Django); el original queda intacto."""
+    _validar(destino)
+    _cliente().copy_object(Bucket=settings.SPACES_BUCKET, Key=destino,
+                           CopySource={'Bucket': settings.SPACES_BUCKET, 'Key': origen})

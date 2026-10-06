@@ -2,7 +2,7 @@
             <div class="form-group">
                 <label for="{{ form.encargado_nombre.id_for_label }}">
                     {{ form.encargado_nombre.label }}
-                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                    {% if form.encargado_nombre.field.required %}<span class="campo-requerido" aria-label="obligatorio">*</span>{% endif %}
                 </label>
                 {{ form.encargado_nombre }}
                 {% if form.encargado_nombre.errors %}
@@ -16,7 +16,7 @@
             <div class="form-group">
                 <label for="{{ form.encargado_email.id_for_label }}">
                     {{ form.encargado_email.label }}
-                    <span class="campo-requerido" aria-label="obligatorio">*</span>
+                    {% if form.encargado_email.field.required %}<span class="campo-requerido" aria-label="obligatorio">*</span>{% endif %}
                 </label>
                 {{ form.encargado_email }}
                 {% if form.encargado_email.help_text %}<small class="form-help" id="{{ form.encargado_email.id_for_label }}-help">{{ form.encargado_email.help_text }}</small>{% endif %}

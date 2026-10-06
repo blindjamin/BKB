@@ -91,17 +91,25 @@ def crear_empresa(request):
     if not puede_gestionar_estructura(request.user):
         raise PermissionDenied("No tienes permisos para crear empresas.")
 
-    if request.method == 'POST':
-        form = EmpresaForm(request.POST)
-        if form.is_valid():
-            form.instance.encargado, _ = obtener_o_invitar(
-                request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
-            empresa = form.save()
-            return redirect('documentos:detalle_empresa', pk=empresa.pk)
-    else:
-        form = EmpresaForm()
+    return _formulario_empresa(request, EmpresaForm(request.POST or None), 'Nueva Empresa')
 
-    return render(request, 'empresa_form.html', {'form': form})
+
+@login_required
+def editar_empresa(request, pk):
+    if not puede_gestionar_estructura(request.user):
+        raise PermissionDenied("No tienes permisos para editar empresas.")
+    empresa = get_object_or_404(Empresa, pk=pk)
+    return _formulario_empresa(request, EmpresaForm(request.POST or None, instance=empresa), 'Editar Empresa')
+
+
+def _formulario_empresa(request, form, titulo):
+    if request.method == 'POST' and form.is_valid():
+        email = form.cleaned_data['encargado_email']
+        form.instance.encargado = obtener_o_invitar(
+            request, form.cleaned_data['encargado_nombre'], email)[0] if email else None
+        empresa = form.save()
+        return redirect('documentos:detalle_empresa', pk=empresa.pk)
+    return render(request, 'empresa_form.html', {'form': form, 'titulo': titulo})
 
 
 @login_required
@@ -120,7 +128,8 @@ def detalle_empresa(request, pk):
 
 
 def _encargados_por_empresa():
-    return {str(e.pk): [e.encargado.nombre, e.encargado.email] for e in Empresa.objects.select_related('encargado')}
+    return {str(e.pk): [e.encargado.nombre, e.encargado.email]
+            for e in Empresa.objects.filter(encargado__isnull=False).select_related('encargado')}
 
 
 @login_required

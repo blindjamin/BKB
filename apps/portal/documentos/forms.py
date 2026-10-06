@@ -16,6 +16,12 @@ class CamposEncargado(forms.Form):
         help_text='Si es nuevo en el portal, le llegará una invitación para crear su contraseña.',
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.encargado_id:  # no .pk: el UUID ya trae valor antes de guardar
+            self.initial.setdefault('encargado_nombre', self.instance.encargado.nombre)
+            self.initial.setdefault('encargado_email', self.instance.encargado.email)
+
     def clean_encargado_email(self):
         email = self.cleaned_data['encargado_email'].lower()
         validar_encargado(email)  # E5
@@ -47,8 +53,22 @@ class EmpresaForm(CamposEncargado, forms.ModelForm):
             raise forms.ValidationError('El nombre de la empresa es obligatorio.')
         return nombre
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # La empresa puede crearse sin encargado y recibirlo después; vaciar el correo lo quita
+        self.fields['encargado_nombre'].required = False
+        self.fields['encargado_email'].required = False
+        self.fields['encargado_email'].help_text = ('Opcional: puedes asignarlo después. '
+                                                    + self.fields['encargado_email'].help_text)
+
     def clean_rut(self):
         return self.cleaned_data.get('rut', '').strip()
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('encargado_email') and not datos.get('encargado_nombre'):
+            self.add_error('encargado_nombre', 'Indica el nombre del encargado.')
+        return datos
 
 
 class ProyectoForm(CamposEncargado, forms.ModelForm):
@@ -73,10 +93,6 @@ class ProyectoForm(CamposEncargado, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['encargados_bkb'].queryset = Usuario.objects.filter(
             rol__in=(Rol.PERSONAL, Rol.JEFE), is_active=True, is_superuser=False).order_by('nombre', 'email')  # E3
-
-        if self.instance.encargado_id:  # no .pk: el UUID ya trae valor antes de guardar
-            self.initial.setdefault('encargado_nombre', self.instance.encargado.nombre)
-            self.initial.setdefault('encargado_email', self.instance.encargado.email)
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre', '').strip()

@@ -37,7 +37,7 @@ El **superusuario de Django** queda solo como cuenta técnica del informático (
 
 **Restricciones:** lo desarrolla una persona con apoyo de IA; sin fecha (terminar lo antes posible); el costo de infraestructura importa (objetivo ≈ US$ 27/mes: 1 instancia, PostgreSQL gestionado y el Space actual; sin staging ni worker al inicio).
 
-**Fuera de alcance de la v1:** subida de archivos por clientes, marca interno/compartido, asignación de proyectos al personal, migrar los archivos antiguos del Space (se dejan donde están; solo el personal los abre directo en DigitalOcean), facturas o ERP, firma electrónica, app móvil, visor DWG, miniaturas y previsualización, avisos por correo **al subir archivos** (sí hay correo al confirmar o rechazar la recepción, sección 12), Google SSO, 2FA, subcarpetas anidadas de profundidad infinita (la v1.3 contempla carpetas de un solo nivel por proyecto) y un panel de administración propio más allá de la pantalla Gestión del jefe (sección 13).
+**Fuera de alcance de la v1:** subida de archivos por clientes, marca interno/compartido, asignación de proyectos al personal, migrar los archivos antiguos del Space de forma automática (se copian a mano por empresa con `manage.py importar_antiguos`; el original queda donde está), facturas o ERP, firma electrónica, app móvil, visor DWG, miniaturas y previsualización, avisos por correo **al subir archivos** (sí hay correo al confirmar o rechazar la recepción, sección 12), Google SSO, 2FA, subcarpetas anidadas de profundidad infinita (la v1.3 contempla carpetas de un solo nivel por proyecto) y un panel de administración propio más allá de la pantalla Gestión del jefe (sección 13).
 
 **Si más adelante piden que el cliente suba o solicite documentos:** el acceso está centralizado en `permisos.py`, así que el cambio se concentra ahí y reutiliza el flujo de subida.
 
@@ -245,7 +245,7 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 **Nunca**
 - Versionar `.env`, claves del Space, `SECRET_KEY` ni `db.sqlite3`.
 - Hacer público el Space ni un objeto suelto.
-- Listar, mover o borrar archivos antiguos del Space.
+- Mover o borrar archivos antiguos del Space. Solo se listan y copian hacia `portal/` con `manage.py importar_antiguos`.
 - Aceptar rutas o claves del Space desde el usuario.
 - Dejar que un cliente suba, confirme o borre archivos, ni que vea un proyecto que no se le asignó.
 - Dejar que el personal borre archivos que subió otra persona (solo el jefe y el superusuario pueden).
