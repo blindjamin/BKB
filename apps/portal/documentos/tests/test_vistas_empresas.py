@@ -108,6 +108,26 @@ class VistasEmpresasYProyectosTests(TestCase):
                 empresa_creada = Empresa.objects.get(nombre=nombre_empresa)
                 self.assertEqual(post_resp.url, reverse('documentos:detalle_empresa', args=[empresa_creada.pk]))
 
+    def test_empresa_sin_encargado_y_asignarlo_despues(self):
+        self.client.force_login(self.jefe)
+        self.client.post(reverse('documentos:crear_empresa'), {'nombre': 'Sin Encargado'})
+        empresa = Empresa.objects.get(nombre='Sin Encargado')
+        self.assertIsNone(empresa.encargado)
+        self.assertContains(self.client.get(reverse('documentos:detalle_empresa', args=[empresa.pk])), 'sin asignar')
+
+        url_editar = reverse('documentos:editar_empresa', args=[empresa.pk])
+        self.client.post(url_editar, {'nombre': 'Sin Encargado', 'encargado_nombre': 'Cliente Uno',
+                                      'encargado_email': self.cliente.email})
+        empresa.refresh_from_db()
+        self.assertEqual(empresa.encargado, self.cliente)
+        self.client.force_login(self.cliente)  # ya la ve
+        self.assertEqual(self.client.get(reverse('documentos:detalle_empresa', args=[empresa.pk])).status_code, 200)
+
+    def test_editar_empresa_cliente_recibe_403(self):
+        self.client.force_login(self.cliente)
+        url = reverse('documentos:editar_empresa', args=[self.empresa_a.pk])
+        self.assertEqual(self.client.get(url).status_code, 403)
+
     def test_crear_empresa_cliente_recibe_403(self):
         self.client.force_login(self.cliente)
         url_crear = reverse('documentos:crear_empresa')
@@ -226,11 +246,12 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertEqual(self.client.post(url_editar, {'nombre': 'Hack'}).status_code, 403)
 
     def test_validacion_formularios_campos_obligatorios(self):
-        # EmpresaForm exige nombre
+        # EmpresaForm exige nombre; el encargado es opcional, pero con correo pide el nombre
         f_empresa = EmpresaForm(data={'nombre': '', 'rut': '123'})
         self.assertFalse(f_empresa.is_valid())
-        self.assertIn('nombre', f_empresa.errors)
-        self.assertIn('encargado_email', f_empresa.errors)
+        self.assertEqual(set(f_empresa.errors), {'nombre'})
+        f_empresa = EmpresaForm(data={'nombre': 'X', 'encargado_email': 'a@b.cl'})
+        self.assertEqual(set(f_empresa.errors), {'encargado_nombre'})
 
         # ProyectoForm exige empresa, nombre y fechas
         f_proyecto = ProyectoForm(data={'empresa': '', 'nombre': '', 'fecha_inicio': ''})

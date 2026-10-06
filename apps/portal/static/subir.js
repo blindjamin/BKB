@@ -10,7 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const datos = entradas[0].dataset;
     const maxBytes = Number(datos.maxMb) * 1024 * 1024;
     const extensiones = datos.extensiones.split(',');
-    let turno = Promise.resolve();
+    const SIMULTANEOS = 3;
+    const pendientes = [];
+    let activos = 0;
     let subidos = 0;
 
     document.querySelectorAll('[data-abrir]').forEach(boton => {
@@ -63,13 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try { return (await res.json()).error || porDefecto; } catch (e) { return porDefecto; }
     };
 
-    const subir = async (f, entrada, fila) => {
-        const d = entrada.dataset;
+    const subir = async ({ f, fila, carpetaId }) => {
         poner(fila, 'Subiendo', 0);
-        const res1 = await fetch(d.urlSubir, {
+        const res1 = await fetch(datos.urlSubir, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': d.csrf },
-            body: JSON.stringify({ nombre: f.name, tipo: f.type || 'application/octet-stream', tamano: f.size, carpeta_id: d.carpetaId || null, modificacion_id: d.modificacionId || null }),
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': datos.csrf },
+            body: JSON.stringify({ nombre: f.name, tipo: f.type || 'application/octet-stream', tamano: f.size, carpeta_id: carpetaId || null, modificacion_id: datos.modificacionId || null }),
         });
         if (!res1.ok) throw new Error(await error(res1, 'No se pudo iniciar la subida'));
         const { id, firma } = await res1.json();
@@ -87,43 +88,97 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         poner(fila, 'Confirmando');
-        const res2 = await fetch(d.urlConfirmar.replace('00000000-0000-0000-0000-000000000000', id), {
-            method: 'POST', headers: { 'X-CSRFToken': d.csrf },
+        const res2 = await fetch(datos.urlConfirmar.replace('00000000-0000-0000-0000-000000000000', id), {
+            method: 'POST', headers: { 'X-CSRFToken': datos.csrf },
         });
         if (!res2.ok) throw new Error(await error(res2, 'No se pudo confirmar la subida'));
     };
 
-    const encolar = (f, entrada, fila) => {
-        poner(fila, 'En cola');
-        fila.reintentar.hidden = true;
-        // Uno a la vez; si uno falla, los demás siguen.
-        turno = turno.then(async () => {
-            try {
-                await subir(f, entrada, fila);
-                poner(fila, 'Listo', 100);
+    // Al vaciarse la cola: sin errores en pantalla, recarga para mostrar los archivos nuevos
+    const alTerminar = () => {
+        if (activos || pendientes.length) return;
+        if (lista.children.length) verNuevos.hidden = !subidos;
+        else if (subidos) window.location.reload();
+        else cola.hidden = true;
+    };
+
+    // Hasta SIMULTANEOS a la vez; si uno falla, los demás siguen.
+    const avanzar = () => {
+        while (activos < SIMULTANEOS && pendientes.length) {
+            const tarea = pendientes.shift();
+            activos += 1;
+            subir(tarea).then(() => {
+                tarea.fila.li.remove();  // listo: la tarjeta sale y no queda nada que reintentar
                 subidos += 1;
-            } catch (e) {
-                poner(fila, `Error: ${e instanceof TypeError ? 'Sin conexión, reintenta' : e.message}`);
-                fila.reintentar.hidden = false;
+            }, (e) => {
+                poner(tarea.fila, `Error: ${e instanceof TypeError ? 'Sin conexión, reintenta' : e.message}`);
+                tarea.fila.reintentar.hidden = false;
+            }).finally(() => {
+                activos -= 1;
+                avanzar();
+                alTerminar();
+            });
+        }
+    };
+
+    const encolar = (tarea) => {
+        tarea.fila.reintentar.hidden = true;
+        poner(tarea.fila, 'En cola');
+        pendientes.push(tarea);
+        avanzar();
+    };
+
+    const agregar = (archivos, carpetaId) => {
+        cola.hidden = false;
+        verNuevos.hidden = true;
+        Array.from(archivos).forEach(f => {
+            const fila = crearFila(f);
+            const motivo = validar(f);
+            if (motivo) {
+                poner(fila, `Error: ${motivo}`);
+                return;
             }
-            if (subidos) verNuevos.hidden = false;
+            const tarea = { f, fila, carpetaId };
+            fila.reintentar.addEventListener('click', () => encolar(tarea));
+            encolar(tarea);
         });
+        alTerminar();
     };
 
     entradas.forEach(entrada => {
         entrada.addEventListener('change', () => {
-            cola.hidden = false;
-            Array.from(entrada.files).forEach(f => {
-                const fila = crearFila(f);
-                const motivo = validar(f);
-                if (motivo) {
-                    poner(fila, `Error: ${motivo}`);
-                    return;
-                }
-                fila.reintentar.addEventListener('click', () => encolar(f, entrada, fila));
-                encolar(f, entrada, fila);
-            });
+            agregar(entrada.files, entrada.dataset.carpetaId);
             entrada.value = '';  // permite volver a elegir el mismo archivo
         });
+    });
+
+    // Arrastrar: sobre una carpeta sube a esa carpeta; en cualquier otra parte, a donde se está mirando
+    const conArchivos = e => Array.from(e.dataTransfer?.types || []).includes('Files');
+    let destino = null;
+    const marcar = (pastilla) => {
+        destino?.classList.remove('es-destino');
+        destino = pastilla;
+        destino?.classList.add('es-destino');
+        document.body.dataset.destino = destino ? `la carpeta ${destino.dataset.carpetaNombre}`
+            : (datos.destino || 'la modificación');
+    };
+    const soltar = () => {
+        marcar(null);
+        document.body.classList.remove('arrastrando');
+    };
+    document.addEventListener('dragover', e => {
+        if (!conArchivos(e)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        document.body.classList.add('arrastrando');
+        marcar(e.target.closest?.('[data-carpeta-id]') || null);
+    });
+    document.addEventListener('dragleave', e => { if (!e.relatedTarget) soltar(); });
+    document.addEventListener('drop', e => {
+        if (!conArchivos(e)) return;
+        e.preventDefault();
+        const carpetaId = destino ? destino.dataset.carpetaId : datos.carpetaId;
+        soltar();
+        agregar(e.dataTransfer.files, carpetaId);
     });
 });

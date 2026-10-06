@@ -2142,6 +2142,32 @@ fieldset.form-group-fieldset legend.form-label {
 }
 
 /* Cola de subida (paso C · DS-5) */
+/* Sin esto, .btn-link (display: inline-flex) le gana a [hidden] y "Reintentar" se ve siempre */
+[hidden] {
+    display: none !important;
+}
+
+/* Arrastrar archivos: aviso fijo con el destino y la carpeta bajo el cursor resaltada */
+body.arrastrando::after {
+    content: "Suelta para subir a " attr(data-destino);
+    position: fixed;
+    inset: auto 50% var(--space-6) auto;
+    transform: translateX(50%);
+    padding: var(--space-3) var(--space-5);
+    border: 2px dashed var(--bkb-salmon-500);
+    border-radius: var(--bkb-radius-pill);
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.carpeta-pastilla.es-destino {
+    border-color: var(--bkb-salmon-500);
+    outline: 2px dashed var(--bkb-salmon-500);
+}
+
 .cola-subida {
     margin-bottom: var(--space-6);
     padding: var(--space-4);

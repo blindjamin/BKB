@@ -13,6 +13,7 @@ class Empresa(models.Model):
     nombre = models.CharField(max_length=200)
     rut = models.CharField(max_length=12, blank=True)
     encargado = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='empresas_a_cargo',
+                                  null=True, blank=True,  # se puede asignar después
                                   limit_choices_to={'rol': 'cliente'})  # E1, E5 en el admin
 
     class Meta:
