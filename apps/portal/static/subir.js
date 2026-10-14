@@ -28,19 +28,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     };
 
-    const crearFila = (f) => {
+    const crearFila = (texto, bytes) => {
         const li = document.createElement('li');
         li.className = 'cola-fila';
         const nombre = document.createElement('span');
         nombre.className = 'cola-nombre';
-        nombre.textContent = f.name;
+        nombre.textContent = texto;
         const tamano = document.createElement('span');
         tamano.className = 'cola-tamano';
-        tamano.textContent = `${(f.size / 1024 / 1024).toFixed(1)} MB`;
+        tamano.textContent = `${(bytes / 1024 / 1024).toFixed(1)} MB`;
         const barra = document.createElement('progress');
         barra.max = 100;
         barra.value = 0;
-        barra.setAttribute('aria-label', `Progreso de ${f.name}`);
+        barra.setAttribute('aria-label', `Progreso de ${texto}`);
         const estado = document.createElement('span');
         estado.className = 'cola-estado';
         const porcentaje = document.createElement('span');
@@ -128,21 +128,112 @@ document.addEventListener('DOMContentLoaded', () => {
         avanzar();
     };
 
-    const agregar = (archivos, carpetaId) => {
+    // tareas: [{ f, nombre (lo que se muestra), carpetaId }]
+    const agregarTareas = (tareas) => {
         cola.hidden = false;
         verNuevos.hidden = true;
-        Array.from(archivos).forEach(f => {
-            const fila = crearFila(f);
-            const motivo = validar(f);
+        tareas.forEach(tarea => {
+            tarea.fila = crearFila(tarea.nombre, tarea.f.size);
+            const motivo = validar(tarea.f);
             if (motivo) {
-                poner(fila, `Error: ${motivo}`);
+                poner(tarea.fila, `Error: ${motivo}`);
                 return;
             }
-            const tarea = { f, fila, carpetaId };
-            fila.reintentar.addEventListener('click', () => encolar(tarea));
+            tarea.fila.reintentar.addEventListener('click', () => encolar(tarea));
             encolar(tarea);
         });
         alTerminar();
+    };
+
+    const agregar = (archivos, carpetaId) => agregarTareas(Array.from(archivos).map(f => ({ f, nombre: f.name, carpetaId })));
+
+    // Carpetas completas (docs/12, S1-S7): se pide el árbol al servidor y cada archivo va a la cola con su carpeta
+    const IGNORAR = /^(\.DS_Store|Thumbs\.db|desktop\.ini|~\$.*)$/i;  // S5
+    const MAX_ARCHIVOS = 500;  // S4
+    const preguntar = (titulo, texto, accion) => (window.confirmar
+        ? window.confirmar(titulo, texto, accion)
+        : Promise.resolve(window.confirm(`${titulo}\n\n${texto}`)));
+    const fallo = (texto, motivo) => {
+        cola.hidden = false;
+        poner(crearFila(texto, 0), `Error: ${motivo}`);
+    };
+    const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+
+    // archivos: [{ f, ruta: 'Rev A/plano.pdf' }] relativos a la carpeta; rutas: Set de subcarpetas ('Rev A', …)
+    const subirCarpeta = async (raiz, archivos, rutas, carpetaId) => {
+        archivos = archivos.filter(a => !IGNORAR.test(a.f.name));
+        if (archivos.length > MAX_ARCHIVOS) {
+            fallo(raiz, `tiene ${archivos.length} archivos y el máximo es ${MAX_ARCHIVOS}. Súbela por partes.`);
+            return;
+        }
+        const malos = archivos.filter(a => validar(a.f)).length;
+        const bytes = archivos.filter(a => !validar(a.f)).reduce((n, a) => n + a.f.size, 0);
+        let texto = `${plural(rutas.size, 'subcarpeta', 'subcarpetas')}, ${plural(archivos.length - malos, 'archivo', 'archivos')} (${(bytes / 1024 / 1024).toFixed(1)} MB).`;
+        if (malos) texto += ` ${plural(malos, 'archivo no se subirá', 'archivos no se subirán')}: tipo no permitido o muy grande.`;
+        if (!await preguntar(`¿Subir la carpeta «${raiz}»?`, texto, 'Subir')) return;
+
+        const res = await fetch(datos.urlArbol, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': datos.csrf },
+            body: JSON.stringify({ padre: carpetaId || null, raiz, rutas: Array.from(rutas) }),
+        }).catch(() => null);
+        if (!res || !res.ok) {
+            fallo(raiz, res ? await error(res, 'No se pudo crear la carpeta') : 'Sin conexión, reintenta');
+            return;
+        }
+        const { carpetas } = await res.json();
+        subidos += 1;  // la carpeta nueva ya es algo que mostrar, aunque no traiga archivos (S6)
+        agregarTareas(archivos.map(({ f, ruta }) => ({
+            f,
+            nombre: `${raiz}/${ruta}`,  // S7
+            carpetaId: carpetas[ruta.includes('/') ? ruta.slice(0, ruta.lastIndexOf('/')) : ''],
+        })));
+    };
+
+    const rutasDe = (archivos) => {
+        const rutas = new Set();
+        archivos.forEach(({ ruta }) => {
+            const partes = ruta.split('/').slice(0, -1);
+            partes.forEach((_, i) => rutas.add(partes.slice(0, i + 1).join('/')));
+        });
+        return rutas;
+    };
+
+    const carpetaInput = document.getElementById('carpeta-input');
+    if (carpetaInput) {
+        // S1: sin selector de carpetas (o en un teléfono, donde no sirve) el botón no se muestra
+        const tactil = !window.matchMedia('(pointer: fine)').matches;
+        if (!('webkitdirectory' in carpetaInput) || tactil) document.getElementById('btn-subir-carpeta').hidden = true;
+        carpetaInput.addEventListener('change', () => {
+            const archivos = Array.from(carpetaInput.files).map(f => ({ f, ruta: f.webkitRelativePath.split('/').slice(1).join('/') }));
+            const raiz = carpetaInput.files.length ? carpetaInput.files[0].webkitRelativePath.split('/')[0] : '';
+            carpetaInput.value = '';
+            if (raiz) subirCarpeta(raiz, archivos, rutasDe(archivos), datos.carpetaId);
+        });
+    }
+
+    // Arrastrar carpetas: se recorren con la API de entradas; readEntries entrega de a tandas (100 en Chrome)
+    const archivoDe = entrada => new Promise((ok, falla) => entrada.file(ok, falla));
+    const leerTodo = lector => new Promise((ok, falla) => {
+        const todas = [];
+        const leer = () => lector.readEntries(tanda => {
+            if (!tanda.length) return ok(todas);
+            todas.push(...tanda);
+            leer();
+        }, falla);
+        leer();
+    });
+    const leerCarpeta = async (dir, prefijo = '', res = { archivos: [], rutas: new Set() }) => {
+        for (const entrada of await leerTodo(dir.createReader())) {
+            const ruta = prefijo ? `${prefijo}/${entrada.name}` : entrada.name;
+            if (entrada.isDirectory) {
+                res.rutas.add(ruta);  // S6: también las vacías
+                await leerCarpeta(entrada, ruta, res);
+            } else {
+                res.archivos.push({ f: await archivoDe(entrada), ruta });
+            }
+        }
+        return res;
     };
 
     entradas.forEach(entrada => {
@@ -179,6 +270,25 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const carpetaId = destino ? destino.dataset.carpetaId : datos.carpetaId;
         soltar();
-        agregar(e.dataTransfer.files, carpetaId);
+        // Las entradas se piden ya: después del evento dataTransfer queda vacío
+        const soltadas = Array.from(e.dataTransfer.items || []).map(i => i.webkitGetAsEntry?.()).filter(Boolean);
+        const carpetas = soltadas.filter(en => en.isDirectory);
+        if (!carpetas.length || !datos.urlArbol) {  // solo archivos, o una página sin carpetas (modificación)
+            agregar(e.dataTransfer.files, carpetaId);
+            return;
+        }
+        (async () => {
+            const sueltos = await Promise.all(soltadas.filter(en => en.isFile).map(archivoDe));
+            if (sueltos.length) agregar(sueltos, carpetaId);
+            for (const dir of carpetas) {  // de a una: cada carpeta tiene su propia confirmación
+                try {
+                    const { archivos, rutas } = await leerCarpeta(dir);
+                    await subirCarpeta(dir.name, archivos, rutas, carpetaId);
+                } catch (err) {
+                    fallo(dir.name, 'no se pudo leer la carpeta');
+                }
+            }
+            alTerminar();
+        })();
     });
 });

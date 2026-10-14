@@ -1,5 +1,6 @@
 {% load static %}
 <article class="archivo-fila">
+    {% if gestionar %}<input type="checkbox" name="archivos" value="{{ archivo.pk }}" form="mover-archivos" class="archivo-marcar" aria-label="Marcar {{ archivo.nombre_original }}">{% endif %}
     <span class="archivo-ext">{{ archivo.extension|default:"—" }}</span>
     <div class="archivo-info">
         <span class="archivo-nombre">{{ archivo.nombre_original }}</span>
@@ -12,6 +13,18 @@
             <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#descargar"></use></svg>
             Descargar
         </a>
+        {% if gestionar %}
+        <details class="archivo-renombrar">
+            <summary class="btn-link">Renombrar</summary>
+            {# R2: solo el nombre; la extensión no cambia #}
+            <form action="{% url 'documentos:renombrar_archivo' archivo.pk %}" method="post" class="form-carpeta">
+                {% csrf_token %}
+                <input type="text" name="nombre" value="{{ archivo.base }}" maxlength="240" required aria-label="Nuevo nombre de {{ archivo.nombre_original }}">
+                <span class="archivo-ext-fija">{{ archivo.ext_punto }}</span>
+                <button type="submit" class="btn-secondary">Guardar</button>
+            </form>
+        </details>
+        {% endif %}
         {% if puede_borrar or archivo.puede_borrar %}
         {# Sin JS abre la página de confirmación (GET, nunca borra); con JS, confirmar.js abre el diálogo y envía POST #}
         <a href="{% url 'documentos:eliminar_archivo' archivo.pk %}" class="btn-eliminar" data-confirmar-eliminar data-confirmar-titulo="¿Eliminar «{{ archivo.nombre_original }}»?" data-confirmar="El archivo dejará de verse para todos, incluidos los clientes." data-confirmar-accion="Eliminar">

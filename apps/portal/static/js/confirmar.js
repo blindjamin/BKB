@@ -37,9 +37,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Para scripts: window.confirmar(titulo, texto, accion) -> Promise<boolean> con el mismo diálogo
+    window.confirmar = (tituloTexto, mensaje, accionTexto) => new Promise((ok) => {
+        abrir({ dataset: { confirmarTitulo: tituloTexto, confirmar: mensaje, confirmarAccion: accionTexto }, alConfirmar: () => ok(true) });
+        dialogo.addEventListener('close', () => ok(false), { once: true });  // si ya confirmó, no cambia nada
+    });
+
     accion.addEventListener('click', () => {
         if (!pendiente) return;
-        if (pendiente.tagName === 'FORM') {
+        if (pendiente.alConfirmar) {
+            pendiente.alConfirmar();
+        } else if (pendiente.tagName === 'FORM') {
             pendiente.submit();  // submit() no vuelve a disparar el evento: no hay bucle
         } else {
             formDialogo.action = pendiente.href;

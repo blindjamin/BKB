@@ -2,6 +2,8 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Lower
 
 
 def _uuid_pk():
@@ -81,10 +83,13 @@ class EstadoArchivo(models.TextChoices):
 
 
 class Carpeta(models.Model):
-    """Carpeta virtual de un proyecto: vive solo en la base de datos, nunca en el Space."""
+    """Carpeta virtual de un proyecto: vive solo en la base de datos, nunca en el Space.
+    Puede estar dentro de otra carpeta del mismo proyecto (docs/12, C1); `padre=None` es la raíz."""
 
     id = _uuid_pk()
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='carpetas')
+    # CASCADE solo como red al borrar el proyecto: eliminar_carpeta sube el contenido antes de borrar (C4)
+    padre = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcarpetas')
     nombre = models.CharField(max_length=100)
     creado_en = models.DateTimeField(auto_now_add=True)
     creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='carpetas_creadas')
@@ -93,7 +98,12 @@ class Carpeta(models.Model):
         verbose_name = 'carpeta'
         verbose_name_plural = 'carpetas'
         ordering = ['nombre']
-        unique_together = [('proyecto', 'nombre')]
+        constraints = [
+            # C2: único por lugar sin distinguir mayúsculas; la raíz aparte porque NULL != NULL
+            models.UniqueConstraint(Lower('nombre'), 'padre', name='carpeta_unica_en_padre'),
+            models.UniqueConstraint(Lower('nombre'), 'proyecto', condition=Q(padre__isnull=True),
+                                    name='carpeta_unica_en_raiz'),
+        ]
 
     def __str__(self):
         return f'{self.proyecto.nombre} - {self.nombre}'

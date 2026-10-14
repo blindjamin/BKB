@@ -6,7 +6,17 @@ from django.utils import timezone
 
 from accounts.models import Usuario
 from documentos import storage
-from documentos.models import Archivo, Carpeta, Empresa, EstadoArchivo, EstadoProyecto, Proyecto
+from documentos.carpetas import hija
+from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Proyecto
+
+
+def _ruta(carpeta):
+    """['planos', 'tbc - 03']: el camino de la carpeta en minúsculas, para no duplicar al repetir."""
+    ruta = []
+    while carpeta:
+        ruta.insert(0, carpeta.nombre.lower())
+        carpeta = carpeta.padre
+    return ruta
 
 
 class Command(BaseCommand):
@@ -41,16 +51,16 @@ class Command(BaseCommand):
                 else:
                     nombre_proyecto = partes.pop(0)
                 nombre_proyecto = nombre_proyecto[:200]
-                # Las carpetas del portal son planas: 'Planos/TBC - 03' pasa a 'Planos / TBC - 03'
-                nombre_carpeta = (' / '.join(partes) or 'General')[:100]
-                if Archivo.objects.filter(
-                        proyecto__empresa=empresa, proyecto__nombre=nombre_proyecto, carpeta__nombre=nombre_carpeta,
-                        nombre_original=nombre, tamano=tamano, eliminado_en__isnull=True).exists():
+                # 'Planos/TBC - 03' pasa a las carpetas anidadas Planos › TBC - 03 (docs/12)
+                ruta = [p.strip()[:100] for p in partes if p.strip()] or ['General']
+                if any(_ruta(a.carpeta) == [p.lower() for p in ruta] for a in Archivo.objects.filter(
+                        proyecto__empresa=empresa, proyecto__nombre=nombre_proyecto,
+                        nombre_original=nombre, tamano=tamano, eliminado_en__isnull=True).select_related('carpeta')):
                     repetidos += 1
                     continue
                 nuevos += 1
                 if not ejecutar:
-                    self.stdout.write(f'{nombre_proyecto} | {nombre_carpeta} | {nombre}')
+                    self.stdout.write(f'{nombre_proyecto} | {" › ".join(ruta)} | {nombre}')
                     continue
                 hoy = timezone.localdate()
                 proyecto, creado = Proyecto.objects.get_or_create(empresa=empresa, nombre=nombre_proyecto, defaults={
@@ -59,8 +69,9 @@ class Command(BaseCommand):
                     'finalizado_en': timezone.now()})  # A8: finalizado, para que el cliente vea los archivos
                 if creado:
                     proyecto.encargados.set(encargados)
-                carpeta, _ = Carpeta.objects.get_or_create(
-                    proyecto=proyecto, nombre=nombre_carpeta, defaults={'creado_por': autor})
+                carpeta = None
+                for parte in ruta:
+                    carpeta = hija(proyecto, carpeta, parte, autor)
                 archivo = Archivo(
                     proyecto=proyecto, carpeta=carpeta, nombre_original=nombre, tamano=tamano,
                     tipo=mimetypes.guess_type(nombre)[0] or 'application/octet-stream',

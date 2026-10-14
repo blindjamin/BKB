@@ -2688,3 +2688,78 @@ a[href^="mailto:"] {
 .form-eliminar {
     margin-top: var(--space-5);
 }
+
+/* Carpetas anidadas (docs/12): migas, acciones de la carpeta abierta, mover y renombrar */
+.migas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) 0;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--bkb-text-body-sm);
+    color: var(--text-muted);
+}
+
+.migas li + li::before {
+    content: "›";
+    margin: 0 var(--space-2);
+}
+
+.carpeta-accion > summary,
+.archivo-renombrar > summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.carpeta-accion > summary::-webkit-details-marker,
+.archivo-renombrar > summary::-webkit-details-marker {
+    display: none;
+}
+
+.carpeta-accion[open] > form,
+.archivo-renombrar[open] > form {
+    margin-top: var(--space-2);
+}
+
+.carpeta-activa-acciones {
+    justify-content: flex-start;
+    margin-bottom: var(--space-4);
+}
+
+.mover-archivos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    font-size: var(--bkb-text-body-sm);
+}
+
+.mover-archivos select {
+    width: auto;
+    max-width: 100%;
+}
+
+.archivo-fila:has(.archivo-marcar) {
+    grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+.archivo-marcar {
+    align-self: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+}
+
+.archivo-ext-fija {
+    align-self: center;
+    font-family: var(--bkb-font-mono);
+    color: var(--text-muted);
+}
+
+@media (min-width: 768px) {
+    .archivo-fila:has(.archivo-marcar) {
+        grid-template-columns: auto auto minmax(0, 1fr) auto;
+    }
+}
