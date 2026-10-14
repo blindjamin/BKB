@@ -60,8 +60,9 @@ class EliminarEstructuraTests(TestCase):
 
     def test_nombre_exacto_borra_el_proyecto_y_lo_suyo(self):
         self.client.force_login(self.jefe)
-        with self.assertLogs('documentos.views', 'WARNING'):
+        with self.assertLogs('documentos.views', 'WARNING') as log:
             r = self.client.post(self.url_proyecto, {'confirmacion': ' NV 28174 '})
+        self.assertIn(str(self.proyecto.pk), log.output[0])
         self.assertRedirects(r, reverse('documentos:detalle_empresa', args=[self.empresa.pk]), fetch_redirect_response=False)
         self.assertFalse(Proyecto.objects.filter(pk=self.proyecto.pk).exists())
         self.assertEqual((Archivo.objects.count(), DescargaLog.objects.count(), Hito.objects.count(),

@@ -483,8 +483,9 @@ def _confirmar_eliminacion(request, objeto, tipo, perdidas, url_volver, borrar, 
         if request.POST.get('confirmacion', '').strip() != objeto.nombre:
             error = f'El nombre no coincide. Escribe exactamente: {objeto.nombre}'
         else:
+            pk = objeto.pk  # después de borrar queda en None
             destino = borrar()
-            logger.warning('%s eliminó %s «%s» (%s).', request.user.email, tipo, objeto.nombre, objeto.pk)
+            logger.warning('%s eliminó %s «%s» (%s).', request.user.email, tipo, objeto.nombre, pk)
             messages.success(request, f'Se eliminó {tipo} «{objeto.nombre}».')
             return redirect(destino)
     return render(request, 'eliminar_estructura.html', {
