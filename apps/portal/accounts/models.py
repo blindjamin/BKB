@@ -1,7 +1,6 @@
 import uuid
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -53,14 +52,6 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
             self.email = self.email.lower()
         if self.is_superuser:
             self.rol = Rol.PERSONAL
-        if self.rol == Rol.JEFE and self.is_active:
-            qs = Usuario.objects.filter(rol=Rol.JEFE, is_active=True)
-            if self.pk:
-                qs = qs.exclude(pk=self.pk)
-            if qs.exists():
-                raise ValidationError({
-                    'rol': 'Ya existe un usuario con el rol de jefe activo. Solo puede existir un jefe activo a la vez.'
-                })
 
     def save(self, *args, **kwargs):
         if self.email:

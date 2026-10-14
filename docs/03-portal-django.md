@@ -143,7 +143,7 @@ apps/portal/
 | Modelo | Campos clave |
 |---|---|
 | `Empresa` | `id`, `nombre`, `rut` |
-| `Usuario` | correo (login), `nombre` (v1.2), `rol` (`personal`/`cliente`/`jefe`, v1.2). Sin empresa propia. El superusuario es `personal`. **Como máximo un jefe activo** |
+| `Usuario` | correo (login), `nombre` (v1.2), `rol` (`personal`/`cliente`/`jefe`, v1.2). Sin empresa propia. El superusuario es `personal`. Puede haber varios jefes activos (desde el 14-10-2026) |
 | `Proyecto` | `id`, `empresa`, `nombre`, `estado` (`activo`/`cerrado`) |
 | `Membresia` | `usuario` (solo clientes), `proyecto` (único por par). Asignar personal se rechaza |
 | `Carpeta` (v1.3) | `id`, `proyecto`, `nombre`, `creado_en`, `creado_por`. Único por (`proyecto`, `nombre`) |
@@ -218,7 +218,7 @@ Las vistas obtienen objetos con `get_object_or_404(archivos_visibles(...), pk=..
 - **Subida:** solo el personal puede iniciar y confirmar; un cliente recibe 403; se rechazan tipos y tamaños no permitidos; solo quien subió puede confirmar.
 - **Borrado:** el autor puede borrar; otro personal recibe 403; el superusuario puede borrar cualquiera; el cliente recibe 403; un archivo borrado desaparece de la lista y su descarga da 404.
 - **Hitos y recepción (v1.2):** la matriz de permisos suma el eje "estado del proyecto" (en curso, esperando recepción, recibido) para el cliente en **listado, descarga y UUID directo**; el personal ve todo en los tres. Hitos: solo se avanza al siguiente y solo se retrocede el último; un cliente que intenta avanzar recibe 403; no se retrocede si ya hay recepción conforme. Recepción: sin nombre de revisor se rechaza; personal o cliente no asignado no pueden responder; "conforme" desbloquea y "no conforme" no; ambos dejan registro y mandan un correo (`django.core.mail.outbox`); si el envío falla, la respuesta igual queda guardada. *(Histórico: reemplazado por docs/11, 29-09-2026.)*
-- **Jefe y gestión (v1.2):** `/gestion/` responde 403 al personal y al cliente. El jefe crea empresas y usuarios, pero no puede crear otro jefe ni un superusuario, cambiarse el rol ni desactivarse. Solo puede existir un jefe activo. Crear un usuario manda la invitación (`mail.outbox`) y el enlace permite fijar la contraseña una sola vez. Un usuario desactivado no entra ni ve nada. "Olvidé mi contraseña" responde igual exista o no el correo. El jefe puede borrar cualquier archivo.
+- **Jefe y gestión (v1.2):** `/gestion/` responde 403 al personal y al cliente. El jefe crea empresas y usuarios, pero no puede crear otro jefe ni un superusuario, cambiarse el rol ni desactivarse. Puede haber varios jefes activos. Crear un usuario manda la invitación (`mail.outbox`) y el enlace permite fijar la contraseña una sola vez. Un usuario desactivado no entra ni ve nada. "Olvidé mi contraseña" responde igual exista o no el correo. El jefe puede borrar cualquier archivo.
 - **Storage:** toda clave generada empieza con el prefijo configurado; ninguna operación sale de él.
 - **Login:** bloqueo tras intentos fallidos; el mensaje de error no revela si el correo existe.
 - **Manual (una vez por hito):** subir una foto y un PDF reales contra el Space con prefijo `portal-dev/` como personal, y verlos y descargarlos como un cliente de prueba asignado.
@@ -337,7 +337,7 @@ Reemplazada por [`11-spec-avance-y-modificaciones.md`](11-spec-avance-y-modifica
 | **Superusuario** | Cuenta técnica del informático | `createsuperuser` |
 
 - El jefe es un **valor más de `rol`** (`jefe`), no un permiso de Django. Todas las reglas lo tratan como personal, más lo propio de su perfil.
-- **Solo puede haber un jefe activo.** El modelo lo valida: designar un segundo jefe se rechaza con un mensaje claro.
+- **Puede haber varios jefes activos** (antes solo uno; se cambió el 14-10-2026 para que Alvaro Rojas, de ingeniería, tenga los mismos permisos que el jefe). Un jefe no gestiona a otro jefe desde `/gestion/`: eso se hace en `/admin/`.
 - El jefe **no entra a `/admin/`** (sigue reservado al superusuario).
 
 ### 13.2 Qué hace el jefe en Gestión
