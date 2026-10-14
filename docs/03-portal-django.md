@@ -37,7 +37,7 @@ El **superusuario de Django** queda solo como cuenta técnica del informático (
 
 **Restricciones:** lo desarrolla una persona con apoyo de IA; sin fecha (terminar lo antes posible); el costo de infraestructura importa (objetivo ≈ US$ 27/mes: 1 instancia, PostgreSQL gestionado y el Space actual; sin staging ni worker al inicio).
 
-**Fuera de alcance de la v1:** subida de archivos por clientes, marca interno/compartido, asignación de proyectos al personal, migrar los archivos antiguos del Space de forma automática (se copian a mano por empresa con `manage.py importar_antiguos`; el original queda donde está), facturas o ERP, firma electrónica, app móvil, visor DWG, miniaturas y previsualización, avisos por correo **al subir archivos** (sí hay correo al confirmar o rechazar la recepción, sección 12), Google SSO, 2FA, subcarpetas anidadas de profundidad infinita (la v1.3 contempla carpetas de un solo nivel por proyecto) y un panel de administración propio más allá de la pantalla Gestión del jefe (sección 13).
+**Fuera de alcance de la v1:** subida de archivos por clientes, marca interno/compartido, asignación de proyectos al personal, migrar los archivos antiguos del Space de forma automática (se copian a mano por empresa con `manage.py importar_antiguos`; el original queda donde está), facturas o ERP, firma electrónica, app móvil, visor DWG, miniaturas y previsualización, avisos por correo **al subir archivos** (sí hay correo al confirmar o rechazar la recepción, sección 12), Google SSO, 2FA, descargar una carpeta como ZIP y un panel de administración propio más allá de la pantalla Gestión del jefe (sección 13).
 
 **Si más adelante piden que el cliente suba o solicite documentos:** el acceso está centralizado en `permisos.py`, así que el cambio se concentra ahí y reutiliza el flujo de subida.
 
@@ -146,7 +146,7 @@ apps/portal/
 | `Usuario` | correo (login), `nombre` (v1.2), `rol` (`personal`/`cliente`/`jefe`, v1.2). Sin empresa propia. El superusuario es `personal`. Puede haber varios jefes activos (desde el 14-10-2026) |
 | `Proyecto` | `id`, `empresa`, `nombre`, `estado` (`activo`/`cerrado`) |
 | `Membresia` | `usuario` (solo clientes), `proyecto` (único por par). Asignar personal se rechaza |
-| `Carpeta` (v1.3) | `id`, `proyecto`, `nombre`, `creado_en`, `creado_por`. Único por (`proyecto`, `nombre`) |
+| `Carpeta` (v1.3) | `id`, `proyecto`, `padre` (opcional, carpeta del mismo proyecto; docs/12), `nombre`, `creado_en`, `creado_por`. Nombre único por lugar sin distinguir mayúsculas |
 | `Archivo` | `id`, `proyecto`, `carpeta` (opcional, v1.3), `nombre_original`, `clave_space`, `tamano`, `tipo`, `subido_por`, `estado` (`pendiente`/`disponible`), `subido_en`, `eliminado_en`, `eliminado_por` |
 | `DescargaLog` | `usuario`, `archivo`, `fecha`, `ip` |
 | `Hito` (v1.2) | `id`, `proyecto`, `orden`, `nombre`, `cumplido_en`, `cumplido_por`. Único por (`proyecto`, `orden`) |
@@ -161,7 +161,8 @@ apps/portal/
 | `/empresas/<uuid>/` (v1.3) | Todos (según asignación) | Historial de proyectos de la empresa (con botón "+ Nuevo Proyecto") |
 | `/proyectos/<uuid>/` | Todos | Detalle del proyecto (hitos, carpetas, archivos) |
 | `POST /proyectos/<uuid>/carpetas/nueva/` (v1.3) | Personal y Jefe | Crear carpeta en el proyecto |
-| `POST /carpetas/<uuid>/eliminar/` (v1.3) | Personal y Jefe | Eliminar carpeta vacía |
+| `POST /carpetas/<uuid>/eliminar/` (v1.3) | Personal y Jefe | Eliminar carpeta: su contenido sube un nivel (docs/12) |
+| `POST /carpetas/<uuid>/renombrar/`, `/mover/`; `POST /archivos/<uuid>/renombrar/`; `POST /proyectos/<uuid>/archivos/mover/`; `POST /proyectos/<uuid>/carpetas/arbol/` | Personal y Jefe | Carpetas anidadas, mover, renombrar y subir carpeta (docs/12) |
 | `POST /proyectos/<uuid>/subir/` | Personal y Jefe | Inicia la subida (acepta `carpeta_id` opcional): valida y devuelve POST prefirmado |
 | `POST /archivos/<uuid>/confirmar/` | Personal y Jefe (quien subió) | Confirma la subida: verifica existencia y tamaño en el Space |
 | `GET /archivos/<uuid>/descargar/` | Todos | Responde 302 a una URL prefirmada de 60 s |
@@ -411,6 +412,8 @@ Login → [ / ]
 ```
 
 ### 14.2 Carpetas virtuales por proyecto
+
+> **Desde el 14-10-2026 las carpetas se anidan** (hasta 8 niveles), se pueden subir carpetas completas y mover o renombrar carpetas y archivos. El detalle vigente está en **docs/12-spec-carpetas-anidadas.md**; lo de abajo describe la v1.3 de un solo nivel.
 
 1. **Modelo `Carpeta`:**
    - `id`: UUID.

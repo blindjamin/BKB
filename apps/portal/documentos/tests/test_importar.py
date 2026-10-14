@@ -35,8 +35,10 @@ class ImportarAntiguosTest(TestCase):
         self.importar('--ejecutar')
         self.importar('--ejecutar')
         self.assertEqual(copiar.call_count, 4)
-        estructura = {p.nombre: sorted(p.carpetas.values_list('nombre', flat=True)) for p in self.empresa.proyectos.all()}
-        self.assertEqual(estructura, {'NV 1': ['Fotos', 'Planos / TBC'], 'NV 2': ['General'],
+        # docs/12: las rutas pasan a carpetas anidadas (Planos › TBC), no a «Planos / TBC»
+        estructura = {p.nombre: sorted((c.padre.nombre + ' › ' if c.padre else '') + c.nombre for c in p.carpetas.all())
+                      for p in self.empresa.proyectos.all()}
+        self.assertEqual(estructura, {'NV 1': ['Fotos', 'Planos', 'Planos › TBC'], 'NV 2': ['General'],
                                       'Proyectos Tecfluid': ['General']})
         a = Archivo.objects.get(nombre_original='a.jpg')
         self.assertEqual((a.estado, a.tipo), ('disponible', 'image/jpeg'))

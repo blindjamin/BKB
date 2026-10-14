@@ -259,8 +259,10 @@ class ArchivosYFlujoTests(TestCase):
 
         html = self._ver(self.personal).content.decode()
         entradas = re.findall(r'<input type="file"[^>]*>', html)
-        self.assertEqual(len(entradas), 2)
-        subir, foto = entradas
+        self.assertEqual(len(entradas), 3)
+        subir, foto, carpeta = entradas
+        self.assertIn('webkitdirectory', carpeta)  # docs/12, S1
+        entradas = [subir, foto]
         self.assertIn('id="archivo-input"', subir)
         self.assertIn('multiple', subir)
         self.assertNotIn('capture', subir)

@@ -1,6 +1,5 @@
-import uuid
-
 import logging
+import os
 
 from django.conf import settings
 from django.contrib import messages
@@ -15,6 +14,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
 
 from . import correos
+from .carpetas import MAX_NIVELES, Arbol
 from .encargados import obtener_o_invitar
 from .forms import EmpresaForm, HitoFormSet, ProyectoForm, encargados_formset
 from .permisos import (
@@ -36,7 +36,7 @@ from .permisos import (
     ve_archivos,
 )
 from .models import (
-    Archivo, Carpeta, DescargaLog, Empresa, EstadoArchivo, EstadoModificacion, EstadoProyecto, Proyecto,
+    Archivo, DescargaLog, Empresa, EstadoArchivo, EstadoModificacion, EstadoProyecto, Proyecto,
     RechazoRevision)
 from .storage import url_descarga
 from .subidas import EXTENSIONES_PERMITIDAS
@@ -54,6 +54,7 @@ def _get_client_ip(request):
 def _preparar_archivo(usuario, archivo):
     archivo.puede_borrar = puede_borrar(usuario, archivo)
     archivo.extension = archivo.nombre_original.rpartition('.')[2].upper() if '.' in archivo.nombre_original else ''
+    archivo.base, archivo.ext_punto = os.path.splitext(archivo.nombre_original)  # renombrar: la extensión queda fija
     return archivo
 
 
@@ -274,14 +275,8 @@ def detalle_proyecto(request, pk):
             'modificaciones': _modificaciones(request.user, proyecto),
         })
 
-    carpeta_activa = None
-    carpeta_id = request.GET.get('carpeta')
-    if carpeta_id:
-        try:
-            carpeta_id = uuid.UUID(carpeta_id)
-        except ValueError:
-            raise Http404("Carpeta no encontrada.")
-        carpeta_activa = get_object_or_404(proyecto.carpetas, pk=carpeta_id)
+    arbol = Arbol(proyecto)
+    carpeta_activa = arbol.get(request.GET.get('carpeta'))
 
     # carpeta_activa=None filtra carpeta IS NULL: los archivos de la raíz
     todos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
@@ -300,9 +295,11 @@ def detalle_proyecto(request, pk):
     conteo = dict(
         archivos_visibles(request.user, proyecto).order_by().values_list('carpeta').annotate(n=Count('id'))
     )
-    carpetas = list(proyecto.carpetas.all())
+    carpetas = arbol.hijos[carpeta_activa.pk if carpeta_activa else None]  # C5: solo las de este lugar
     for c in carpetas:
-        c.n_archivos = conteo.get(c.pk, 0)
+        c.n_archivos = conteo.get(c.pk, 0)  # C7: lo de adentro directo
+        c.n_carpetas = len(arbol.hijos[c.pk])
+    gestiona = puede_gestionar_estructura(request.user)
 
     edita = puede_editar_proyecto(request.user, proyecto)  # E3
     hitos = _hitos_con_actual(proyecto)
@@ -319,6 +316,13 @@ def detalle_proyecto(request, pk):
         'puede_retroceder': edita and not proyecto.finalizado and any(h.cumplido for h in hitos),
         'carpetas': carpetas,
         'carpeta_activa': carpeta_activa,
+        'camino': arbol.camino(carpeta_activa),
+        'carpeta_padre': arbol.por_id.get(carpeta_activa.padre_id) if carpeta_activa else None,
+        'padre_id': str(carpeta_activa.padre_id or '') if carpeta_activa else '',
+        'carpeta_activa_id': str(carpeta_activa.pk) if carpeta_activa else '',
+        'puede_crear_carpeta': gestiona and arbol.nivel(carpeta_activa) < MAX_NIVELES,  # C3
+        'destinos_archivos': arbol.destinos() if gestiona and todos else None,
+        'destinos_carpeta': arbol.destinos(carpeta_activa) if gestiona and carpeta_activa else None,
         'archivos': archivos,
         'tipo': tipo,
         'n_todos': len(todos),
@@ -328,43 +332,10 @@ def detalle_proyecto(request, pk):
         # Límites de la subida para la validación previa del navegador (el servidor sigue decidiendo)
         'max_upload_mb': settings.MAX_UPLOAD_MB,
         'extensiones': sorted(EXTENSIONES_PERMITIDAS),
-        'puede_gestionar': puede_gestionar_estructura(request.user),
+        'puede_gestionar': gestiona,
         'modificaciones': _modificaciones(request.user, proyecto),
     }
     return render(request, 'archivos.html', context)
-
-
-@login_required
-@require_POST
-def crear_carpeta(request, pk):
-    if not puede_gestionar_estructura(request.user):
-        raise PermissionDenied("No tienes permisos para crear carpetas.")
-
-    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
-    nombre = request.POST.get('nombre', '').strip()
-    url_proyecto = reverse('documentos:detalle_proyecto', args=[proyecto.pk])
-
-    if not nombre:
-        messages.error(request, 'La carpeta necesita un nombre.')
-        return redirect(url_proyecto)
-    if proyecto.carpetas.filter(nombre__iexact=nombre).exists():
-        messages.error(request, f'Ya existe una carpeta llamada "{nombre}" en este proyecto.')
-        return redirect(url_proyecto)
-
-    carpeta = Carpeta.objects.create(proyecto=proyecto, nombre=nombre, creado_por=request.user)
-    return redirect(f'{url_proyecto}?carpeta={carpeta.pk}')
-
-
-@login_required
-@require_POST
-def eliminar_carpeta(request, pk):
-    if not puede_gestionar_estructura(request.user):
-        raise PermissionDenied("No tienes permisos para eliminar carpetas.")
-
-    carpeta = get_object_or_404(Carpeta.objects.filter(proyecto__in=proyectos_visibles(request.user)), pk=pk)
-    proyecto_pk = carpeta.proyecto_id
-    carpeta.delete()  # sus archivos vuelven a la raíz (SET_NULL); el Space no se toca
-    return redirect('documentos:detalle_proyecto', pk=proyecto_pk)
 
 
 @login_required
