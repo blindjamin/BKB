@@ -32,8 +32,9 @@ def es_jefe(usuario):
     return _activo(usuario) and usuario.rol == Rol.JEFE
 
 
-def _a_cargo(usuario):  # E1, E6
-    return Q(encargado=usuario) | Q(empresa__encargado=usuario)
+def _a_cargo(usuario):  # E1, E6: subconsultas, así los conteos de la lista no se multiplican
+    return (Q(pk__in=Proyecto.objects.filter(encargados=usuario).values('pk'))
+            | Q(empresa__in=Empresa.objects.filter(encargados=usuario).values('pk')))
 
 
 def proyectos_visibles(usuario):
@@ -53,7 +54,8 @@ def empresas_visibles(usuario):
     if _es_personal(usuario):
         return Empresa.objects.all()
     if _activo(usuario):
-        return Empresa.objects.filter(Q(encargado=usuario) | Q(proyectos__encargado=usuario)).distinct()
+        return Empresa.objects.filter(Q(pk__in=Empresa.objects.filter(encargados=usuario).values('pk'))
+                                      | Q(pk__in=Proyecto.objects.filter(encargados=usuario).values('empresa')))
     return Empresa.objects.none()
 
 
@@ -62,7 +64,7 @@ def puede_ver_empresa(usuario, empresa):
     if _es_personal(usuario):
         return True
     if _activo(usuario):
-        return empresa.encargado_id == usuario.pk or empresa.proyectos.filter(encargado=usuario).exists()
+        return empresa.encargados.filter(pk=usuario.pk).exists() or empresa.proyectos.filter(encargados=usuario).exists()
     return False
 
 
@@ -73,6 +75,11 @@ def proyectos_de_empresa(usuario, empresa):
     if _activo(usuario):
         return empresa.proyectos.filter(_a_cargo(usuario))
     return Proyecto.objects.none()
+
+
+def puede_eliminar_estructura(usuario):
+    """Eliminar proyectos y empresas: solo el jefe y el superusuario (borra información de verdad)."""
+    return es_jefe(usuario) or (_activo(usuario) and usuario.is_superuser)
 
 
 def puede_gestionar_estructura(usuario):
@@ -124,9 +131,10 @@ def puede_editar_proyecto(usuario, proyecto):
 
 
 def puede_responder_cliente(usuario, proyecto):
-    """A5, M5: el encargado del proyecto o el de su empresa (cliente activo)."""
+    """A5, M5: un encargado del proyecto o de su empresa (cliente activo)."""
     return (_activo(usuario) and usuario.rol == Rol.CLIENTE
-            and usuario.pk in (proyecto.encargado_id, proyecto.empresa.encargado_id))
+            and (proyecto.encargados.filter(pk=usuario.pk).exists()
+                 or proyecto.empresa.encargados.filter(pk=usuario.pk).exists()))
 
 
 def modificaciones_visibles(usuario):  # M1, M8: el cliente no ve borradores
@@ -151,7 +159,7 @@ def leer_enlace(token):
     except (BadSignature, ValueError):
         raise Http404
     m = Modificacion.objects.select_related(
-        'proyecto__empresa', 'proyecto__encargado', 'respondida_por').filter(pk=mod_pk, enviada_en__isnull=False).first()
+        'proyecto__empresa', 'respondida_por').filter(pk=mod_pk, enviada_en__isnull=False).first()
     usuario = Usuario.objects.filter(pk=usuario_pk).first()
     if not m or not usuario or not puede_responder_cliente(usuario, m.proyecto):
         raise Http404

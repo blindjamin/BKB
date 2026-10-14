@@ -1,6 +1,6 @@
 {% autoescape off %}Comenzó el proyecto {{ proyecto.nombre }} de {{ proyecto.empresa.nombre }}.
 
-Encargado cliente: {{ proyecto.encargado.nombre|default:proyecto.encargado.email }}
+Encargado{{ proyecto.encargados.all|length|pluralize }} cliente: {% for u in proyecto.encargados.all %}{{ u.nombre|default:u.email }}{% if not forloop.last %}, {% endif %}{% endfor %}
 Inicio: {{ proyecto.fecha_inicio|date:"d-m-Y" }}
 Término previsto: {{ proyecto.fecha_termino|date:"d-m-Y" }}
 

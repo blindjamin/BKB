@@ -1,5 +1,7 @@
 import uuid
 
+import logging
+
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
@@ -14,7 +16,7 @@ from django.utils import timezone
 
 from . import correos
 from .encargados import obtener_o_invitar
-from .forms import EmpresaForm, HitoFormSet, ProyectoForm
+from .forms import EmpresaForm, HitoFormSet, ProyectoForm, encargados_formset
 from .permisos import (
     _es_personal,
     proyectos_visibles,
@@ -22,6 +24,7 @@ from .permisos import (
     empresas_visibles,
     puede_ver_empresa,
     puede_gestionar_estructura,
+    puede_eliminar_estructura,
     archivos_visibles,
     archivos_visibles_para,
     firmar_enlace,
@@ -37,6 +40,9 @@ from .models import (
     RechazoRevision)
 from .storage import url_descarga
 from .subidas import EXTENSIONES_PERMITIDAS
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_client_ip(request):
@@ -74,6 +80,18 @@ def _ocultar_conteo_bloqueados(usuario, proyectos):
     return proyectos
 
 
+def _separar_anteriores(request, proyectos):
+    """Los cerrados viven en la carpeta «Proyectos anteriores» (?anteriores=1); fuera de ella, solo los activos."""
+    en_carpeta = request.GET.get('anteriores') == '1'
+    proyectos = list(proyectos)
+    cerrados = [p for p in proyectos if p.estado == EstadoProyecto.CERRADO]
+    return {
+        'proyectos': cerrados if en_carpeta else [p for p in proyectos if p.estado != EstadoProyecto.CERRADO],
+        'anteriores': en_carpeta,
+        'n_anteriores': len(cerrados),
+    }
+
+
 @login_required
 def lista_proyectos(request):
     if _es_personal(request.user):
@@ -83,7 +101,7 @@ def lista_proyectos(request):
         return render(request, 'empresas.html', {'empresas': empresas})
 
     proyectos = _tarjetas_de_proyecto(request.user, proyectos_visibles(request.user).select_related('empresa'))
-    return render(request, 'proyectos.html', {'proyectos': proyectos})
+    return render(request, 'proyectos.html', _separar_anteriores(request, proyectos))
 
 
 @login_required
@@ -91,7 +109,7 @@ def crear_empresa(request):
     if not puede_gestionar_estructura(request.user):
         raise PermissionDenied("No tienes permisos para crear empresas.")
 
-    return _formulario_empresa(request, EmpresaForm(request.POST or None), 'Nueva Empresa')
+    return _formulario_empresa(request, EmpresaForm(request.POST or None), None, 'Nueva Empresa')
 
 
 @login_required
@@ -99,17 +117,25 @@ def editar_empresa(request, pk):
     if not puede_gestionar_estructura(request.user):
         raise PermissionDenied("No tienes permisos para editar empresas.")
     empresa = get_object_or_404(Empresa, pk=pk)
-    return _formulario_empresa(request, EmpresaForm(request.POST or None, instance=empresa), 'Editar Empresa')
+    return _formulario_empresa(request, EmpresaForm(request.POST or None, instance=empresa), empresa, 'Editar Empresa')
 
 
-def _formulario_empresa(request, form, titulo):
-    if request.method == 'POST' and form.is_valid():
-        email = form.cleaned_data['encargado_email']
-        form.instance.encargado = obtener_o_invitar(
-            request, form.cleaned_data['encargado_nombre'], email)[0] if email else None
-        empresa = form.save()
+def _invitar_encargados(request, formset):
+    """E4: los usuarios de la lista; invita a los correos nuevos."""
+    return [obtener_o_invitar(request, nombre, email)[0] for nombre, email in formset.encargados]
+
+
+def _formulario_empresa(request, form, empresa, titulo):
+    encargados = encargados_formset(request.POST or None, empresa, obligatorio=False)  # se pueden asignar después
+    if request.method == 'POST' and form.is_valid() and encargados.is_valid():
+        usuarios = _invitar_encargados(request, encargados)
+        with transaction.atomic():
+            empresa = form.save()
+            empresa.encargados.set(usuarios)
         return redirect('documentos:detalle_empresa', pk=empresa.pk)
-    return render(request, 'empresa_form.html', {'form': form, 'titulo': titulo})
+    return render(request, 'empresa_form.html', {
+        'form': form, 'encargados': encargados, 'titulo': titulo, 'empresa': empresa,
+        'puede_eliminar': empresa is not None and puede_eliminar_estructura(request.user)})
 
 
 @login_required
@@ -121,15 +147,15 @@ def detalle_empresa(request, pk):
     proyectos = _tarjetas_de_proyecto(request.user, proyectos_de_empresa(request.user, empresa))
     context = {
         'empresa': empresa,
-        'proyectos': proyectos,
         'puede_gestionar': puede_gestionar_estructura(request.user),
+        **_separar_anteriores(request, proyectos),
     }
     return render(request, 'empresa_detalle.html', context)
 
 
 def _encargados_por_empresa():
-    return {str(e.pk): [e.encargado.nombre, e.encargado.email]
-            for e in Empresa.objects.filter(encargado__isnull=False).select_related('encargado')}
+    return {str(e.pk): [[u.nombre, u.email] for u in e.encargados.all()]
+            for e in Empresa.objects.prefetch_related('encargados') if e.encargados.all()}
 
 
 @login_required
@@ -142,21 +168,20 @@ def crear_proyecto(request):
     if empresa_id:
         initial['empresa'] = empresa_id
 
-    if request.method == 'POST':
-        form = ProyectoForm(request.POST)
-        if form.is_valid():
-            form.instance.encargado, _ = obtener_o_invitar(
-                request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
-            with transaction.atomic():
-                proyecto = form.save()
-                proyecto.crear_hitos_estandar()  # A1
-            correos.avisar_inicio(request, proyecto)  # V2, V6: después del atomic
-            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
-    else:
-        form = ProyectoForm(initial=initial)
+    form = ProyectoForm(request.POST or None, initial=initial)
+    encargados = encargados_formset(request.POST or None, None, obligatorio=True)  # E2
+    if request.method == 'POST' and form.is_valid() and encargados.is_valid():
+        usuarios = _invitar_encargados(request, encargados)
+        with transaction.atomic():
+            proyecto = form.save()
+            proyecto.encargados.set(usuarios)
+            proyecto.crear_hitos_estandar()  # A1
+        correos.avisar_inicio(request, proyecto)  # V2, V6: después del atomic
+        return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
 
     return render(request, 'proyecto_form.html', {
         'form': form,
+        'encargados': encargados,
         'titulo': 'Nuevo Proyecto',
         'accion': 'Crear Proyecto',
         'encargados_empresa': _encargados_por_empresa(),
@@ -172,19 +197,20 @@ def editar_proyecto(request, pk):
     if not puede_editar_proyecto(request.user, proyecto):
         raise PermissionDenied("Solo los encargados BKB del proyecto pueden editarlo.")  # E3
 
-    if request.method == 'POST':
-        form = ProyectoForm(request.POST, instance=proyecto)
-        if form.is_valid():
-            form.instance.encargado, _ = obtener_o_invitar(
-                request, form.cleaned_data['encargado_nombre'], form.cleaned_data['encargado_email'])
+    form = ProyectoForm(request.POST or None, instance=proyecto)
+    encargados = encargados_formset(request.POST or None, proyecto, obligatorio=True)  # E2
+    if request.method == 'POST' and form.is_valid() and encargados.is_valid():
+        usuarios = _invitar_encargados(request, encargados)
+        with transaction.atomic():
             form.save()
-            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
-    else:
-        form = ProyectoForm(instance=proyecto)
+            proyecto.encargados.set(usuarios)
+        return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
 
     return render(request, 'proyecto_form.html', {
         'form': form,
+        'encargados': encargados,
         'proyecto': proyecto,
+        'puede_eliminar': puede_eliminar_estructura(request.user),
         'titulo': f'Editar {proyecto.nombre}',
         'accion': 'Guardar Cambios',
         'encargados_empresa': _encargados_por_empresa(),
@@ -203,13 +229,18 @@ def editar_hitos(request, pk):
 
     # Sin la Revisión en el queryset, un POST con su id no es válido: no se puede quitar ni mover (A2)
     formset = HitoFormSet(request.POST or None, instance=proyecto, queryset=proyecto.hitos.filter(es_revision=False))
+    # La Revisión solo cambia de nombre: sigue siendo el hito final que responde el cliente
+    revision = proyecto.hitos.filter(es_revision=True).first()
+    revision_nombre = request.POST.get('revision_nombre', '').strip()[:200] or (revision.nombre if revision else '')
     if request.method == 'POST' and formset.is_valid():
         with transaction.atomic():
             Proyecto.objects.select_for_update().get(pk=proyecto.pk)
             formset.guardar()
+            proyecto.hitos.filter(es_revision=True).update(nombre=revision_nombre)
         messages.success(request, 'Hitos actualizados.')
         return redirect(url)
-    return render(request, 'hitos_form.html', {'proyecto': proyecto, 'formset': formset})
+    return render(request, 'hitos_form.html', {
+        'proyecto': proyecto, 'formset': formset, 'revision': revision, 'revision_nombre': revision_nombre})
 
 
 def _hitos_con_actual(proyecto):
@@ -443,3 +474,65 @@ def eliminar_archivo(request, pk):
     if archivo.modificacion_id:  # M1: vuelve al borrador
         return redirect('documentos:detalle_modificacion', pk=archivo.modificacion_id)
     return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)
+
+
+def _confirmar_eliminacion(request, objeto, tipo, perdidas, url_volver, borrar, bloqueo=None):
+    """Página de eliminación: muestra lo que se pierde y exige escribir el nombre exacto (sin JS también)."""
+    error = None
+    if request.method == 'POST' and not bloqueo:
+        if request.POST.get('confirmacion', '').strip() != objeto.nombre:
+            error = f'El nombre no coincide. Escribe exactamente: {objeto.nombre}'
+        else:
+            destino = borrar()
+            logger.warning('%s eliminó %s «%s» (%s).', request.user.email, tipo, objeto.nombre, objeto.pk)
+            messages.success(request, f'Se eliminó {tipo} «{objeto.nombre}».')
+            return redirect(destino)
+    return render(request, 'eliminar_estructura.html', {
+        'objeto': objeto, 'tipo': tipo, 'perdidas': perdidas, 'url_volver': url_volver,
+        'bloqueo': bloqueo, 'error': error}, status=400 if error else 200)
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def eliminar_proyecto(request, pk):
+    if not puede_eliminar_estructura(request.user):
+        raise PermissionDenied('Solo el jefe puede eliminar proyectos.')
+    proyecto = get_object_or_404(Proyecto.objects.select_related('empresa'), pk=pk)
+    archivos = Archivo.objects.filter(proyecto=proyecto)
+    perdidas = [
+        (archivos.filter(eliminado_en__isnull=True, estado=EstadoArchivo.DISPONIBLE).count(), 'archivo', 'archivos'),
+        (proyecto.carpetas.count(), 'carpeta', 'carpetas'),
+        (proyecto.hitos.count(), 'hito con su avance', 'hitos con su avance'),
+        (proyecto.modificaciones.count(), 'modificación con sus respuestas', 'modificaciones con sus respuestas'),
+        (DescargaLog.objects.filter(archivo__proyecto=proyecto).count(), 'registro de descarga', 'registros de descarga'),
+    ]
+
+    def borrar():
+        with transaction.atomic():
+            # Los archivos y sus descargas están protegidos: se borran primero. El Space no se toca.
+            DescargaLog.objects.filter(archivo__proyecto=proyecto).delete()
+            archivos.delete()
+            proyecto.delete()  # carpetas, hitos, modificaciones y rechazos caen con él
+        return reverse('documentos:detalle_empresa', args=[proyecto.empresa_id])
+
+    return _confirmar_eliminacion(request, proyecto, 'el proyecto', perdidas,
+                                  reverse('documentos:editar_proyecto', args=[proyecto.pk]), borrar)
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def eliminar_empresa(request, pk):
+    if not puede_eliminar_estructura(request.user):
+        raise PermissionDenied('Solo el jefe puede eliminar empresas.')
+    empresa = get_object_or_404(Empresa, pk=pk)
+    n = empresa.proyectos.count()
+    # Una empresa con proyectos no se borra de una vez: primero se eliminan sus proyectos, uno por uno.
+    bloqueo = (f'Esta empresa tiene {n} proyecto{"s" if n != 1 else ""}. Para eliminarla, primero elimina '
+               f'cada proyecto desde su página de edición.') if n else None
+
+    def borrar():
+        empresa.delete()
+        return reverse('documentos:lista_proyectos')
+
+    return _confirmar_eliminacion(request, empresa, 'la empresa', [(empresa.encargados.count(), 'encargado asignado', 'encargados asignados')],
+                                  reverse('documentos:editar_empresa', args=[empresa.pk]), borrar, bloqueo)

@@ -1,29 +1,21 @@
 {% load static %}
-            <div class="form-group">
-                <label for="{{ form.encargado_nombre.id_for_label }}">
-                    {{ form.encargado_nombre.label }}
-                    {% if form.encargado_nombre.field.required %}<span class="campo-requerido" aria-label="obligatorio">*</span>{% endif %}
-                </label>
-                {{ form.encargado_nombre }}
-                {% if form.encargado_nombre.errors %}
-                    <div class="field-error" id="{{ form.encargado_nombre.id_for_label }}-error" role="alert">
-                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
-                        <span>{{ form.encargado_nombre.errors.0 }}</span>
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.encargado_email.id_for_label }}">
-                    {{ form.encargado_email.label }}
-                    {% if form.encargado_email.field.required %}<span class="campo-requerido" aria-label="obligatorio">*</span>{% endif %}
-                </label>
-                {{ form.encargado_email }}
-                {% if form.encargado_email.help_text %}<small class="form-help" id="{{ form.encargado_email.id_for_label }}-help">{{ form.encargado_email.help_text }}</small>{% endif %}
-                {% if form.encargado_email.errors %}
-                    <div class="field-error" id="{{ form.encargado_email.id_for_label }}-error" role="alert">
-                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
-                        <span>{{ form.encargado_email.errors.0 }}</span>
-                    </div>
-                {% endif %}
-            </div>
+{# Lista de encargados cliente: una fila por persona; "+ Agregar encargado" suma filas (js/agregar_fila.js) #}
+<fieldset class="form-group form-group-fieldset">
+    <legend class="form-label">
+        Encargados cliente
+        {% if encargados.obligatorio %}<span class="campo-requerido" aria-label="obligatorio">*</span>{% endif %}
+    </legend>
+    <small class="form-help">{% if not encargados.obligatorio %}Opcional: puedes asignarlos después. {% endif %}Si alguno es nuevo en el portal, le llegará una invitación para crear su contraseña.</small>
+    {{ encargados.management_form }}
+    {% for error in encargados.non_form_errors %}
+        <div class="field-error" role="alert">
+            <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+            <span>{{ error }}</span>
+        </div>
+    {% endfor %}
+    <ul class="encargados-lista" id="encargados-lista">
+        {% for f in encargados %}{% include 'includes/encargado_fila.html' with form=f %}{% endfor %}
+    </ul>
+    <template id="encargado-nuevo">{% include 'includes/encargado_fila.html' with form=encargados.empty_form %}</template>
+    <p><button type="button" class="btn-secondary" data-agregar-fila="encargado-nuevo" data-destino="encargados-lista" data-prefijo="encargados">+ Agregar encargado</button></p>
+</fieldset>

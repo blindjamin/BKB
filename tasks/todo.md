@@ -33,5 +33,12 @@ La landing y el portal ya corren en el Droplet (`/srv/BKB-2026`, ver `apps/porta
 - [ ] Contenido sin respaldo en `empresabkb.cl`: mercados, obras del portafolio y menciones a SEC TE1/Clase A. Autorización de los logos de clientes y nombre oficial ("Obras" o "Ingeniería Eléctrica & Servicios").
 - [ ] Botón de envío de la cotización con `salmon-700` en vez de `salmon-500` (contraste AA).
 
+## 6. Vista de encargados con sus notas de venta (pedido de Tecfluid, 06-10-2026)
+El jefe de Tecfluid quiere, entre la vista de la empresa y la de proyectos, una pantalla con los encargados que tiene a su cargo; dentro de cada encargado, las notas de venta (NV) asignadas a él.
+- [ ] Definir quién asigna: probablemente el encargado de la empresa (cliente) asigna proyectos/NV a sus encargados. Hoy el cliente no puede asignar nada (solo mira y descarga).
+- [ ] Definir qué es una "nota de venta" en el portal: ¿es el proyecto (los importados ya se llaman "NV 28174") o un dato aparte?
+- [ ] Hacerla opcional por empresa (ej. una casilla "Usa vista de encargados" en Editar empresa); sin ella, la empresa sigue directo a sus proyectos.
+- [ ] Revisar permisos: un encargado ve solo sus NV; el encargado de la empresa ve todo.
+
 ## Después de la v1
 Ver `docs/03` §15.3 (seguimiento posterior).

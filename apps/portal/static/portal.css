@@ -2383,7 +2383,8 @@ h1, h2, h3,
 }
 
 /* Editor de hitos (A2) */
-.hitos-editor {
+.hitos-editor,
+.encargados-lista {
     list-style: none;
     margin: 0 0 1rem;
     padding: 0;
@@ -2391,7 +2392,8 @@ h1, h2, h3,
     gap: 0.75rem;
 }
 
-.hito-fila {
+.hito-fila,
+.encargado-fila {
     display: grid;
     grid-template-columns: 1fr;
     gap: 0.5rem;
@@ -2411,6 +2413,14 @@ h1, h2, h3,
 @media (min-width: 640px) {
     .hito-fila {
         grid-template-columns: 1fr 8rem auto;
+    }
+
+    .encargado-fila {
+        grid-template-columns: 1fr 1fr auto;
+    }
+
+    .hito-fila-fija .hito-detalle {
+        grid-column: span 2;
     }
 }
 
@@ -2645,4 +2655,36 @@ a[href^="mailto:"] {
     /* Sin animación no hay cuenta regresiva: queda hasta que lo cierren */
     .aviso-hito { transition: none; }
     .aviso-hito.is-open .aviso-hito-franja { animation: none; }
+}
+
+/* Zona de peligro: al pie de Editar proyecto / Editar empresa, solo para el jefe */
+.zona-peligro {
+    margin-top: var(--space-8);
+    padding: var(--space-5);
+    border: 1px solid var(--bkb-sec-danger-border);
+    border-radius: var(--bkb-radius-card);
+}
+
+.zona-peligro h2 {
+    margin: 0 0 var(--space-2);
+    font-size: 1.125rem;
+    color: var(--bkb-danger);
+}
+
+.zona-peligro p {
+    margin: 0 0 var(--space-4);
+    color: var(--text-muted);
+}
+
+.zona-peligro-pagina {
+    text-align: left;
+}
+
+.zona-peligro-pagina ul {
+    margin: var(--space-2) 0 0;
+    padding-left: 1.25rem;
+}
+
+.form-eliminar {
+    margin-top: var(--space-5);
 }

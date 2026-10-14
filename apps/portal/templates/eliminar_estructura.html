@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Eliminar {{ objeto.nombre }} - BKB Portal{% endblock %}
+
+{% block content %}
+<section class="pagina-error zona-peligro-pagina" aria-labelledby="eliminar-titulo">
+    <h1 id="eliminar-titulo">¿Eliminar {{ tipo }} «{{ objeto.nombre }}»?</h1>
+
+    {% if bloqueo %}
+        <div class="form-error" role="alert">
+            <svg class="icono form-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+            <div class="form-error-content"><p>{{ bloqueo }}</p></div>
+        </div>
+        <div class="dialogo-acciones">
+            <a href="{{ url_volver }}" class="btn-secondary">Volver</a>
+        </div>
+    {% else %}
+        <div class="form-error" role="alert">
+            <svg class="icono form-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+            <div class="form-error-content">
+                <p><strong>Esta acción no se puede deshacer.</strong> Se perderá para todos, también para los clientes:</p>
+                <ul>
+                    {% for n, uno, varios in perdidas %}<li>{{ n }} {% if n == 1 %}{{ uno }}{% else %}{{ varios }}{% endif %}</li>{% endfor %}
+                </ul>
+            </div>
+        </div>
+        <p>Si solo quieres sacarlo de la vista, cámbiale el estado a <strong>Cerrado</strong> en vez de eliminarlo.</p>
+
+        <form method="post" class="form-eliminar">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_confirmacion">Para confirmar, escribe el nombre exacto: <strong>{{ objeto.nombre }}</strong></label>
+                <input type="text" name="confirmacion" id="id_confirmacion" autocomplete="off" required
+                       {% if error %}aria-invalid="true" aria-describedby="confirmacion-error"{% endif %}>
+                {% if error %}
+                    <div class="field-error" id="confirmacion-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ error }}</span>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="dialogo-acciones">
+                <a href="{{ url_volver }}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-peligro">Eliminar definitivamente</button>
+            </div>
+        </form>
+    {% endif %}
+</section>
+{% endblock %}

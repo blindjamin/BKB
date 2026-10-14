@@ -78,7 +78,7 @@ class PanelAdminTests(DatosBase):
     def datos_proyecto(self, empresa, encargado, **extra):
         datos = {
             'empresa': empresa.pk, 'nombre': 'Proyecto nuevo', 'estado': 'activo',
-            'encargado': encargado.pk, 'encargados_bkb': [self.personal.pk],
+            'encargados': [encargado.pk], 'encargados_bkb': [self.personal.pk],
             'fecha_inicio': '2026-01-01', 'fecha_termino': '2026-06-30',
         }
         datos.update(extra)
@@ -91,7 +91,7 @@ class PanelAdminTests(DatosBase):
         self.assertEqual(respuesta.status_code, 302)
         cliente = Usuario.objects.get(email='gerente@minera.cl')
 
-        respuesta = self.post('/admin/documentos/empresa/add/', {'nombre': 'Minera Andes', 'rut': '99.999.999-9', 'encargado': cliente.pk})
+        respuesta = self.post('/admin/documentos/empresa/add/', {'nombre': 'Minera Andes', 'rut': '99.999.999-9', 'encargados': [cliente.pk]})
         self.assertEqual(respuesta.status_code, 302)
         empresa = Empresa.objects.get(nombre='Minera Andes')
 
@@ -99,7 +99,7 @@ class PanelAdminTests(DatosBase):
         self.assertEqual(respuesta.status_code, 302)
         proyecto = Proyecto.objects.get(nombre='Proyecto nuevo')
         self.assertEqual(proyecto.empresa, empresa)
-        self.assertEqual(proyecto.encargado, cliente)
+        self.assertEqual(list(proyecto.encargados.all()), [cliente])
 
     def test_admin_rechaza_personal_como_encargado(self):
         respuesta = self.post('/admin/documentos/proyecto/add/', self.datos_proyecto(self.empresa, self.personal))

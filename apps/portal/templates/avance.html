@@ -29,8 +29,8 @@
     </dl>
 
     <p class="avance-encargado">
-        Encargado: {{ proyecto.encargado.nombre|default:proyecto.encargado.email }}
-        · <a href="mailto:{{ proyecto.encargado.email }}">{{ proyecto.encargado.email }}</a>
+        Encargado{{ proyecto.encargados.all|length|pluralize }}:
+        {% for u in proyecto.encargados.all %}{{ u.nombre|default:u.email }} · <a href="mailto:{{ u.email }}">{{ u.email }}</a>{% if not forloop.last %}; {% endif %}{% endfor %}
     </p>
 
     <section class="hitos">

@@ -6,8 +6,13 @@ from .models import Archivo, DescargaLog, Empresa, Hito, Modificacion, Proyecto,
 
 @admin.register(Empresa)
 class EmpresaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'rut', 'encargado')
+    list_display = ('nombre', 'rut', 'lista_encargados')
     search_fields = ('nombre', 'rut')
+    filter_horizontal = ('encargados',)
+
+    @admin.display(description='encargados')
+    def lista_encargados(self, obj):
+        return ', '.join(u.email for u in obj.encargados.all())
 
 
 class HitoInline(admin.TabularInline):
@@ -31,11 +36,16 @@ class HitoInline(admin.TabularInline):
 
 @admin.register(Proyecto)
 class ProyectoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'empresa', 'estado', 'encargado')
+    list_display = ('nombre', 'empresa', 'estado', 'lista_encargados')
     list_filter = ('estado', 'empresa')
     list_select_related = ('empresa',)
     search_fields = ('nombre', 'empresa__nombre')
+    filter_horizontal = ('encargados', 'encargados_bkb')
     inlines = [HitoInline]
+
+    @admin.display(description='encargados')
+    def lista_encargados(self, obj):
+        return ', '.join(u.email for u in obj.encargados.all())
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

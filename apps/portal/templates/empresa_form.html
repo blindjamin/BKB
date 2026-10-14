@@ -59,6 +59,18 @@
                 <a href="{% url 'documentos:lista_proyectos' %}" class="btn-secondary">Cancelar</a>
             </div>
         </form>
+
+    {% if puede_eliminar %}
+    <section class="zona-peligro" aria-labelledby="zona-peligro-titulo">
+        <h2 id="zona-peligro-titulo">Zona de peligro</h2>
+        <p>Solo se puede eliminar una empresa sin proyectos. No se puede deshacer.</p>
+        <a href="{% url 'documentos:eliminar_empresa' empresa.pk %}" class="btn-peligro">Eliminar empresa…</a>
+    </section>
+    {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/agregar_fila.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endblock %}

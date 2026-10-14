@@ -1,6 +1,7 @@
 from django import forms
 from django.db.models import F
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from accounts.models import Rol
 from .encargados import validar_encargado
@@ -9,26 +10,67 @@ from .models import Empresa, Hito, Modificacion, Proyecto
 Usuario = get_user_model()
 
 
-class CamposEncargado(forms.Form):
-    encargado_nombre = forms.CharField(max_length=200, label='Nombre del encargado')
-    encargado_email = forms.EmailField(
-        label='Correo del encargado',
-        help_text='Si es nuevo en el portal, le llegará una invitación para crear su contraseña.',
-    )
+class EncargadoForm(forms.Form):
+    """Una fila de encargado cliente. Vacía se ignora; el nombre solo hace falta si el correo es nuevo (E4)."""
+    nombre = forms.CharField(max_length=200, required=False, label='Nombre')
+    email = forms.EmailField(required=False, label='Correo')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance.encargado_id:  # no .pk: el UUID ya trae valor antes de guardar
-            self.initial.setdefault('encargado_nombre', self.instance.encargado.nombre)
-            self.initial.setdefault('encargado_email', self.instance.encargado.email)
+    def clean(self):
+        datos = super().clean()
+        email = datos.get('email')
+        if not email:
+            if datos.get('nombre') and not self.has_error('email'):
+                self.add_error('email', 'Indica el correo del encargado.')
+            return datos
+        datos['email'] = email.lower()
+        try:
+            existe = validar_encargado(datos['email'])  # E5
+        except forms.ValidationError as e:
+            self.add_error('email', e)
+            return datos
+        if not existe and not datos.get('nombre'):
+            self.add_error('nombre', 'Indica el nombre: le llegará una invitación al portal.')
+        return datos
 
-    def clean_encargado_email(self):
-        email = self.cleaned_data['encargado_email'].lower()
-        validar_encargado(email)  # E5
-        return email
+
+class BaseEncargadosFormSet(forms.BaseFormSet):
+    obligatorio = False
+
+    def _construct_form(self, i, **kwargs):
+        # Toda fila se valida: si no, una fila sin cambios respecto de la lista actual se ignora y la vaciaría
+        form = super()._construct_form(i, **kwargs)
+        form.empty_permitted = False
+        return form
+
+    def clean(self):
+        super().clean()
+        self.encargados = []  # (nombre, correo) sin repetir, en el orden del formulario
+        if any(self.errors):
+            return
+        vistos = set()
+        for form in self.forms:
+            datos = form.cleaned_data
+            if datos.get('DELETE') or not datos.get('email') or datos['email'] in vistos:
+                continue
+            vistos.add(datos['email'])
+            self.encargados.append((datos.get('nombre', ''), datos['email']))
+        if self.obligatorio and not self.encargados:
+            raise forms.ValidationError('Agrega al menos un encargado.')  # E2
 
 
-class EmpresaForm(CamposEncargado, forms.ModelForm):
+EncargadosFormSet = forms.formset_factory(EncargadoForm, formset=BaseEncargadosFormSet, extra=0, can_delete=True)
+
+
+def encargados_formset(data, instancia, obligatorio):
+    """Una fila por encargado actual; si no hay ninguno, una vacía."""
+    actuales = [{'nombre': u.nombre, 'email': u.email}
+                for u in instancia.encargados.all()] if instancia and instancia.pk and not instancia._state.adding else []
+    formset = EncargadosFormSet(data, prefix='encargados', initial=actuales or [{}])
+    formset.obligatorio = obligatorio
+    return formset
+
+
+class EmpresaForm(forms.ModelForm):
     class Meta:
         model = Empresa
         fields = ['nombre', 'rut']
@@ -53,25 +95,11 @@ class EmpresaForm(CamposEncargado, forms.ModelForm):
             raise forms.ValidationError('El nombre de la empresa es obligatorio.')
         return nombre
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # La empresa puede crearse sin encargado y recibirlo después; vaciar el correo lo quita
-        self.fields['encargado_nombre'].required = False
-        self.fields['encargado_email'].required = False
-        self.fields['encargado_email'].help_text = ('Opcional: puedes asignarlo después. '
-                                                    + self.fields['encargado_email'].help_text)
-
     def clean_rut(self):
         return self.cleaned_data.get('rut', '').strip()
 
-    def clean(self):
-        datos = super().clean()
-        if datos.get('encargado_email') and not datos.get('encargado_nombre'):
-            self.add_error('encargado_nombre', 'Indica el nombre del encargado.')
-        return datos
 
-
-class ProyectoForm(CamposEncargado, forms.ModelForm):
+class ProyectoForm(forms.ModelForm):
     class Meta:
         model = Proyecto
         fields = ['empresa', 'nombre', 'estado', 'fecha_inicio', 'fecha_termino', 'encargados_bkb']
@@ -114,12 +142,22 @@ class HitoForm(forms.ModelForm):
 
     class Meta:
         model = Hito
-        fields = ['nombre']
+        fields = ['nombre', 'cumplido_en']
+        labels = {'cumplido_en': 'Cumplido el'}
+        widgets = {'cumplido_en': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M')}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance._state.adding:  # no .pk: el UUID ya trae valor
             self.fields['posicion'].initial = self.instance.orden
+        if not self.instance.cumplido:  # la fecha solo se corrige en hitos ya cumplidos; aquí no se marca nada
+            del self.fields['cumplido_en']
+
+    def clean_cumplido_en(self):
+        fecha = self.cleaned_data.get('cumplido_en') or self.instance.cumplido_en  # vacío = se deja la que tenía
+        if fecha > timezone.now():
+            raise forms.ValidationError('La fecha no puede ser futura.')
+        return fecha
 
 
 class BaseHitoFormSet(forms.BaseInlineFormSet):

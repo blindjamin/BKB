@@ -43,12 +43,12 @@ def _avisar_si_falla(request, enviado, que):  # V6
 def avisar_inicio(request, proyecto):  # V2
     ctx = {'proyecto': proyecto, 'hitos': list(proyecto.hitos.all()), 'url': _url(request, proyecto)}
     _avisar_si_falla(request, enviar(f'Inicio del proyecto {proyecto.nombre}', 'inicio', ctx,
-                                     [proyecto.encargado.email]), 'inicio')
+                                     proyecto.correos_encargados()), 'inicio')
 
 
 def avisar_termino(request, proyecto):  # V3
     cliente = request.user
-    para = list(dict.fromkeys([proyecto.encargado.email, proyecto.empresa.encargado.email]))  # sin repetir
+    para = proyecto.correos_encargados(con_empresa=True)
     ctx = {'proyecto': proyecto, 'cliente': cliente, 'url': _url(request, proyecto)}
     _avisar_si_falla(request, enviar(f'Proyecto {proyecto.nombre} finalizado y aprobado por {cliente}',
                                      'termino', ctx, para), 'término')
@@ -60,8 +60,8 @@ def avisar_rechazo_revision(request, rechazo):  # V4
                                      ctx, settings.AVISO_INGENIERIA_CORREOS, cc=False), 'aviso a ingeniería')
 
 
-def _enlaces(m, base):  # M3: un enlace por acción, firmado para el encargado
-    pagina = base + reverse('documentos:responder_modificacion', args=[firmar_enlace(m, m.proyecto.encargado)])
+def _enlaces(m, base, usuario):  # M3: un enlace por acción, firmado para cada encargado
+    pagina = base + reverse('documentos:responder_modificacion', args=[firmar_enlace(m, usuario)])
     return {'url_pagina': pagina, 'url_aprobar': pagina + '?accion=aprobar', 'url_rechazar': pagina + '?accion=rechazar'}
 
 
@@ -75,11 +75,20 @@ def avisar_modificacion(m, base, recordatorio=False):  # M2, M6: `base` es https
         except Exception:
             logger.exception('No se pudieron leer los adjuntos de la modificación %s; van enlaces.', m.pk)
             archivos = []
-    ctx = {'m': m, 'proyecto': proyecto, 'adjuntos': adjuntos, 'adjuntados': bool(archivos),
-           'recordatorio': recordatorio, **_enlaces(m, base)}
-    asunto = f'Modificación propuesta: {m.titulo} ({proyecto.nombre})'
-    return enviar(('Recordatorio: ' if recordatorio else '') + asunto, 'modificacion', ctx,
-                  [proyecto.encargado.email], adjuntos=archivos)
+    asunto = ('Recordatorio: ' if recordatorio else '') + f'Modificación propuesta: {m.titulo} ({proyecto.nombre})'
+    # Uno por encargado del proyecto: sus enlaces van firmados a su nombre (M3). Sin copia a ingeniería:
+    # los botones son del cliente; ingeniería recibe aparte la confirmación de envío. True si salieron todos.
+    enviados = [enviar(asunto, 'modificacion', {
+        'm': m, 'proyecto': proyecto, 'adjuntos': adjuntos, 'adjuntados': bool(archivos),
+        'recordatorio': recordatorio, **_enlaces(m, base, u)}, [u.email], cc=False, adjuntos=archivos)
+        for u in proyecto.encargados.all()]
+    return bool(enviados) and all(enviados)
+
+
+def avisar_modificacion_enviada(m, base):
+    ctx = {'m': m, 'proyecto': m.proyecto, 'adjuntos': list(m.adjuntos_disponibles()), 'url': _url_proyecto(base, m.proyecto)}
+    return enviar(f'Modificación enviada al cliente: {m.titulo} ({m.proyecto.nombre})', 'modificacion_enviada', ctx,
+                  settings.AVISO_INGENIERIA_CORREOS, cc=False)
 
 
 def _url_proyecto(base, proyecto):

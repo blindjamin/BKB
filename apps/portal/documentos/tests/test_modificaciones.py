@@ -14,7 +14,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from documentos.models import Archivo, DescargaLog, EstadoArchivo, EstadoModificacion, Modificacion
-from documentos.permisos import archivos_visibles, firmar_enlace, modificaciones_visibles
+from accounts.models import Rol, Usuario
+from documentos.permisos import archivos_visibles, firmar_enlace, modificaciones_visibles, puede_responder_cliente
 from documentos.tests.ayudantes import finalizar
 from documentos.tests.test_avance import Base
 from documentos.tests.test_avisos import CAIDO
@@ -136,13 +137,28 @@ class EnvioTests(ModificacionBase):
     def test_destinatarios_y_botones(self):  # M2, M3
         m = self.crear_mod(enviada=False)
         self.enviar(m)
-        correo = mail.outbox[0]
-        self.assertEqual((correo.to, correo.cc), ([self.cliente.email], ING))
+        correo, confirmacion = mail.outbox
+        self.assertEqual((correo.to, correo.cc), ([self.cliente.email], []))  # los botones solo al cliente
         html = correo.alternatives[0][0]
         self.assertIn('?accion=aprobar', html)
         self.assertIn('?accion=rechazar', html)
+        self.assertEqual((confirmacion.to, confirmacion.cc), (ING, []))
+        self.assertTrue(confirmacion.subject.startswith('Modificación enviada al cliente'))
+        self.assertNotIn('?accion=', confirmacion.body + confirmacion.alternatives[0][0])
         m.refresh_from_db()
         self.assertEqual((m.correos_enviados, m.enviada_en is not None), (1, True))
+
+    def test_con_dos_encargados_cada_uno_recibe_sus_enlaces(self):  # M3
+        otro = Usuario.objects.create_user('otro@cli.cl', 'Clave123!', rol=Rol.CLIENTE)
+        self.proyecto.encargados.add(otro)
+        m = self.crear_mod(enviada=False)
+        self.enviar(m)
+        al_cliente = [c for c in mail.outbox if c.subject.startswith('Modificación propuesta')]
+        self.assertEqual(sorted(c.to[0] for c in al_cliente), sorted([self.cliente.email, 'otro@cli.cl']))
+        for c in al_cliente:
+            usuario = Usuario.objects.get(email=c.to[0])
+            self.assertIn(reverse('documentos:responder_modificacion', args=[firmar_enlace(m, usuario)]), c.alternatives[0][0])
+        self.assertTrue(puede_responder_cliente(otro, self.proyecto))
 
     def test_si_leer_falla_el_correo_sale_con_enlaces(self):  # M2
         m = self.crear_mod(enviada=False)
@@ -150,7 +166,7 @@ class EnvioTests(ModificacionBase):
         with patch('documentos.storage.leer', side_effect=OSError('space caído')), \
                 self.assertLogs('documentos.correos', 'ERROR'):
             self.enviar(m)
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(len(mail.outbox), 2)  # el del cliente y la confirmación a ingeniería
         self.assertEqual(mail.outbox[0].attachments, [])
         self.assertIn('Ver y descargar los adjuntos', mail.outbox[0].alternatives[0][0])
 
@@ -158,7 +174,7 @@ class EnvioTests(ModificacionBase):
         m = self.crear_mod(enviada=False)
         self.enviar(m)
         self.enviar(m)
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(len(mail.outbox), 2)  # el del cliente y la confirmación, una sola vez
         m.refresh_from_db()
         self.assertEqual(m.correos_enviados, 1)
 
@@ -364,7 +380,7 @@ class RecordatoriosTests(ModificacionBase):
         recordatorios = [c for c in todos if c.subject.startswith('Recordatorio')]
         self.assertEqual(len(recordatorios), 4)
         for c in recordatorios:
-            self.assertEqual((c.to, c.cc, c.attachments), ([self.cliente.email], ING, []))
+            self.assertEqual((c.to, c.cc, c.attachments), ([self.cliente.email], [], []))
         m.refresh_from_db()
         self.assertEqual(m.correos_enviados, 5)
 
