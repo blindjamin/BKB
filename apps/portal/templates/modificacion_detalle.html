@@ -51,7 +51,7 @@
     </section>
 
     {% if not m.enviada_en and puede_editar %}
-    <form method="post" action="{% url 'documentos:enviar_modificacion' m.pk %}" data-confirmar="Se enviará un correo a {{ m.proyecto.encargado.email }}. Después ya no podrás cambiar los adjuntos.">
+    <form method="post" action="{% url 'documentos:enviar_modificacion' m.pk %}" data-confirmar="Se enviará un correo a {% for u in m.proyecto.encargados.all %}{{ u.email }}{% if not forloop.last %}, {% endif %}{% endfor %}. Después ya no podrás cambiar los adjuntos.">
         {% csrf_token %}
         <button type="submit" class="btn-primary">Enviar al cliente</button>
     </form>

@@ -3,8 +3,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from accounts.models import Rol
-from documentos.forms import EmpresaForm, ProyectoForm
-from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar
+from documentos.forms import EmpresaForm, ProyectoForm, encargados_formset
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, encargados_post
 from documentos.models import Archivo, Empresa, EstadoArchivo, EstadoProyecto, Proyecto
 from documentos.models import HITOS_ESTANDAR
 
@@ -100,8 +100,7 @@ class VistasEmpresasYProyectosTests(TestCase):
                 post_resp = self.client.post(url_crear, {
                     'nombre': nombre_empresa,
                     'rut': f'55.555.55{i}-5',
-                    'encargado_nombre': 'Cliente Uno',
-                    'encargado_email': self.cliente.email,
+                    **encargados_post(('Cliente Uno', self.cliente.email)),
                 })
                 self.assertEqual(post_resp.status_code, 302)
 
@@ -110,16 +109,14 @@ class VistasEmpresasYProyectosTests(TestCase):
 
     def test_empresa_sin_encargado_y_asignarlo_despues(self):
         self.client.force_login(self.jefe)
-        self.client.post(reverse('documentos:crear_empresa'), {'nombre': 'Sin Encargado'})
+        self.client.post(reverse('documentos:crear_empresa'), {'nombre': 'Sin Encargado', **encargados_post(('', ''))})
         empresa = Empresa.objects.get(nombre='Sin Encargado')
-        self.assertIsNone(empresa.encargado)
+        self.assertFalse(empresa.encargados.exists())
         self.assertContains(self.client.get(reverse('documentos:detalle_empresa', args=[empresa.pk])), 'sin asignar')
 
         url_editar = reverse('documentos:editar_empresa', args=[empresa.pk])
-        self.client.post(url_editar, {'nombre': 'Sin Encargado', 'encargado_nombre': 'Cliente Uno',
-                                      'encargado_email': self.cliente.email})
-        empresa.refresh_from_db()
-        self.assertEqual(empresa.encargado, self.cliente)
+        self.client.post(url_editar, {'nombre': 'Sin Encargado', **encargados_post(('Cliente Uno', self.cliente.email))})
+        self.assertEqual(list(empresa.encargados.all()), [self.cliente])
         self.client.force_login(self.cliente)  # ya la ve
         self.assertEqual(self.client.get(reverse('documentos:detalle_empresa', args=[empresa.pk])).status_code, 200)
 
@@ -146,9 +143,16 @@ class VistasEmpresasYProyectosTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertTemplateUsed(response, 'empresa_detalle.html')
 
-                # Ve tanto activos como cerrados
+                # Ve los activos y la carpeta con los cerrados
                 self.assertContains(response, 'Proyecto Alfa Activo')
+                self.assertNotContains(response, 'Proyecto Alfa Cerrado')
+                self.assertContains(response, 'Proyectos anteriores')
+                self.assertContains(response, '1 proyecto cerrado')
+
+                # Dentro de la carpeta, solo los cerrados
+                response = self.client.get(url_detalle + '?anteriores=1')
                 self.assertContains(response, 'Proyecto Alfa Cerrado')
+                self.assertNotContains(response, 'Proyecto Alfa Activo')
 
                 # Botón de nuevo proyecto presente
                 self.assertContains(response, reverse('documentos:crear_proyecto'))
@@ -189,8 +193,7 @@ class VistasEmpresasYProyectosTests(TestCase):
             'nombre': 'Tableros Principales',
             'estado': 'activo',
             'fecha_inicio': '2026-02-01', 'fecha_termino': '2026-08-31',
-            'encargado_nombre': 'Encargado',
-            'encargado_email': self.cliente.email,
+            **encargados_post(('Encargado', self.cliente.email)),
             'encargados_bkb': [self.personal.pk],
         })
         self.assertEqual(post_resp.status_code, 302)
@@ -203,7 +206,7 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertEqual([h.nombre for h in proyecto.hitos.all()], HITOS_ESTANDAR)
         self.assertEqual(str(proyecto.fecha_inicio), '2026-02-01')
 
-        self.assertEqual(proyecto.encargado, self.cliente)  # E2
+        self.assertEqual(list(proyecto.encargados.all()), [self.cliente])  # E2
 
     def test_crear_proyecto_cliente_recibe_403(self):
         self.client.force_login(self.cliente)
@@ -225,8 +228,7 @@ class VistasEmpresasYProyectosTests(TestCase):
             'nombre': 'Proyecto Alfa Modificado',
             'estado': 'cerrado',
             'fecha_inicio': '2026-03-01', 'fecha_termino': '2026-09-30',
-            'encargado_nombre': 'Encargado',
-            'encargado_email': self.cliente2.email,
+            **encargados_post(('Encargado', self.cliente2.email)),
             'encargados_bkb': [self.personal.pk],
         })
         self.assertEqual(post_resp.status_code, 302)
@@ -236,7 +238,7 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertEqual(self.proy_a1.estado, EstadoProyecto.CERRADO)
 
         self.assertEqual(str(self.proy_a1.fecha_termino), '2026-09-30')
-        self.assertEqual(self.proy_a1.encargado, self.cliente2)  # E2
+        self.assertEqual(list(self.proy_a1.encargados.all()), [self.cliente2])  # E2
 
     def test_editar_proyecto_cliente_recibe_403(self):
         self.client.force_login(self.cliente)
@@ -246,12 +248,12 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertEqual(self.client.post(url_editar, {'nombre': 'Hack'}).status_code, 403)
 
     def test_validacion_formularios_campos_obligatorios(self):
-        # EmpresaForm exige nombre; el encargado es opcional, pero con correo pide el nombre
+        # EmpresaForm exige nombre; los encargados son una lista aparte (un correo nuevo pide el nombre)
         f_empresa = EmpresaForm(data={'nombre': '', 'rut': '123'})
         self.assertFalse(f_empresa.is_valid())
         self.assertEqual(set(f_empresa.errors), {'nombre'})
-        f_empresa = EmpresaForm(data={'nombre': 'X', 'encargado_email': 'a@b.cl'})
-        self.assertEqual(set(f_empresa.errors), {'encargado_nombre'})
+        encargados = encargados_formset(encargados_post(('', 'a@b.cl')), None, obligatorio=False)
+        self.assertEqual(set(encargados.errors[0]), {'nombre'})
 
         # ProyectoForm exige empresa, nombre y fechas
         f_proyecto = ProyectoForm(data={'empresa': '', 'nombre': '', 'fecha_inicio': ''})
@@ -259,7 +261,6 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertIn('empresa', f_proyecto.errors)
         self.assertIn('nombre', f_proyecto.errors)
         self.assertIn('fecha_inicio', f_proyecto.errors)
-        self.assertIn('encargado_email', f_proyecto.errors)
         self.assertIn('encargados_bkb', f_proyecto.errors)
 
     def test_detalle_empresa_anotaciones_archivos_y_metadatos_ds3(self):
@@ -292,11 +293,12 @@ class VistasEmpresasYProyectosTests(TestCase):
         proyectos = {p.nombre: p for p in response.context['proyectos']}
         self.assertEqual(proyectos['Proyecto Alfa Activo'].archivos_count, 1)
         self.assertIsNotNone(proyectos['Proyecto Alfa Activo'].ultima_carga)
+        self.assertContains(response, '1 archivo')
+
+        response = self.client.get(url_detalle + '?anteriores=1')
+        proyectos = {p.nombre: p for p in response.context['proyectos']}
         self.assertEqual(proyectos['Proyecto Alfa Cerrado'].archivos_count, 0)
         self.assertIsNone(proyectos['Proyecto Alfa Cerrado'].ultima_carga)
-
-        # Verificación en HTML
-        self.assertContains(response, '1 archivo')
         self.assertContains(response, '0 archivos · Sin cargas aún')
         self.assertContains(response, 'RUT: 11.111.111-1')
 
@@ -376,8 +378,8 @@ class VistasEmpresasYProyectosTests(TestCase):
         self.assertContains(get_resp, 'for="id_estado"')
         self.assertContains(get_resp, 'for="id_fecha_inicio"')
         self.assertContains(get_resp, 'type="date"')
-        self.assertContains(get_resp, 'for="id_encargado_nombre"')
-        self.assertContains(get_resp, 'for="id_encargado_email"')
+        self.assertContains(get_resp, 'for="id_encargados-0-nombre"')
+        self.assertContains(get_resp, 'for="id_encargados-0-email"')
         self.assertContains(get_resp, 'class="form-help"')
         self.assertContains(get_resp, 'class="checkbox-list"')
         self.assertContains(get_resp, 'class="checkbox-item"')

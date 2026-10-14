@@ -13,14 +13,15 @@ from documentos.models import HITOS_ESTANDAR
 _ahora = timezone.now()
 _cliente = SimpleNamespace(nombre='Cliente Uno', email='cliente@empresa.cl')
 _proyecto = SimpleNamespace(
-    nombre='Proyecto Alfa', empresa=SimpleNamespace(nombre='Empresa Alfa'), encargado=_cliente,
+    nombre='Proyecto Alfa', empresa=SimpleNamespace(nombre='Empresa Alfa'), encargados=SimpleNamespace(all=[_cliente]),
     fecha_inicio=datetime.date(2026, 2, 1), fecha_termino=datetime.date(2026, 8, 1), finalizado_en=_ahora)
 _url = 'http://localhost:8000/proyectos/00000000-0000-0000-0000-000000000000/'
 
 _mod = SimpleNamespace(
     titulo='Cambiar el tablero de la sala 2', descripcion='Pasar de 24 a 36 circuitos.\nSe agrega protección diferencial.',
     estado='rechazada', get_estado_display='Rechazada', respondida_por=_cliente, respondida_en=_ahora,
-    motivo_rechazo='El costo supera el presupuesto.', ip='127.0.0.1', correos_enviados=5, proyecto=_proyecto)
+    motivo_rechazo='El costo supera el presupuesto.', ip='127.0.0.1', correos_enviados=5, proyecto=_proyecto,
+    creada_por=SimpleNamespace(nombre='Personal BKB', email='personal@empresabkb.cl'), enviada_en=_ahora)
 _adjuntos = [SimpleNamespace(nombre_original='foto.jpg', tamano=123)]
 
 MUESTRAS = {
@@ -34,6 +35,7 @@ MUESTRAS = {
         'rechazo': SimpleNamespace(usuario=_cliente, fecha=_ahora, motivo='Falta el plano del tablero.\nRevisar la sección 3.')},
     'modificacion': {'m': _mod, 'proyecto': _proyecto, 'adjuntos': _adjuntos, 'adjuntados': True, 'recordatorio': False,
                      'url_pagina': _url, 'url_aprobar': _url + '?accion=aprobar', 'url_rechazar': _url + '?accion=rechazar'},
+    'modificacion_enviada': {'m': _mod, 'proyecto': _proyecto, 'adjuntos': _adjuntos, 'url': _url},
     'modificacion_respondida': {'m': _mod, 'proyecto': _proyecto, 'url': _url},
     'modificacion_sin_respuesta': {'m': _mod, 'proyecto': _proyecto, 'url': _url},
     'cotizacion': {'c': {'name': 'Juan Pérez', 'organization': 'Empresa Alfa', 'email': 'juan@empresa.cl',

@@ -1,0 +1,10 @@
+{% autoescape off %}{{ m.creada_por.nombre|default:m.creada_por.email }} envió la modificación «{{ m.titulo }}» del proyecto {{ proyecto.nombre }} de {{ proyecto.empresa.nombre }} a {% for u in proyecto.encargados.all %}{{ u.nombre|default:u.email }} ({{ u.email }}){% if not forloop.last %}, {% endif %}{% endfor %} el {{ m.enviada_en|date:"d-m-Y H:i" }}.
+
+{{ m.descripcion }}
+{% if adjuntos %}
+Adjuntos: {% for a in adjuntos %}{{ a.nombre_original }}{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}
+Te avisaremos cuando el cliente la apruebe o la rechace.
+
+Ver proyecto: {{ url }}
+{% endautoescape %}

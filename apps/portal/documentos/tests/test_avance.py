@@ -3,12 +3,13 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from accounts.models import Rol
 from documentos.models import HITOS_ESTANDAR, Proyecto
 
 ANTES_DE_REVISION = len(HITOS_ESTANDAR) - 1  # hitos que cumple BKB; el último lo responde el cliente
-from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargar, finalizar
+from documentos.tests.ayudantes import crear_empresa, crear_proyecto, encargados_post, encargar, finalizar
 
 Usuario = get_user_model()
 
@@ -36,7 +37,7 @@ class FechasEHitosEstandarTests(Base):
     def datos(self, **extra):
         d = {'empresa': self.empresa.pk, 'nombre': 'Nuevo', 'estado': 'activo',
              'fecha_inicio': '2026-02-01', 'fecha_termino': '2026-08-01',
-             'encargado_nombre': 'Cli', 'encargado_email': self.cliente.email, 'encargados_bkb': [self.personal.pk]}
+             **encargados_post(('Cli', self.cliente.email)), 'encargados_bkb': [self.personal.pk]}
         d.update(extra)
         return d
 
@@ -53,7 +54,7 @@ class FechasEHitosEstandarTests(Base):
         self.client.force_login(admin)
         r = self.client.post('/admin/documentos/proyecto/add/', {
             'empresa': self.empresa.pk, 'nombre': 'Desde admin', 'estado': 'activo',
-            'encargado': self.cliente.pk, 'encargados_bkb': [self.personal.pk],
+            'encargados': [self.cliente.pk], 'encargados_bkb': [self.personal.pk],
             'fecha_inicio': '2026-01-01', 'fecha_termino': '2026-06-30'}, secure=True)
         self.assertEqual(r.status_code, 302)
         self.assertEqual(Proyecto.objects.get(nombre='Desde admin').hitos.count(), len(HITOS_ESTANDAR))
@@ -77,7 +78,7 @@ class EditorDeHitosTests(Base):
     def url(self):
         return reverse('documentos:editar_hitos', args=[self.proyecto.pk])
 
-    def post(self, filas, proyecto=None):
+    def post(self, filas, proyecto=None, **extra):
         """filas: lista de dicts con id, nombre, posicion, borrar. El prefijo del formset es `hitos`."""
         datos = {'hitos-TOTAL_FORMS': len(filas), 'hitos-INITIAL_FORMS': sum(1 for f in filas if f.get('id')),
                  'hitos-MIN_NUM_FORMS': 0, 'hitos-MAX_NUM_FORMS': 1000}
@@ -89,7 +90,7 @@ class EditorDeHitosTests(Base):
             if f.get('borrar'):
                 datos[f'hitos-{n}-DELETE'] = 'on'
         url = reverse('documentos:editar_hitos', args=[(proyecto or self.proyecto).pk])
-        return self.client.post(url, datos)
+        return self.client.post(url, {**datos, **extra})
 
     def filas(self):
         """Filas actuales sin la Revisión."""
@@ -120,6 +121,33 @@ class EditorDeHitosTests(Base):
         ultimo = self.proyecto.hitos.last()
         self.assertEqual((ultimo.nombre, ultimo.es_revision), ('Revisión', True))
         self.assertEqual(self.proyecto.hitos.filter(es_revision=True).count(), 1)
+
+    def test_corregir_la_fecha_de_un_hito_cumplido(self):
+        self.client.force_login(self.personal)
+        self.cumplir(2)
+        filas = self.filas()
+        datos = {'hitos-0-cumplido_en': '2026-09-01T10:30', 'hitos-1-cumplido_en': '',  # vacío: queda la que tenía
+                 'hitos-2-cumplido_en': '2026-09-01T10:30'}  # pendiente: se ignora, no lo marca
+        antes = self.proyecto.hitos.get(orden=2).cumplido_en
+        self.assertEqual(self.post(filas, **datos).status_code, 302)
+        h1, h2, h3 = self.proyecto.hitos.all()[:3]
+        self.assertEqual(timezone.localtime(h1.cumplido_en).strftime('%Y-%m-%d %H:%M'), '2026-09-01 10:30')
+        self.assertEqual(h2.cumplido_en, antes)
+        self.assertIsNone(h3.cumplido_en)
+
+    def test_fecha_futura_de_un_hito_cumplido_da_error(self):
+        self.client.force_login(self.personal)
+        self.cumplir(1)
+        r = self.post(self.filas(), **{'hitos-0-cumplido_en': '2099-01-01T10:00'})
+        self.assertContains(r, 'La fecha no puede ser futura.')
+
+    def test_renombrar_la_revision_la_deja_como_hito_final(self):
+        self.client.force_login(self.personal)
+        self.assertContains(self.client.get(self.url()), 'name="revision_nombre" id="id_revision_nombre" value="Revisión"')
+        self.assertEqual(self.post(self.filas(), revision_nombre=' Recepción conforme ').status_code, 302)
+        ultimo = self.proyecto.hitos.last()
+        self.assertEqual((ultimo.nombre, ultimo.es_revision), ('Recepción conforme', True))
+        self.assertEqual(self.proyecto.revision_por_responder() is None, True)  # sigue esperando los hitos previos
 
     def test_post_con_el_id_de_la_revision_no_la_borra(self):  # A2
         self.client.force_login(self.personal)

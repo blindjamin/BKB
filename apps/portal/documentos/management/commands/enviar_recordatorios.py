@@ -18,7 +18,7 @@ class Command(BaseCommand):
         # Por fecha y no por "ahora - 48 h": el trabajo corre a hora fija y así salen los días 0, 2, 4, 6 y 8
         pendientes = Modificacion.objects.filter(
             estado=EstadoModificacion.PENDIENTE, enviada_en__isnull=False, correos_enviados__lt=TOPE,
-            ultimo_correo_en__date__lte=hoy - timedelta(days=2)).select_related('proyecto__encargado', 'proyecto__empresa')
+            ultimo_correo_en__date__lte=hoy - timedelta(days=2)).select_related('proyecto__empresa')
         enviados = 0
         for m in pendientes:
             n = m.correos_enviados

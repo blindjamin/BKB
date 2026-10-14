@@ -5,15 +5,39 @@
 
 {% block content %}
 <div class="proyectos-container">
+    {% if anteriores %}
+    <nav class="breadcrumbs">
+        <a href="{% url 'documentos:lista_proyectos' %}" class="btn-volver">&larr; Volver a Proyectos</a>
+    </nav>
+    {% endif %}
     <div class="proyectos-header-box">
-        <h1 class="proyectos-title">Proyectos</h1>
+        <h1 class="proyectos-title">{% if anteriores %}Proyectos anteriores{% else %}Proyectos{% endif %}</h1>
         {% if proyectos %}
             <p class="proyectos-subtitle">Tienes acceso a {{ proyectos|length }} proyecto{{ proyectos|length|pluralize }}</p>
         {% endif %}
     </div>
 
-    {% if proyectos %}
+    {% if proyectos or n_anteriores %}
         <div class="proyectos-grid">
+            {% if n_anteriores and not anteriores %}
+                <a href="?anteriores=1" class="project-card">
+                    <div class="project-card-top">
+                        <span class="project-card-empresa">
+                            <svg class="icono icono-empresa" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
+                            Carpeta
+                        </span>
+                    </div>
+
+                    <h2 class="project-card-title">Proyectos anteriores</h2>
+
+                    <div class="project-card-meta">
+                        <div class="project-card-secondary">
+                            <span>{{ n_anteriores }} proyecto{{ n_anteriores|pluralize }} cerrado{{ n_anteriores|pluralize }}</span>
+                        </div>
+                        <span class="card-arrow" aria-hidden="true">Abrir carpeta &rarr;</span>
+                    </div>
+                </a>
+            {% endif %}
             {% for proyecto in proyectos %}
                 <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="project-card{% if proyecto.estado != 'activo' %} is-cerrado{% endif %}">
                     <div class="project-card-top">

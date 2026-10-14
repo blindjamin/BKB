@@ -12,9 +12,8 @@ class Empresa(models.Model):
     id = _uuid_pk()
     nombre = models.CharField(max_length=200)
     rut = models.CharField(max_length=12, blank=True)
-    encargado = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='empresas_a_cargo',
-                                  null=True, blank=True,  # se puede asignar después
-                                  limit_choices_to={'rol': 'cliente'})  # E1, E5 en el admin
+    encargados = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='empresas_a_cargo', blank=True,  # pueden asignarse después
+                                        limit_choices_to={'rol': 'cliente'})  # E1, E5 en el admin
 
     class Meta:
         ordering = ['nombre']
@@ -36,8 +35,8 @@ class Proyecto(models.Model):
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name='proyectos')
     nombre = models.CharField(max_length=200)
     estado = models.CharField(max_length=10, choices=EstadoProyecto.choices, default=EstadoProyecto.ACTIVO)
-    encargado = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='proyectos_a_cargo',
-                                  limit_choices_to={'rol': 'cliente'})  # E2
+    encargados = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='proyectos_a_cargo',
+                                        limit_choices_to={'rol': 'cliente'})  # E2: al menos uno, lo exige el formulario
     encargados_bkb = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='proyectos_bkb',
                                             limit_choices_to={'rol__in': ['personal', 'jefe']},
                                             verbose_name='encargados BKB')  # E3
@@ -50,6 +49,11 @@ class Proyecto(models.Model):
 
     def __str__(self):
         return f'{self.nombre} ({self.empresa})'
+
+    def correos_encargados(self, con_empresa=False):
+        """Correos de los encargados cliente, sin repetir; con_empresa suma los de la empresa."""
+        usuarios = list(self.encargados.all()) + (list(self.empresa.encargados.all()) if con_empresa else [])
+        return list(dict.fromkeys(u.email for u in usuarios))
 
     @property
     def finalizado(self):

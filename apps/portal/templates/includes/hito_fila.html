@@ -1,0 +1,40 @@
+{% load static %}
+<li class="hito-fila">
+    {% for oculto in form.hidden_fields %}{{ oculto }}{% endfor %}
+    <div class="form-group">
+        <label for="{{ form.nombre.id_for_label }}">{% if numero %}Hito {{ numero }}{% else %}Hito nuevo{% endif %}</label>
+        {{ form.nombre }}
+        {% for error in form.nombre.errors %}
+            <div class="field-error" role="alert">
+                <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                <span>{{ error }}</span>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="form-group">
+        <label for="{{ form.posicion.id_for_label }}">{{ form.posicion.label }}</label>
+        {{ form.posicion }}
+        {% for error in form.posicion.errors %}
+            <div class="field-error" role="alert">
+                <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                <span>{{ error }}</span>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="hito-fila-quitar">
+        {% if form.instance.cumplido %}
+            <div class="form-group">
+                <label for="{{ form.cumplido_en.id_for_label }}">{{ form.cumplido_en.label }}</label>
+                {{ form.cumplido_en }}
+                {% for error in form.cumplido_en.errors %}
+                    <div class="field-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ error }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <label class="checkbox-label" for="{{ form.DELETE.id_for_label }}">{{ form.DELETE }} Quitar</label>
+        {% endif %}
+    </div>
+</li>

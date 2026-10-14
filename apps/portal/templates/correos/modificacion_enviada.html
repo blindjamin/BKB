@@ -1,0 +1,8 @@
+{% extends 'correos/base.html' %}
+{% block contenido %}
+<p>{{ m.creada_por.nombre|default:m.creada_por.email }} envió la modificación «{{ m.titulo }}» del proyecto <strong>{{ proyecto.nombre }}</strong> de {{ proyecto.empresa.nombre }} a {% for u in proyecto.encargados.all %}{{ u.nombre|default:u.email }} ({{ u.email }}){% if not forloop.last %}, {% endif %}{% endfor %} el {{ m.enviada_en|date:"d-m-Y H:i" }}.</p>
+<p style="border-left:3px solid #C2410C;padding-left:12px;margin-left:0">{{ m.descripcion|linebreaksbr }}</p>
+{% if adjuntos %}<p>Adjuntos: {% for a in adjuntos %}{{ a.nombre_original }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+<p>Te avisaremos cuando el cliente la apruebe o la rechace.</p>
+{% endblock %}
+{% block boton %}Ver proyecto{% endblock %}

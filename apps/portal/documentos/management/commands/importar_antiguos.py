@@ -24,8 +24,9 @@ class Command(BaseCommand):
 
     def handle(self, empresa, raices, usuario, nombre_con_raiz, ejecutar, **_):
         empresa = Empresa.objects.get(pk=empresa)
-        if not empresa.encargado:
-            raise CommandError('La empresa no tiene encargado: asígnale uno antes de importar.')
+        encargados = list(empresa.encargados.all())
+        if not encargados:
+            raise CommandError('La empresa no tiene encargados: asígnale uno antes de importar.')
         autor = Usuario.objects.get(email__iexact=usuario)
         nuevos = repetidos = 0
         for raiz in raices:
@@ -52,10 +53,12 @@ class Command(BaseCommand):
                     self.stdout.write(f'{nombre_proyecto} | {nombre_carpeta} | {nombre}')
                     continue
                 hoy = timezone.localdate()
-                proyecto, _ = Proyecto.objects.get_or_create(empresa=empresa, nombre=nombre_proyecto, defaults={
-                    'encargado': empresa.encargado, 'estado': EstadoProyecto.CERRADO,
+                proyecto, creado = Proyecto.objects.get_or_create(empresa=empresa, nombre=nombre_proyecto, defaults={
+                    'estado': EstadoProyecto.CERRADO,
                     'fecha_inicio': hoy, 'fecha_termino': hoy,
                     'finalizado_en': timezone.now()})  # A8: finalizado, para que el cliente vea los archivos
+                if creado:
+                    proyecto.encargados.set(encargados)
                 carpeta, _ = Carpeta.objects.get_or_create(
                     proyecto=proyecto, nombre=nombre_carpeta, defaults={'creado_por': autor})
                 archivo = Archivo(

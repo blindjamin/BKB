@@ -38,7 +38,7 @@ def crear_modificacion(request, pk):
 @login_required
 def detalle_modificacion(request, pk):
     m = get_object_or_404(modificaciones_visibles(request.user).select_related(
-        'proyecto__encargado', 'proyecto__empresa', 'respondida_por'), pk=pk)
+        'proyecto__empresa', 'respondida_por'), pk=pk)
     adjuntos = m.adjuntos_disponibles().select_related('subido_por', 'modificacion')
     return render(request, 'modificacion_detalle.html', {
         'm': m,
@@ -63,7 +63,10 @@ def enviar_modificacion(request, pk):
         messages.error(request, 'La modificación ya fue enviada.')
         return redirect('documentos:detalle_modificacion', pk=m.pk)
     m.refresh_from_db()
-    correos._avisar_si_falla(request, correos.avisar_modificacion(m, _base(request)), 'la modificación')  # V6
+    enviado = correos.avisar_modificacion(m, _base(request))
+    correos._avisar_si_falla(request, enviado, 'la modificación')  # V6
+    if enviado:  # la confirmación solo si el correo al cliente salió de verdad
+        correos._avisar_si_falla(request, correos.avisar_modificacion_enviada(m, _base(request)), 'confirmación a ingeniería')
     messages.success(request, 'Modificación enviada al cliente.')
     return redirect('documentos:detalle_modificacion', pk=m.pk)
 

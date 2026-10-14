@@ -39,7 +39,7 @@
             <dl class="proyecto-datos">
                 <div><dt>Inicio</dt><dd>{{ proyecto.fecha_inicio|date:"d M Y" }}</dd></div>
                 <div><dt>Término</dt><dd>{{ proyecto.fecha_termino|date:"d M Y" }}</dd></div>
-                <div><dt>Encargado cliente</dt><dd>{{ proyecto.encargado.nombre|default:proyecto.encargado.email }} · <a href="mailto:{{ proyecto.encargado.email }}">{{ proyecto.encargado.email }}</a></dd></div>
+                <div><dt>Encargados cliente</dt><dd>{% for u in proyecto.encargados.all %}{{ u.nombre|default:u.email }} · <a href="mailto:{{ u.email }}">{{ u.email }}</a>{% if not forloop.last %}<br>{% endif %}{% empty %}Sin asignar{% endfor %}</dd></div>
                 <div><dt>Encargados BKB</dt><dd>{% for u in proyecto.encargados_bkb.all %}{{ u.nombre|default:u.email }}{% if not forloop.last %}, {% endif %}{% empty %}Sin asignar{% endfor %}</dd></div>
             </dl>
             {% endif %}

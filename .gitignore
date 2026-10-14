@@ -48,3 +48,6 @@ graphify-out/
 # Portal Django: estáticos recolectados y media local
 apps/portal/staticfiles/
 apps/portal/media/
+
+# Credenciales de las cuentas de prueba locales
+*.local.txt

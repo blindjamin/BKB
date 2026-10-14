@@ -16,7 +16,7 @@ from documentos import correos
 from documentos.models import HITOS_ESTANDAR, Proyecto, RechazoRevision
 
 ANTES_DE_REVISION = len(HITOS_ESTANDAR) - 1  # hitos que cumple BKB; el último lo responde el cliente
-from documentos.tests.ayudantes import encargar_empresa
+from documentos.tests.ayudantes import encargar_empresa, encargados_post
 from documentos.tests.test_avance import Base
 
 ING = ['ing1@bkb.test', 'ing2@bkb.test']
@@ -63,7 +63,7 @@ class InicioTests(Base):
     def datos(self):
         return {'empresa': self.empresa.pk, 'nombre': 'Nuevo', 'estado': 'activo',
                 'fecha_inicio': '2026-01-01', 'fecha_termino': '2026-06-30',
-                'encargado_nombre': 'Cli', 'encargado_email': self.cliente.email, 'encargados_bkb': [self.personal.pk]}
+                **encargados_post(('Cli', self.cliente.email)), 'encargados_bkb': [self.personal.pk]}
 
     def test_crear_proyecto_envia_inicio(self):  # V2
         self.client.force_login(self.jefe)

@@ -103,7 +103,7 @@
             {% include 'includes/campos_encargado.html' %}
 
             <p class="form-group">
-                <button type="button" class="btn-link" id="usar-encargado-empresa">Usar el encargado de la empresa</button>
+                <button type="button" class="btn-link" id="usar-encargado-empresa">Agregar los encargados de la empresa</button>
             </p>
             {{ encargados_empresa|json_script:"encargados-empresa" }}
 
@@ -151,10 +151,19 @@
                 {% endif %}
             </div>
         </form>
+
+    {% if proyecto and puede_eliminar %}
+    <section class="zona-peligro" aria-labelledby="zona-peligro-titulo">
+        <h2 id="zona-peligro-titulo">Zona de peligro</h2>
+        <p>Eliminar el proyecto borra sus archivos, carpetas, hitos y modificaciones del portal. No se puede deshacer.</p>
+        <a href="{% url 'documentos:eliminar_proyecto' proyecto.pk %}" class="btn-peligro">Eliminar proyecto…</a>
+    </section>
+    {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/agregar_fila.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/encargado.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endblock %}
