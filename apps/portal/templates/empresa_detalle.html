@@ -4,6 +4,12 @@
 {% block title %}{{ empresa.nombre }} - Proyectos - BKB Portal{% endblock %}
 
 {% block content %}
+{# Pantallas anchas: logos a los costados. Más angostas: solo el de la empresa junto al título (el de BKB ya está en la barra). #}
+{% if empresa.logo_tipo %}
+<aside class="marco-logo marco-logo-empresa" aria-hidden="true">
+    <img src="{% url 'documentos:logo_empresa' empresa.pk %}?v={{ empresa.logo_version }}" alt="">
+</aside>
+{% endif %}
 <div class="proyectos-container">
     {% if anteriores %}
     <nav class="breadcrumbs">
@@ -16,7 +22,11 @@
     {% endif %}
 
     <div class="view-header">
-        <div>
+        <div class="empresa-encabezado">
+            {% if empresa.logo_tipo %}
+            <img class="empresa-logo-inline" src="{% url 'documentos:logo_empresa' empresa.pk %}?v={{ empresa.logo_version }}" alt="Logo de {{ empresa.nombre }}">
+            {% endif %}
+            <div>
             <h1 class="proyectos-title">{{ empresa.nombre }}{% if anteriores %} · Proyectos anteriores{% endif %}</h1>
             {% if empresa.rut %}
                 <p class="view-subtitle"><span class="empresa-rut">RUT: {{ empresa.rut }}</span> · Historial de proyectos</p>
@@ -26,6 +36,7 @@
             {% if puede_gestionar %}
                 <p class="view-subtitle">Encargado{{ empresa.encargados.all|length|pluralize }}: {% for u in empresa.encargados.all %}{{ u.nombre|default:u.email }} · {{ u.email }}{% if not forloop.last %}; {% endif %}{% empty %}sin asignar{% endfor %}</p>
             {% endif %}
+            </div>
         </div>
         {% if puede_gestionar %}
         <div>
@@ -104,5 +115,8 @@
         </div>
     {% endif %}
 </div>
+<aside class="marco-logo marco-logo-bkb" aria-hidden="true">
+    <img src="{% static 'img/logo-bkb.png' %}" alt="">
+</aside>
 {% endblock %}
 

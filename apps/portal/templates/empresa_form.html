@@ -13,7 +13,7 @@
         <h1 class="proyectos-title">{{ titulo }}</h1>
         <p class="view-subtitle">Registra una empresa cliente para gestionar sus proyectos.</p>
 
-        <form method="post" class="form-card">
+        <form method="post" enctype="multipart/form-data" class="form-card">
             {% csrf_token %}
 
             {% if form.non_field_errors %}
@@ -48,6 +48,24 @@
                     <div class="field-error" id="{{ form.rut.id_for_label }}-error" role="alert">
                         <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
                         <span>{{ form.rut.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.logo_archivo.id_for_label }}">{{ form.logo_archivo.label }}</label>
+                {% if empresa.logo_tipo %}
+                    <img class="empresa-logo-form" src="{% url 'documentos:logo_empresa' empresa.pk %}?v={{ empresa.logo_version }}" alt="Logo actual de {{ empresa.nombre }}">
+                {% endif %}
+                <input type="file" name="{{ form.logo_archivo.html_name }}" id="{{ form.logo_archivo.id_for_label }}" accept="image/png,image/jpeg,image/webp" aria-describedby="help-logo">
+                <small class="form-help" id="help-logo">{{ form.logo_archivo.help_text }}</small>
+                {% if empresa.logo_tipo %}
+                    <label class="empresa-quitar-logo">{{ form.quitar_logo }} {{ form.quitar_logo.label }}</label>
+                {% endif %}
+                {% if form.logo_archivo.errors %}
+                    <div class="field-error" role="alert">
+                        <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                        <span>{{ form.logo_archivo.errors.0 }}</span>
                     </div>
                 {% endif %}
             </div>

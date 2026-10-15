@@ -70,7 +70,25 @@ def encargados_formset(data, instancia, obligatorio):
     return formset
 
 
+LOGO_MAX_BYTES = 500 * 1024
+# Por firma de bytes, no por extensión; sin SVG (puede llevar scripts).
+_FIRMAS_LOGO = {b'\x89PNG\r\n\x1a\n': 'image/png', b'\xff\xd8\xff': 'image/jpeg', b'RIFF': 'image/webp'}
+
+
+def tipo_de_logo(datos):
+    for firma, tipo in _FIRMAS_LOGO.items():
+        if datos.startswith(firma) and (tipo != 'image/webp' or datos[8:12] == b'WEBP'):
+            return tipo
+    return None
+
+
 class EmpresaForm(forms.ModelForm):
+    logo_archivo = forms.FileField(
+        required=False, label='Logo (opcional)',
+        help_text='PNG, JPG o WebP de hasta 500 KB. Mejor con fondo transparente.',
+        widget=forms.ClearableFileInput(attrs={'accept': 'image/png,image/jpeg,image/webp'}))
+    quitar_logo = forms.BooleanField(required=False, label='Quitar el logo actual')
+
     class Meta:
         model = Empresa
         fields = ['nombre', 'rut']
@@ -97,6 +115,28 @@ class EmpresaForm(forms.ModelForm):
 
     def clean_rut(self):
         return self.cleaned_data.get('rut', '').strip()
+
+    def clean_logo_archivo(self):
+        archivo = self.cleaned_data.get('logo_archivo')
+        if not archivo:
+            return None
+        if archivo.size > LOGO_MAX_BYTES:
+            raise forms.ValidationError('El logo pesa más de 500 KB.')
+        datos = archivo.read()
+        tipo = tipo_de_logo(datos)
+        if not tipo:
+            raise forms.ValidationError('El logo debe ser PNG, JPG o WebP.')
+        return datos, tipo
+
+    def save(self, commit=True):
+        empresa = super().save(commit=False)
+        if self.cleaned_data.get('logo_archivo'):
+            empresa.logo, empresa.logo_tipo = self.cleaned_data['logo_archivo']
+        elif self.cleaned_data.get('quitar_logo'):
+            empresa.logo, empresa.logo_tipo = b'', ''
+        if commit:
+            empresa.save()
+        return empresa
 
 
 class ProyectoForm(forms.ModelForm):

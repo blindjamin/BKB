@@ -24,7 +24,7 @@
     <header class="encabezado" data-theme="dark">
         <a href="{% url 'documentos:lista_proyectos' %}" class="marca">
             <img src="{% static 'img/logo-bkb.png' %}" alt="BKB" class="marca-logo" height="44">
-            <span class="marca-nombre">Portal de Archivos</span>
+            <span class="marca-nombre">Portal de Archivos<span class="marca-nombre-extra"> para nuestros clientes</span></span>
         </a>
         <div class="header-actions">
             {% if not user.is_authenticated %}

@@ -27,7 +27,7 @@
                 <a href="{% url 'documentos:responder_modificacion' m.enlace %}" class="btn-primary">Responder</a>
                 {% endif %}
                 {% if puede_editar %}
-                <a href="{% url 'documentos:detalle_modificacion' m.pk %}" class="btn-link">Ver detalle</a>
+                <a href="{% url 'documentos:detalle_modificacion' m.pk %}" class="btn-link">{% if m.enviada_en %}Ver detalle{% else %}Continuar borrador{% endif %}</a>
                 {% endif %}
             </div>
         </article>

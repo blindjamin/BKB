@@ -14,6 +14,14 @@
         {% if m.enviada_en %}<span>Enviada el {{ m.enviada_en|date:"d-m-Y" }}</span>{% endif %}
     </div>
 
+    {% if not m.enviada_en and puede_editar %}
+    <div class="aviso aviso-info borrador-aviso">
+        <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+        <span>Borrador: el cliente aún no lo ve. Puedes editar el texto y sumar adjuntos las veces que quieras; cuando esté listo, envíalo.</span>
+        <a href="{% url 'documentos:editar_modificacion' m.pk %}" class="btn-link">Editar texto</a>
+    </div>
+    {% endif %}
+
     <p class="modificacion-descripcion">{{ m.descripcion|linebreaksbr }}</p>
 
     {% if m.respondida_en %}

@@ -992,10 +992,37 @@ fieldset.form-group-fieldset legend.form-label {
     display: none;
     font-family: var(--bkb-font-display);
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.15;
 }
 
+.marca-nombre-extra {
+    display: none;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+/* Celular: solo el logo. Tablet y notebook: "PORTAL DE ARCHIVOS". Pantallas anchas: la frase completa y más grande. */
 @media (min-width: 600px) {
     .marca-nombre {
+        display: inline;
+        font-size: 1rem;
+    }
+}
+
+@media (min-width: 1100px) {
+    .marca-nombre {
+        font-size: 1.25rem;
+    }
+}
+
+@media (min-width: 1440px) {
+    .marca-nombre {
+        font-size: clamp(1.375rem, 0.2rem + 1.4vw, 2rem);
+    }
+
+    .marca-nombre-extra {
         display: inline;
     }
 }
@@ -2762,4 +2789,115 @@ a[href^="mailto:"] {
     .archivo-fila:has(.archivo-marcar) {
         grid-template-columns: auto auto minmax(0, 1fr) auto;
     }
+}
+
+/* ==========================================================================
+   Logo de la empresa (vista de empresa y formulario)
+   ========================================================================== */
+
+/* Fondo blanco fijo: los logos de clientes suelen venir pensados para fondo claro. */
+.empresa-logo-inline,
+.empresa-logo-form,
+.marco-logo-empresa img {
+    background: #FFFFFF;
+    border: 1px solid var(--input-border);
+    border-radius: var(--bkb-radius-input, 10px);
+    object-fit: contain;
+    box-sizing: border-box;
+}
+
+.empresa-encabezado {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4, 16px);
+    min-width: 0;
+}
+
+.empresa-logo-inline {
+    flex: none;
+    height: 56px;
+    max-width: 160px;
+    padding: 6px 10px;
+}
+
+@media (max-width: 599.98px) {
+    .empresa-logo-inline {
+        height: 44px;
+        max-width: 112px;
+        padding: 4px 8px;
+    }
+}
+
+.empresa-logo-form {
+    display: block;
+    height: 64px;
+    max-width: 220px;
+    padding: 6px 10px;
+    margin-bottom: var(--space-2, 8px);
+}
+
+.form-group .empresa-quitar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: var(--space-2, 8px);
+    font-weight: 400;
+}
+
+.form-group .empresa-quitar-logo input {
+    width: auto;
+}
+
+/* Laterales fijos: solo cuando sobra margen a ambos lados del contenedor. */
+.marco-logo {
+    display: none;
+}
+
+@media (min-width: 1440px) {
+    .marco-logo {
+        display: flex;
+        justify-content: center;
+        position: fixed;
+        top: 50%;
+        width: min(220px, calc((100vw - var(--contenedor)) / 2 - 48px));
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+    }
+
+    .marco-logo-empresa {
+        left: calc((100vw - var(--contenedor)) / 4);
+    }
+
+    .marco-logo-bkb {
+        left: calc(100vw - (100vw - var(--contenedor)) / 4);
+    }
+
+    .marco-logo img {
+        max-width: 100%;
+        max-height: 200px;
+    }
+
+    .marco-logo-empresa img {
+        padding: 12px 16px;
+    }
+
+    .marco-logo-bkb img {
+        width: 160px;
+        border-radius: 50%;
+    }
+
+    .empresa-logo-inline {
+        display: none;
+    }
+}
+
+/* Aviso de borrador en el detalle de una modificación */
+.borrador-aviso {
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+}
+
+.borrador-aviso span {
+    flex: 1 1 16rem;
 }
