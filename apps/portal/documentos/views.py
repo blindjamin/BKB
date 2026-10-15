@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, Prefetch, Q
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponseBadRequest, Http404
+from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -110,7 +110,7 @@ def crear_empresa(request):
     if not puede_gestionar_estructura(request.user):
         raise PermissionDenied("No tienes permisos para crear empresas.")
 
-    return _formulario_empresa(request, EmpresaForm(request.POST or None), None, 'Nueva Empresa')
+    return _formulario_empresa(request, EmpresaForm(request.POST or None, request.FILES or None), None, 'Nueva Empresa')
 
 
 @login_required
@@ -118,7 +118,7 @@ def editar_empresa(request, pk):
     if not puede_gestionar_estructura(request.user):
         raise PermissionDenied("No tienes permisos para editar empresas.")
     empresa = get_object_or_404(Empresa, pk=pk)
-    return _formulario_empresa(request, EmpresaForm(request.POST or None, instance=empresa), empresa, 'Editar Empresa')
+    return _formulario_empresa(request, EmpresaForm(request.POST or None, request.FILES or None, instance=empresa), empresa, 'Editar Empresa')
 
 
 def _invitar_encargados(request, formset):
@@ -152,6 +152,17 @@ def detalle_empresa(request, pk):
         **_separar_anteriores(request, proyectos),
     }
     return render(request, 'empresa_detalle.html', context)
+
+
+@login_required
+def logo_empresa(request, pk):
+    empresa = get_object_or_404(Empresa, pk=pk)
+    if not empresa.logo_tipo or not puede_ver_empresa(request.user, empresa):
+        raise Http404
+    respuesta = HttpResponse(bytes(empresa.logo), content_type=empresa.logo_tipo)
+    respuesta['Cache-Control'] = 'private, max-age=3600'  # el enlace lleva ?v= y cambia al subir otro logo
+    respuesta['X-Content-Type-Options'] = 'nosniff'
+    return respuesta
 
 
 def _encargados_por_empresa():

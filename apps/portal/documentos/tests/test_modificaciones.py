@@ -398,3 +398,29 @@ class RecordatoriosTests(ModificacionBase):
         mail.outbox.clear()
         self.correr(2)
         self.assertEqual(len(mail.outbox), 0)
+
+
+class EditarBorradorTests(ModificacionBase):
+    def _editar(self, m, **datos):
+        return self.client.post(reverse('documentos:editar_modificacion', args=[m.pk]),
+                                {'titulo': 'Nuevo título', 'descripcion': 'Con más detalle', **datos})
+
+    def test_borrador_se_edita_antes_de_enviar(self):
+        m = self.crear_mod(enviada=False)
+        self.client.force_login(self.personal)
+        self.assertRedirects(self._editar(m), reverse('documentos:detalle_modificacion', args=[m.pk]))
+        m.refresh_from_db()
+        self.assertEqual((m.titulo, m.descripcion, m.enviada_en), ('Nuevo título', 'Con más detalle', None))
+        self.assertEqual(len(mail.outbox), 0)  # editar no avisa a nadie
+
+    def test_enviada_no_se_edita(self):
+        m = self.crear_mod(enviada=True)
+        self.client.force_login(self.personal)
+        self._editar(m)
+        m.refresh_from_db()
+        self.assertEqual(m.titulo, 'Cambiar tablero')
+
+    def test_cliente_no_edita(self):
+        m = self.crear_mod(enviada=False)
+        self.client.force_login(self.cliente)
+        self.assertEqual(self._editar(m).status_code, 404)  # ni siquiera ve borradores

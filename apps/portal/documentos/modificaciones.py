@@ -36,6 +36,28 @@ def crear_modificacion(request, pk):
 
 
 @login_required
+def editar_modificacion(request, pk):
+    """Solo borradores: después de enviada, el cliente ya respondió o puede responder sobre ese texto."""
+    m = get_object_or_404(modificaciones_visibles(request.user).select_related('proyecto'), pk=pk)
+    if not puede_editar_proyecto(request.user, m.proyecto):
+        raise PermissionDenied('Solo los encargados BKB del proyecto editan modificaciones.')  # M1
+    if m.enviada_en:
+        messages.error(request, 'La modificación ya fue enviada y no se puede editar.')
+        return redirect('documentos:detalle_modificacion', pk=m.pk)
+    form = ModificacionForm(request.POST or None, instance=m)
+    if request.method == 'POST' and form.is_valid():
+        # El UPDATE condicional evita pisar una modificación que se envió mientras se editaba
+        guardada = Modificacion.objects.filter(pk=m.pk, enviada_en__isnull=True).update(
+            titulo=form.cleaned_data['titulo'], descripcion=form.cleaned_data['descripcion'])
+        if guardada:
+            messages.success(request, 'Borrador guardado.')
+        else:
+            messages.error(request, 'La modificación ya fue enviada y no se puede editar.')
+        return redirect('documentos:detalle_modificacion', pk=m.pk)
+    return render(request, 'modificacion_form.html', {'form': form, 'proyecto': m.proyecto, 'm': m})
+
+
+@login_required
 def detalle_modificacion(request, pk):
     m = get_object_or_404(modificaciones_visibles(request.user).select_related(
         'proyecto__empresa', 'respondida_por'), pk=pk)

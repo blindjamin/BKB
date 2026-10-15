@@ -1,16 +1,21 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Nueva modificación - {{ proyecto.nombre }}{% endblock %}
+{% block title %}{% if m %}Editar borrador{% else %}Nueva modificación{% endif %} - {{ proyecto.nombre }}{% endblock %}
 
 {% block content %}
 <div class="proyectos-container">
     <nav class="breadcrumbs" aria-label="Navegación secundaria">
+        {% if m %}
+        <a href="{% url 'documentos:detalle_modificacion' m.pk %}" class="btn-volver">&larr; Volver al borrador</a>
+        {% else %}
         <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-volver">&larr; Volver al Proyecto</a>
+        {% endif %}
     </nav>
 
     <div class="form-container">
-        <h1 class="proyectos-title">Nueva modificación de {{ proyecto.nombre }}</h1>
+        <h1 class="proyectos-title">{% if m %}Editar borrador{% else %}Nueva modificación de {{ proyecto.nombre }}{% endif %}</h1>
+        <p class="view-subtitle">Se guarda como borrador: el cliente no la ve hasta que la envíes. Los adjuntos se suben después, desde el borrador.</p>
 
         <form method="post" class="form-card">
             {% csrf_token %}
@@ -27,7 +32,8 @@
                 </div>
             {% endfor %}
             <div class="form-actions">
-                <button type="submit" class="btn-primary">Crear borrador</button>
+                <button type="submit" class="btn-primary">{% if m %}Guardar cambios{% else %}Guardar borrador{% endif %}</button>
+                {% if m %}<a href="{% url 'documentos:detalle_modificacion' m.pk %}" class="btn-secondary">Cancelar</a>{% endif %}
             </div>
         </form>
     </div>

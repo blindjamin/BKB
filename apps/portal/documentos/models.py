@@ -1,4 +1,5 @@
 import uuid
+import zlib
 
 from django.conf import settings
 from django.db import models
@@ -16,12 +17,20 @@ class Empresa(models.Model):
     rut = models.CharField(max_length=12, blank=True)
     encargados = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='empresas_a_cargo', blank=True,  # pueden asignarse después
                                         limit_choices_to={'rol': 'cliente'})  # E1, E5 en el admin
+    # ponytail: el logo vive en la base (pesa poco y la CSP solo permite imágenes propias); pasar al Space si crecen.
+    logo = models.BinaryField(blank=True, default=b'')
+    logo_tipo = models.CharField(max_length=20, blank=True)
 
     class Meta:
         ordering = ['nombre']
 
     def __str__(self):
         return self.nombre
+
+    @property
+    def logo_version(self):
+        """Cambia con el contenido: invalida la caché del navegador al subir otro logo."""
+        return zlib.crc32(bytes(self.logo))
 
 
 HITOS_ESTANDAR = ['Compras', 'Armado', 'Cableado', 'Pruebas', 'Entrega', 'Revisión']  # A1
