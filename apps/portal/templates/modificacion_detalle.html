@@ -8,7 +8,7 @@
     <nav class="breadcrumbs">
         <a href="{% url 'documentos:detalle_proyecto' m.proyecto.pk %}#modificaciones" class="btn-volver">&larr; {{ m.proyecto.nombre }}</a>
     </nav>
-    <h1 class="archivos-title">{{ m.titulo }}</h1>
+    {% include "includes/titulo_con_logo.html" with empresa=m.proyecto.empresa titulo=m.titulo %}
     <div class="archivos-meta">
         {% if m.enviada_en %}<span class="pastilla-flujo pastilla-flujo-{{ m.estado }}">{{ m.get_estado_display }}</span>{% else %}<span class="pastilla">Borrador</span>{% endif %}
         {% if m.enviada_en %}<span>Enviada el {{ m.enviada_en|date:"d-m-Y" }}</span>{% endif %}
@@ -65,6 +65,7 @@
     </form>
     {% endif %}
 </div>
+{% include "includes/marco_logos.html" with empresa=m.proyecto.empresa %}
 {% endblock %}
 
 {% block extra_js %}

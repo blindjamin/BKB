@@ -1,0 +1,7 @@
+{# Título de una vista dentro de una empresa, con su logo al lado si tiene. Uso: include con empresa= y titulo= #}
+<div class="titulo-con-logo">
+    {% if empresa.logo_tipo %}
+    <img class="empresa-logo-inline empresa-logo-angosto" src="{% url 'documentos:logo_empresa' empresa.pk %}?v={{ empresa.logo_version }}" alt="Logo de {{ empresa.nombre }}">
+    {% endif %}
+    <h1 class="{{ clase|default:'archivos-title' }}">{{ titulo }}</h1>
+</div>

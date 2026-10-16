@@ -2813,6 +2813,29 @@ a[href^="mailto:"] {
     min-width: 0;
 }
 
+.titulo-con-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3, 12px);
+    margin-bottom: 0.5rem;
+    min-width: 0;
+}
+
+.titulo-con-logo h1 {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Celular: el logo arriba, para que los nombres largos usen todo el ancho */
+@media (max-width: 599.98px) {
+    .titulo-con-logo {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2, 8px);
+    }
+}
+
 .empresa-logo-inline {
     flex: none;
     height: 56px;
@@ -2886,7 +2909,7 @@ a[href^="mailto:"] {
         border-radius: 50%;
     }
 
-    .empresa-logo-inline {
+    .empresa-logo-angosto {
         display: none;
     }
 }

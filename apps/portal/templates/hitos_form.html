@@ -10,7 +10,7 @@
     </nav>
 
     <div class="form-container">
-        <h1 class="proyectos-title">Editar hitos de {{ proyecto.nombre }}</h1>
+        {% with titulo="Editar hitos de "|add:proyecto.nombre %}{% include "includes/titulo_con_logo.html" with empresa=proyecto.empresa clase="proyectos-title" %}{% endwith %}
 
         <form method="post" class="form-card">
             {% csrf_token %}
@@ -51,6 +51,7 @@
         </form>
     </div>
 </div>
+{% include "includes/marco_logos.html" with empresa=proyecto.empresa %}
 {% endblock %}
 
 {% block extra_js %}

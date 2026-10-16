@@ -22,6 +22,10 @@
                     <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}" class="btn-volver">&larr; {{ proyecto.empresa.nombre }}</a>
                 {% endif %}
             </nav>
+            <div class="titulo-con-logo">
+            {% if proyecto.empresa.logo_tipo %}
+            <img class="empresa-logo-inline empresa-logo-angosto" src="{% url 'documentos:logo_empresa' proyecto.empresa.pk %}?v={{ proyecto.empresa.logo_version }}" alt="Logo de {{ proyecto.empresa.nombre }}">
+            {% endif %}
             <h1 class="archivos-title">
                 {% if carpeta_activa %}
                     <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
@@ -30,6 +34,7 @@
                     {{ proyecto.nombre }}
                 {% endif %}
             </h1>
+            </div>
             <div class="archivos-meta">
                 <span>
                     <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#empresa"></use></svg>
@@ -214,6 +219,7 @@
     <a href="#hitos" class="btn-secondary btn-naranjo" data-cerrar>Ver hitos</a>
 </aside>
 {% endif %}
+{% include "includes/marco_logos.html" with empresa=proyecto.empresa %}
 {% endblock %}
 
 {% block extra_js %}
