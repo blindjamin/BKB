@@ -14,7 +14,7 @@
     </nav>
 
     <div class="form-container">
-        <h1 class="proyectos-title">{% if m %}Editar borrador{% else %}Nueva modificación de {{ proyecto.nombre }}{% endif %}</h1>
+        {% if m %}{% include "includes/titulo_con_logo.html" with empresa=proyecto.empresa titulo="Editar borrador" clase="proyectos-title" %}{% else %}{% with titulo="Nueva modificación de "|add:proyecto.nombre %}{% include "includes/titulo_con_logo.html" with empresa=proyecto.empresa clase="proyectos-title" %}{% endwith %}{% endif %}
         <p class="view-subtitle">Se guarda como borrador: el cliente no la ve hasta que la envíes. Los adjuntos se suben después, desde el borrador.</p>
 
         <form method="post" class="form-card">
@@ -38,4 +38,5 @@
         </form>
     </div>
 </div>
+{% include "includes/marco_logos.html" with empresa=proyecto.empresa %}
 {% endblock %}

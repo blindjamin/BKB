@@ -8,7 +8,7 @@
     <nav class="breadcrumbs">
         <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}" class="btn-volver">&larr; {{ proyecto.empresa.nombre }}</a>
     </nav>
-    <h1 class="archivos-title">{{ proyecto.nombre }}</h1>
+    {% include "includes/titulo_con_logo.html" with empresa=proyecto.empresa titulo=proyecto.nombre %}
     <div class="archivos-meta">
         <span>
             <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#empresa"></use></svg>
@@ -73,4 +73,5 @@
 
     {% include "includes/modificaciones.html" %}
 </div>
+{% include "includes/marco_logos.html" with empresa=proyecto.empresa %}
 {% endblock %}

@@ -1,0 +1,10 @@
+{% load static %}
+{# Pantallas anchas: logo de la empresa al margen izquierdo y el de BKB al derecho (ver .marco-logo). Uso: include con empresa= #}
+{% if empresa.logo_tipo %}
+<aside class="marco-logo marco-logo-empresa" aria-hidden="true">
+    <img src="{% url 'documentos:logo_empresa' empresa.pk %}?v={{ empresa.logo_version }}" alt="">
+</aside>
+{% endif %}
+<aside class="marco-logo marco-logo-bkb" aria-hidden="true">
+    <img src="{% static 'img/logo-bkb.png' %}" alt="">
+</aside>
