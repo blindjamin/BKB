@@ -1,0 +1,4 @@
+{% autoescape off %}Se actualizó el avance del proyecto {{ proyecto.nombre }} de {{ proyecto.empresa.nombre }}.
+
+{% for hito in hitos %}{{ forloop.counter }}. {{ hito.nombre }}: {% if hito.cumplido %}cumplido el {{ hito.cumplido_en|date:"d-m-Y" }}{% else %}pendiente{% endif %}
+{% endfor %}{% endautoescape %}

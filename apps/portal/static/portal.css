@@ -2589,6 +2589,72 @@ a[href^="mailto:"] {
     margin: 0 0 var(--space-2);
 }
 
+/* Plegable: el resumen (título y estado) abre y cierra la modificación */
+.modificacion-resumen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3, 12px);
+    cursor: pointer;
+    list-style: none;
+}
+
+.modificacion-resumen::-webkit-details-marker {
+    display: none;
+}
+
+.modificacion-resumen h3 {
+    margin: 0;
+    flex: 1 1 auto;
+}
+
+.modificacion-resumen::after {
+    content: "▸";
+    color: var(--bkb-salmon-700);
+    transition: transform 150ms ease;
+}
+
+.modificacion[open] > .modificacion-resumen {
+    margin-bottom: var(--space-3, 12px);
+}
+
+.modificacion[open] > .modificacion-resumen::after {
+    transform: rotate(90deg);
+}
+
+.modificacion-resumen:focus-visible {
+    outline: 3px solid var(--bkb-salmon-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.modificaciones-filtro {
+    margin: var(--space-4) 0 0;
+}
+
+.modificaciones-filtro input,
+.modificaciones-filtro select {
+    min-height: 40px;
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: var(--bkb-radius-input, 10px);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+.modificaciones-filtro input {
+    flex: 1 1 14rem;
+    min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modificacion-resumen::after {
+        transition: none;
+    }
+}
+
 .modificacion-adjuntos {
     display: flex;
     flex-wrap: wrap;

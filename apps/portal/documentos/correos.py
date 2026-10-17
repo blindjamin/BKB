@@ -46,6 +46,17 @@ def avisar_inicio(request, proyecto):  # V2
                                      proyecto.correos_encargados()), 'inicio')
 
 
+def avisar_hitos(request, proyecto):
+    """La línea de hitos a los correos del proyecto, cada vez que BKB la cambia. Uno por correo: no se ven entre sí.
+    Sin botón: pueden no tener cuenta en el portal."""
+    para = proyecto.lista_correos_hitos()
+    if not para:
+        return
+    ctx = {'proyecto': proyecto, 'hitos': list(proyecto.hitos.select_related('cumplido_por'))}
+    enviados = [enviar(f'Avance del proyecto {proyecto.nombre}', 'hitos', ctx, [c], cc=False) for c in para]
+    _avisar_si_falla(request, all(enviados), 'hitos')
+
+
 def avisar_termino(request, proyecto):  # V3
     cliente = request.user
     para = proyecto.correos_encargados(con_empresa=True)

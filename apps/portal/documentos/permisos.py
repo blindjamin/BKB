@@ -82,6 +82,11 @@ def puede_eliminar_estructura(usuario):
     return es_jefe(usuario) or (_activo(usuario) and usuario.is_superuser)
 
 
+def puede_descargar_proyecto(usuario):
+    """Bajar el proyecto completo en ZIP (respaldo): los jefes y el superusuario."""
+    return puede_eliminar_estructura(usuario)
+
+
 def puede_gestionar_estructura(usuario):
     """Solo el personal y el jefe pueden crear empresas, crear/editar proyectos y crear/eliminar carpetas."""
     return _es_personal(usuario)

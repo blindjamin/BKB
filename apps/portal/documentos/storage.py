@@ -1,7 +1,8 @@
 """Conexión con el Space: firma URLs y confirma objetos, siempre bajo SPACES_PREFIX.
 
 El contenido de los archivos nunca pasa por Django: viaja navegador <-> Space.
-Única excepción (M2): `leer` trae el objeto para adjuntarlo a un correo, solo al enviar una modificación.
+Excepciones: `leer` trae el objeto para adjuntarlo a un correo, solo al enviar una modificación (M2), y
+`abrir` lo lee para armar el ZIP del proyecto completo (solo jefes).
 A propósito no hay función para borrar. Los archivos antiguos solo se listan y copian, al importarlos (comando importar_antiguos).
 """
 
@@ -81,6 +82,12 @@ def leer(clave):
     """M2: contenido del objeto para adjuntarlo al correo (solo al enviar, tope de 20 MB)."""
     _validar(clave)
     return _cliente().get_object(Bucket=settings.SPACES_BUCKET, Key=clave)['Body'].read()
+
+
+def abrir(clave):
+    """ZIP del proyecto: el objeto como flujo de lectura, para copiarlo al ZIP sin cargarlo entero en memoria."""
+    _validar(clave)
+    return _cliente().get_object(Bucket=settings.SPACES_BUCKET, Key=clave)['Body']
 
 
 def listar_antiguos(raiz):

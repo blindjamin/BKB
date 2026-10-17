@@ -29,6 +29,8 @@ MUESTRAS = {
     'recuperar_contrasena': {'protocol': 'http', 'domain': 'localhost:8000', 'uid': 'MQ', 'token': 'muestra-token',
                              'user': _cliente},
     'inicio': {'proyecto': _proyecto, 'hitos': [SimpleNamespace(nombre=n) for n in HITOS_ESTANDAR], 'url': _url},
+    'hitos': {'proyecto': _proyecto, 'hitos': [SimpleNamespace(nombre=n, cumplido=i < 2, cumplido_en=_ahora)
+                                               for i, n in enumerate(HITOS_ESTANDAR)]},
     'termino': {'proyecto': _proyecto, 'cliente': _cliente, 'url': _url},
     'revision_rechazada': {
         'proyecto': _proyecto, 'url': _url,

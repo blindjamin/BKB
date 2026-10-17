@@ -54,12 +54,17 @@ class Proyecto(models.Model):
     fecha_inicio = models.DateField()  # A3
     fecha_termino = models.DateField()
     finalizado_en = models.DateTimeField(null=True, blank=True)  # A5: se llena al aceptar la Revisión
+    # Reciben por correo la línea de hitos cada vez que BKB la cambia; no les da acceso al portal. Uno por línea.
+    correos_hitos = models.TextField(blank=True, default='')
 
     class Meta:
         ordering = ['nombre']
 
     def __str__(self):
         return f'{self.nombre} ({self.empresa})'
+
+    def lista_correos_hitos(self):
+        return self.correos_hitos.split()
 
     def correos_encargados(self, con_empresa=False):
         """Correos de los encargados cliente, sin repetir; con_empresa suma los de la empresa."""
