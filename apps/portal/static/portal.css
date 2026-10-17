@@ -2603,6 +2603,42 @@ a[href^="mailto:"] {
     display: none;
 }
 
+/* Sección Modificaciones plegable: el encabezado abre y cierra toda la sección */
+.seccion-resumen {
+    cursor: pointer;
+    list-style: none;
+}
+
+.seccion-resumen::-webkit-details-marker {
+    display: none;
+}
+
+.seccion-resumen .seccion-title {
+    margin: 0;
+}
+
+.seccion-resumen .seccion-title::after {
+    content: "▸";
+    display: inline-block;
+    margin-left: var(--space-2, 8px);
+    color: var(--bkb-salmon-700);
+    transition: transform 150ms ease;
+}
+
+.seccion-plegable[open] > .seccion-resumen .seccion-title::after {
+    transform: rotate(90deg);
+}
+
+.seccion-plegable:not([open]) > .seccion-resumen {
+    margin-bottom: 0;
+}
+
+.seccion-resumen:focus-visible {
+    outline: 3px solid var(--bkb-salmon-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
 .modificacion-resumen h3 {
     margin: 0;
     flex: 1 1 auto;
@@ -2650,7 +2686,8 @@ a[href^="mailto:"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .modificacion-resumen::after {
+    .modificacion-resumen::after,
+    .seccion-resumen .seccion-title::after {
         transition: none;
     }
 }
