@@ -44,6 +44,18 @@
             <template id="hito-nuevo">{% include "includes/hito_fila.html" with form=formset.empty_form %}</template>
             <p><button type="button" class="btn-secondary" data-agregar-fila="hito-nuevo" data-antes="hito-revision" data-prefijo="hitos">+ Agregar hito</button></p>
 
+            <div class="form-group">
+                <label for="id_correos_hitos">Correos que reciben los hitos</label>
+                <textarea name="correos_hitos" id="id_correos_hitos" rows="3" placeholder="uno por línea"{% if correos_malos %} aria-invalid="true" aria-describedby="correos-hitos-error"{% endif %}>{{ correos_hitos }}</textarea>
+                <p class="hito-detalle">Les llega un correo con la línea de hitos cada vez que la actualizamos. Solo ven los hitos: no entran al portal.</p>
+                {% if correos_malos %}
+                <div class="field-error" id="correos-hitos-error" role="alert">
+                    <svg class="icono field-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
+                    <span>Correo no válido: {{ correos_malos|join:", " }}</span>
+                </div>
+                {% endif %}
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Guardar hitos</button>
                 <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-secondary">Cancelar</a>

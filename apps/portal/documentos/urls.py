@@ -14,6 +14,7 @@ urlpatterns = [
     path('proyectos/nuevo/', views.crear_proyecto, name='crear_proyecto'),
     path('proyectos/<uuid:pk>/', views.detalle_proyecto, name='detalle_proyecto'),
     path('proyectos/<uuid:pk>/editar/', views.editar_proyecto, name='editar_proyecto'),
+    path('proyectos/<uuid:pk>/descargar/', views.descargar_proyecto, name='descargar_proyecto'),
     path('proyectos/<uuid:pk>/eliminar/', views.eliminar_proyecto, name='eliminar_proyecto'),
     path('proyectos/<uuid:pk>/hitos/', views.editar_hitos, name='editar_hitos'),
     path('proyectos/<uuid:pk>/carpetas/nueva/', carpetas.crear_carpeta, name='crear_carpeta'),

@@ -1,19 +1,23 @@
 import logging
 import os
+import shutil
+import tempfile
+import zipfile
 
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, Prefetch, Q
-from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, HttpResponseBadRequest, Http404
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.validators import validate_email
+from django.http import FileResponse, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
 
-from . import correos
+from . import correos, storage
 from .carpetas import MAX_NIVELES, Arbol
 from .encargados import obtener_o_invitar
 from .forms import EmpresaForm, HitoFormSet, ProyectoForm, encargados_formset
@@ -25,6 +29,7 @@ from .permisos import (
     puede_ver_empresa,
     puede_gestionar_estructura,
     puede_eliminar_estructura,
+    puede_descargar_proyecto,
     archivos_visibles,
     archivos_visibles_para,
     firmar_enlace,
@@ -244,15 +249,31 @@ def editar_hitos(request, pk):
     # La Revisión solo cambia de nombre: sigue siendo el hito final que responde el cliente
     revision = proyecto.hitos.filter(es_revision=True).first()
     revision_nombre = request.POST.get('revision_nombre', '').strip()[:200] or (revision.nombre if revision else '')
-    if request.method == 'POST' and formset.is_valid():
+    correos_hitos = request.POST.get('correos_hitos', proyecto.correos_hitos)
+    malos = _correos_invalidos(correos_hitos)
+    if request.method == 'POST' and formset.is_valid() and not malos:
         with transaction.atomic():
             Proyecto.objects.select_for_update().get(pk=proyecto.pk)
             formset.guardar()
             proyecto.hitos.filter(es_revision=True).update(nombre=revision_nombre)
+            proyecto.correos_hitos = '\n'.join(dict.fromkeys(c.lower() for c in correos_hitos.split()))
+            proyecto.save(update_fields=['correos_hitos'])
+        correos.avisar_hitos(request, proyecto)
         messages.success(request, 'Hitos actualizados.')
         return redirect(url)
     return render(request, 'hitos_form.html', {
-        'proyecto': proyecto, 'formset': formset, 'revision': revision, 'revision_nombre': revision_nombre})
+        'proyecto': proyecto, 'formset': formset, 'revision': revision, 'revision_nombre': revision_nombre,
+        'correos_hitos': correos_hitos, 'correos_malos': malos})
+
+
+def _correos_invalidos(texto):
+    malos = []
+    for c in texto.split():
+        try:
+            validate_email(c)
+        except ValidationError:
+            malos.append(c)
+    return malos
 
 
 def _hitos_con_actual(proyecto):
@@ -344,6 +365,7 @@ def detalle_proyecto(request, pk):
         'max_upload_mb': settings.MAX_UPLOAD_MB,
         'extensiones': sorted(EXTENSIONES_PERMITIDAS),
         'puede_gestionar': gestiona,
+        'puede_descargar_proyecto': puede_descargar_proyecto(request.user),
         'modificaciones': _modificaciones(request.user, proyecto),
     }
     return render(request, 'archivos.html', context)
@@ -363,6 +385,8 @@ def avanzar_hito(request, pk):
             hito.cumplido_en = timezone.now()
             hito.cumplido_por = request.user
             hito.save(update_fields=['cumplido_en', 'cumplido_por'])
+    if hito:
+        correos.avisar_hitos(request, proyecto)
     return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
 
 
@@ -382,6 +406,8 @@ def retroceder_hito(request, pk):
             hito.cumplido_en = None
             hito.cumplido_por = None
             hito.save(update_fields=['cumplido_en', 'cumplido_por'])
+    if hito:
+        correos.avisar_hitos(request, proyecto)
     return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
 
 
@@ -433,6 +459,49 @@ def descargar_archivo(request, pk):
 
     url = url_descarga(archivo.clave_space, archivo.nombre_original)
     return redirect(url)
+
+
+def _rutas_zip(proyecto, archivos):
+    """Ruta dentro del ZIP de cada archivo: sus carpetas, o Modificaciones/<título>/ para los adjuntos.
+    Nombres repetidos en el mismo lugar llevan (2), (3)..."""
+    arbol = Arbol(proyecto)
+    usadas = set()
+    for a in archivos:
+        if a.modificacion_id:
+            partes = ['Modificaciones', a.modificacion.titulo]
+        else:
+            partes = [c.nombre for c in arbol.camino(arbol.por_id.get(a.carpeta_id))]
+        # Nombres escritos por usuarios: sin barras ni '..' para que nada se salga de la carpeta al descomprimir
+        partes = [p.replace('/', '-').replace('\\', '-').strip(' .') or '_' for p in partes + [a.nombre_original]]
+        ruta, n = '/'.join(partes), 1
+        base, ext = os.path.splitext(ruta)
+        while ruta.lower() in usadas:
+            n += 1
+            ruta = f'{base} ({n}){ext}'
+        usadas.add(ruta.lower())
+        yield a, ruta
+
+
+@login_required
+def descargar_proyecto(request, pk):
+    """El proyecto completo (archivos y adjuntos de modificaciones) en un ZIP, con sus carpetas. Solo jefes."""
+    if not puede_descargar_proyecto(request.user):
+        raise PermissionDenied('Solo los jefes pueden descargar el proyecto completo.')
+    proyecto = get_object_or_404(Proyecto, pk=pk)
+    archivos = list(proyecto.archivos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True)
+                    .select_related('modificacion').order_by('subido_en'))
+    # ponytail: se arma en un temporal del servidor antes de enviarlo; un proyecto de varios GB puede pasar el
+    # timeout de gunicorn. Si pasa, armarlo en segundo plano y mandar el enlace por correo.
+    tmp = tempfile.TemporaryFile()
+    with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
+        for archivo, ruta in _rutas_zip(proyecto, archivos):
+            with zf.open(ruta, 'w', force_zip64=True) as destino:
+                shutil.copyfileobj(storage.abrir(archivo.clave_space), destino, 1024 * 1024)
+    tmp.seek(0)
+    ip = _get_client_ip(request)
+    DescargaLog.objects.bulk_create([DescargaLog(usuario=request.user, archivo=a, ip=ip) for a in archivos])
+    logger.info('%s descargó el ZIP del proyecto %s (%d archivos).', request.user.email, proyecto.pk, len(archivos))
+    return FileResponse(tmp, as_attachment=True, filename=f'{proyecto.empresa.nombre} - {proyecto.nombre}.zip')
 
 
 @login_required
