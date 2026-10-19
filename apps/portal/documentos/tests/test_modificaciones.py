@@ -296,7 +296,7 @@ class ResponderTests(ModificacionBase):
 class PanelYDescargaTests(ModificacionBase):
     def panel(self, usuario):
         self.client.force_login(usuario)
-        return self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+        return self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]), {'vista': 'modificaciones'})
 
     def test_el_cliente_no_ve_el_borrador_en_el_panel(self):  # M1
         self.crear_mod(enviada=False, titulo='Secreta')

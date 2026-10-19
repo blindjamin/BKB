@@ -86,8 +86,8 @@ class ArbolTests(Base):
         self.assertContains(r, '1 carpeta · 1 archivo')
         r = self.ver(self.rev_a)
         self.assertContains(r, f'?carpeta={self.planos.pk}">Planos</a>')  # migas con enlace a la de arriba
-        self.assertContains(r, '<span aria-current="page">Rev A</span>', html=True)
-        self.assertContains(r, '&larr; Planos')
+        self.assertContains(r, f'data-objetivo data-tipo="carpeta" data-id="{self.rev_a.pk}"')  # la miga actual abre sus acciones
+        self.assertContains(self.ver(self.rev_a, usuario=self.cliente), '<span aria-current="page">Rev A</span>', html=True)
 
     def test_raiz_solo_muestra_las_de_primer_nivel(self):
         r = self.ver()
@@ -208,9 +208,6 @@ class MoverRenombrarTests(Base):
         self.post('mover_carpeta', self.planos.pk, destino=hondo.pk)
         self.planos.refresh_from_db()
         self.assertIsNone(self.planos.padre)
-        r = self.ver(self.planos)  # tampoco se ofrecen en la lista
-        self.assertNotContains(r, f'<option value="{detalles.pk}"')
-        self.assertNotContains(r, f'<option value="{hondo.pk}"')
 
     def test_mover_carpeta_con_nombre_repetido_en_destino_se_rechaza(self):
         otra = self.carpeta('Otra')
@@ -248,6 +245,101 @@ class MoverRenombrarTests(Base):
                                   ('mover_archivos', self.proyecto.pk, {'archivos': [a.pk], 'destino': ''})):
             with self.subTest(nombre=nombre):
                 self.assertEqual(self.post(nombre, pk, **datos).status_code, 403)
+
+
+class ExploradorTests(Base):
+    """docs/13 F1: mover y eliminar varios de una vez, volver a la carpeta de origen y pestañas."""
+
+    def url(self, ruta, pk=None):
+        return reverse(f'documentos:{ruta}', args=[pk or self.proyecto.pk])
+
+    def detalle(self, carpeta=None):
+        url = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])
+        return f'{url}?carpeta={carpeta.pk}' if carpeta else url
+
+    def test_mover_archivos_y_carpetas_juntos_y_volver_al_origen(self):
+        fotos = self.carpeta('Fotos')
+        a = self.archivo('a.pdf')
+        r = self.client.post(self.url('mover_archivos'), {
+            'archivos': [a.pk], 'carpetas': [self.rev_a.pk], 'destino': fotos.pk, 'desde': ''})
+        self.assertRedirects(r, self.detalle(), fetch_redirect_response=False)  # se queda donde estaba
+        a.refresh_from_db(); self.rev_a.refresh_from_db()
+        self.assertEqual((a.carpeta, self.rev_a.padre), (fotos, fotos))
+
+    def test_mover_carpeta_invalida_no_frena_al_resto(self):  # R3 por carpeta
+        a = self.archivo('a.pdf')
+        self.client.post(self.url('mover_archivos'), {
+            'archivos': [a.pk], 'carpetas': [self.planos.pk], 'destino': self.rev_a.pk})
+        a.refresh_from_db(); self.planos.refresh_from_db()
+        self.assertEqual(a.carpeta, self.rev_a)
+        self.assertIsNone(self.planos.padre)  # dentro de sí misma: se rechaza
+
+    def test_mover_carpeta_de_otro_proyecto_da_404(self):  # R6
+        ajena = self.carpeta('Ajena', proyecto=self.otro)
+        r = self.client.post(self.url('mover_archivos'), {'carpetas': [ajena.pk], 'destino': ''})
+        self.assertEqual(r.status_code, 404)
+
+    def test_eliminar_varios(self):
+        a = self.archivo('a.pdf', self.rev_a)
+        b = self.archivo('b.pdf')
+        r = self.client.post(self.url('eliminar_elementos'), {
+            'archivos': [b.pk], 'carpetas': [self.rev_a.pk], 'desde': self.planos.pk})
+        self.assertRedirects(r, self.detalle(self.planos), fetch_redirect_response=False)
+        a.refresh_from_db(); b.refresh_from_db()
+        self.assertIsNotNone(b.eliminado_en)
+        self.assertFalse(Carpeta.objects.filter(pk=self.rev_a.pk).exists())
+        self.assertEqual((a.carpeta, a.eliminado_en), (self.planos, None))  # C4: el contenido sube, no se borra
+
+    def test_eliminar_carpeta_y_su_subcarpeta_marcadas(self):
+        detalles = self.carpeta('Detalles', self.rev_a)
+        a = self.archivo('a.pdf', detalles)
+        self.client.post(self.url('eliminar_elementos'), {'carpetas': [self.rev_a.pk, detalles.pk]})
+        a.refresh_from_db()
+        self.assertEqual(a.carpeta, self.planos)
+        self.assertEqual(list(Carpeta.objects.values_list('nombre', flat=True)), ['Planos'])
+
+    def test_eliminar_solo_los_archivos_propios(self):  # el personal borra lo que subió
+        otro = Usuario.objects.create_user('otro@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
+        mio, ajeno = self.archivo('mio.pdf'), self.archivo('ajeno.pdf')
+        ajeno.subido_por = otro
+        ajeno.save()
+        self.client.post(self.url('eliminar_elementos'), {'archivos': [mio.pk, ajeno.pk]})
+        mio.refresh_from_db(); ajeno.refresh_from_db()
+        self.assertIsNotNone(mio.eliminado_en)
+        self.assertIsNone(ajeno.eliminado_en)
+
+    def test_eliminar_cliente_403_y_otro_proyecto_no_toca(self):
+        a = self.archivo('a.pdf')
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.client.post(self.url('eliminar_elementos'), {'archivos': [a.pk]}).status_code, 403)
+        self.client.force_login(self.personal)
+        self.client.post(self.url('eliminar_elementos', self.otro.pk), {'archivos': [a.pk], 'carpetas': [self.rev_a.pk]})
+        a.refresh_from_db()
+        self.assertIsNone(a.eliminado_en)
+        self.assertTrue(Carpeta.objects.filter(pk=self.rev_a.pk).exists())
+
+    def test_crear_y_renombrar_desde_afuera_se_quedan_en_el_lugar(self):
+        r = self.client.post(self.url('crear_carpeta'), {'nombre': 'Nueva', 'padre': self.planos.pk, 'desde': self.planos.pk})
+        self.assertRedirects(r, self.detalle(self.planos), fetch_redirect_response=False)
+        r = self.client.post(self.url('renombrar_carpeta', self.rev_a.pk), {'nombre': 'Rev B', 'desde': self.planos.pk})
+        self.assertRedirects(r, self.detalle(self.planos), fetch_redirect_response=False)
+        r = self.client.post(self.url('crear_carpeta'), {'nombre': 'Otra'})  # sin `desde`: entra a la nueva, como antes
+        self.assertRedirects(r, self.detalle(Carpeta.objects.get(nombre='Otra')), fetch_redirect_response=False)
+
+    def test_eliminar_archivo_vuelve_a_su_carpeta(self):
+        a = self.archivo('a.pdf', self.rev_a)
+        r = self.client.post(self.url('eliminar_archivo', a.pk))
+        self.assertRedirects(r, self.detalle(self.rev_a), fetch_redirect_response=False)
+
+    def test_pestanas(self):  # P3
+        r = self.ver()
+        self.assertContains(r, 'id="ex-arbol"')
+        self.assertNotContains(r, 'id="hitos"')
+        url = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])
+        self.assertContains(self.client.get(url, {'vista': 'hitos'}), 'id="hitos"')
+        r = self.client.get(url, {'vista': 'modificaciones'})
+        self.assertContains(r, 'id="modificaciones"')
+        self.assertNotContains(r, 'id="ex-arbol"')
 
 
 class AnidarCarpetasTests(Base):

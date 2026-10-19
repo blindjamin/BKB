@@ -6,7 +6,7 @@
 {% block content %}
 <div class="archivos-container">
     <nav class="breadcrumbs">
-        <a href="{% url 'documentos:detalle_proyecto' m.proyecto.pk %}#modificaciones" class="btn-volver">&larr; {{ m.proyecto.nombre }}</a>
+        <a href="{% url 'documentos:detalle_proyecto' m.proyecto.pk %}?vista=modificaciones" class="btn-volver">&larr; {{ m.proyecto.nombre }}</a>
     </nav>
     {% include "includes/titulo_con_logo.html" with empresa=m.proyecto.empresa titulo=m.titulo %}
     <div class="archivos-meta">

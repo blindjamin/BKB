@@ -1,195 +1,280 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ proyecto.nombre }} - Archivos{% endblock %}
+{% block title %}{% if carpeta_activa %}{{ carpeta_activa.nombre }} - {% endif %}{{ proyecto.nombre }} - Archivos{% endblock %}
 
 {% block content %}
-<div class="archivos-container">
-    <div class="proyecto-cabecera">
-        <div>
-            <nav class="breadcrumbs" aria-label="Ubicación">
-                {% if carpeta_activa %}
-                    {# C6: la flecha vuelve a la carpeta de arriba; las migas muestran el camino completo #}
-                    <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}{% if carpeta_padre %}?carpeta={{ carpeta_padre.pk }}{% endif %}" class="btn-volver">&larr; {{ carpeta_padre.nombre|default:proyecto.nombre }}</a>
-                    <ol class="migas">
-                        <li><a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}">{{ proyecto.empresa.nombre }}</a></li>
-                        <li><a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}">{{ proyecto.nombre }}</a></li>
-                        {% for c in camino %}
-                        <li>{% if forloop.last %}<span aria-current="page">{{ c.nombre }}</span>{% else %}<a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}?carpeta={{ c.pk }}">{{ c.nombre }}</a>{% endif %}</li>
-                        {% endfor %}
-                    </ol>
-                {% else %}
-                    <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}" class="btn-volver">&larr; {{ proyecto.empresa.nombre }}</a>
-                {% endif %}
-            </nav>
-            <div class="titulo-con-logo">
+{# docs/13: explorador tipo Drive. El cliente navega y descarga con enlaces simples; las acciones del personal usan explorador.js, igual que la subida #}
+<div class="archivos-container explorador">
+    <div class="proyecto-cabecera ex-cabecera">
+        <a href="{% url 'documentos:detalle_empresa' proyecto.empresa.pk %}" class="btn-volver">&larr; {{ proyecto.empresa.nombre }}</a>
+        <div class="ex-titulo">
             {% if proyecto.empresa.logo_tipo %}
             <img class="empresa-logo-inline empresa-logo-angosto" src="{% url 'documentos:logo_empresa' proyecto.empresa.pk %}?v={{ proyecto.empresa.logo_version }}" alt="Logo de {{ proyecto.empresa.nombre }}">
             {% endif %}
-            <h1 class="archivos-title">
-                {% if carpeta_activa %}
-                    <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
-                    {{ carpeta_activa.nombre }}
-                {% else %}
-                    {{ proyecto.nombre }}
-                {% endif %}
-            </h1>
-            </div>
-            <div class="archivos-meta">
-                <span>
-                    <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#empresa"></use></svg>
-                    {{ proyecto.empresa.nombre }}
-                </span>
-                <span class="pastilla-flujo pastilla-flujo-{% if proyecto.finalizado %}finalizado{% else %}en_curso{% endif %}">
-                    {% if proyecto.finalizado %}Finalizado{% else %}En curso{% endif %}
-                </span>
-                {% if puede_editar %}
-                    <a href="{% url 'documentos:editar_proyecto' proyecto.pk %}" class="btn-link">Editar proyecto</a>
-                    <a href="{% url 'documentos:editar_hitos' proyecto.pk %}" class="btn-link">Editar hitos</a>
-                {% endif %}
-                {% if puede_descargar_proyecto and not carpeta_activa %}
-                    <a href="{% url 'documentos:descargar_proyecto' proyecto.pk %}" class="btn-link">Descargar proyecto (ZIP)</a>
-                {% endif %}
-            </div>
-            {% if not carpeta_activa %}
+            <h1 class="archivos-title">{{ proyecto.nombre }}</h1>
+            <span class="pastilla-flujo pastilla-flujo-{% if proyecto.finalizado %}finalizado{% else %}en_curso{% endif %}">
+                {% if proyecto.finalizado %}Finalizado{% else %}En curso{% endif %}
+            </span>
+            {% if puede_editar or puede_descargar_proyecto %}
+            <details class="menu-desplegable ex-menu-proyecto">
+                <summary class="ex-icono-btn" aria-label="Más acciones del proyecto" title="Más acciones">&#8943;</summary>
+                <div class="menu-panel menu-panel-derecha">
+                    {% if puede_editar %}
+                    <a href="{% url 'documentos:editar_proyecto' proyecto.pk %}" class="menu-item">Editar proyecto</a>
+                    <a href="{% url 'documentos:editar_hitos' proyecto.pk %}" class="menu-item">Editar hitos</a>
+                    {% endif %}
+                    {% if puede_descargar_proyecto %}
+                    <a href="{% url 'documentos:descargar_proyecto' proyecto.pk %}" class="menu-item">
+                        <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#descargar"></use></svg>
+                        Descargar proyecto (ZIP)
+                    </a>
+                    {% endif %}
+                </div>
+            </details>
+            {% endif %}
+        </div>
+        <details class="proyecto-detalles">
+            <summary>Detalles del proyecto</summary>
             <dl class="proyecto-datos">
                 <div><dt>Inicio</dt><dd>{{ proyecto.fecha_inicio|date:"d M Y" }}</dd></div>
                 <div><dt>Término</dt><dd>{{ proyecto.fecha_termino|date:"d M Y" }}</dd></div>
                 <div><dt>Encargados cliente</dt><dd>{% for u in proyecto.encargados.all %}{{ u.nombre|default:u.email }} · <a href="mailto:{{ u.email }}">{{ u.email }}</a>{% if not forloop.last %}<br>{% endif %}{% empty %}Sin asignar{% endfor %}</dd></div>
                 <div><dt>Encargados BKB</dt><dd>{% for u in proyecto.encargados_bkb.all %}{{ u.nombre|default:u.email }}{% if not forloop.last %}, {% endif %}{% empty %}Sin asignar{% endfor %}</dd></div>
             </dl>
-            {% endif %}
-        </div>
-
-        {% if puede_subir %}
-        <div class="proyecto-acciones">
-            {# Sin capture: permite elegir PDF, planos y fotos de la galería (corrige F6 de docs/09) #}
-            <input type="file" id="archivo-input" class="archivo-input-hidden" multiple data-url-arbol="{% url 'documentos:crear_arbol' proyecto.pk %}" data-destino="{% if carpeta_activa %}la carpeta {{ carpeta_activa.nombre }}{% else %}el proyecto{% endif %}" accept="{{ extensiones|join:',' }}" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}"{% if carpeta_activa %} data-carpeta-id="{{ carpeta_activa.pk }}"{% endif %} data-max-mb="{{ max_upload_mb }}" data-extensiones="{{ extensiones|join:',' }}">
-            <input type="file" id="foto-input" class="archivo-input-hidden" accept="image/*" capture="environment" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}"{% if carpeta_activa %} data-carpeta-id="{{ carpeta_activa.pk }}"{% endif %} data-max-mb="{{ max_upload_mb }}" data-extensiones="{{ extensiones|join:',' }}">
-            <button type="button" class="btn-primary" data-abrir="archivo-input">
-                <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#subir"></use></svg>
-                Subir archivos
-            </button>
-            {% if puede_gestionar %}
-            {# S1: selector de carpetas del sistema; subir.js oculta el botón si el navegador no lo tiene #}
-            <input type="file" id="carpeta-input" class="archivo-input-hidden" webkitdirectory>
-            <button type="button" class="btn-secondary" data-abrir="carpeta-input" id="btn-subir-carpeta">
-                <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
-                Subir carpeta
-            </button>
-            {% endif %}
-            <button type="button" class="btn-secondary" data-abrir="foto-input">
-                <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#camara"></use></svg>
-                Tomar foto
-            </button>
-        </div>
-        {% endif %}
+        </details>
+        {# P3: pestañas por enlace (sirven sin JS y se pueden compartir) #}
+        <nav class="ex-pestanas" aria-label="Secciones del proyecto">
+            <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="ex-pestana"{% if vista == 'archivos' %} aria-current="page"{% endif %}>Archivos</a>
+            <a href="?vista=hitos" class="ex-pestana"{% if vista == 'hitos' %} aria-current="page"{% endif %}>Hitos</a>
+            <a href="?vista=modificaciones" class="ex-pestana"{% if vista == 'modificaciones' %} aria-current="page"{% endif %}>Modificaciones{% if modificaciones %} ({{ modificaciones|length }}){% endif %}</a>
+        </nav>
     </div>
 
-    {% if puede_subir %}
-    <section id="cola-subida" class="cola-subida" aria-live="polite" aria-label="Archivos en subida" hidden>
-        <ul id="cola-lista" class="cola-lista"></ul>
-        <button type="button" id="ver-nuevos" class="btn-secondary" hidden>Ver archivos nuevos</button>
-    </section>
-    {% endif %}
-
-    <section class="carpetas">
-        {% if carpeta_activa and puede_gestionar %}
-            <div class="carpeta-activa-acciones">
-                <details class="carpeta-accion">
-                    <summary class="btn-link">Renombrar</summary>
-                    <form action="{% url 'documentos:renombrar_carpeta' carpeta_activa.pk %}" method="post" class="form-carpeta">
-                        {% csrf_token %}
-                        <input type="text" name="nombre" value="{{ carpeta_activa.nombre }}" maxlength="100" required aria-label="Nuevo nombre de la carpeta">
-                        <button type="submit" class="btn-secondary">Guardar</button>
-                    </form>
-                </details>
-                <details class="carpeta-accion">
-                    <summary class="btn-link">Mover</summary>
-                    <form action="{% url 'documentos:mover_carpeta' carpeta_activa.pk %}" method="post" class="form-carpeta">
-                        {% csrf_token %}
-                        <select name="destino" aria-label="Mover la carpeta a">
-                            {% for valor, etiqueta in destinos_carpeta %}<option value="{{ valor }}"{% if valor == padre_id %} selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
-                        </select>
-                        <button type="submit" class="btn-secondary">Mover</button>
-                    </form>
-                </details>
-                <form action="{% url 'documentos:eliminar_carpeta' carpeta_activa.pk %}" method="post" class="form-eliminar" data-confirmar="No se borra ningún archivo: lo que tiene adentro (archivos y subcarpetas) pasa a {% if carpeta_padre %}«{{ carpeta_padre.nombre }}»{% else %}la raíz del proyecto{% endif %}." data-confirmar-titulo="¿Eliminar la carpeta «{{ carpeta_activa.nombre }}»?" data-confirmar-accion="Eliminar carpeta">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-eliminar">
-                        <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg>
-                        Eliminar carpeta
-                    </button>
-                </form>
-            </div>
+    {% if vista == 'archivos' %}
+    <section class="ex-zona" aria-label="Archivos"
+        {% if puede_subir %}
+        data-csrf="{{ csrf_token }}"
+        data-desde="{{ carpeta_activa.pk|default:'' }}"
+        data-max-niveles="{{ max_niveles }}"
+        data-url-crear="{% url 'documentos:crear_carpeta' proyecto.pk %}"
+        data-url-mover="{% url 'documentos:mover_archivos' proyecto.pk %}"
+        data-url-eliminar="{% url 'documentos:eliminar_elementos' proyecto.pk %}"
+        data-url-renombrar-carpeta="{% url 'documentos:renombrar_carpeta' '00000000-0000-0000-0000-000000000000' %}"
+        data-url-renombrar-archivo="{% url 'documentos:renombrar_archivo' '00000000-0000-0000-0000-000000000000' %}"
+        {% endif %}>
+        {% if puede_subir %}
+        {# Sin capture: permite elegir PDF, planos y fotos de la galería (corrige F6 de docs/09) #}
+        <input type="file" id="archivo-input" class="archivo-input-hidden" multiple data-url-arbol="{% url 'documentos:crear_arbol' proyecto.pk %}" data-destino="{% if carpeta_activa %}la carpeta {{ carpeta_activa.nombre }}{% else %}el proyecto{% endif %}" accept="{{ extensiones|join:',' }}" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}"{% if carpeta_activa %} data-carpeta-id="{{ carpeta_activa.pk }}"{% endif %} data-max-mb="{{ max_upload_mb }}" data-extensiones="{{ extensiones|join:',' }}">
+        <input type="file" id="foto-input" class="archivo-input-hidden" accept="image/*" capture="environment" data-url-subir="{% url 'documentos:iniciar_subida' proyecto.pk %}" data-url-confirmar="{% url 'documentos:confirmar_subida' '00000000-0000-0000-0000-000000000000' %}" data-csrf="{{ csrf_token }}"{% if carpeta_activa %} data-carpeta-id="{{ carpeta_activa.pk }}"{% endif %} data-max-mb="{{ max_upload_mb }}" data-extensiones="{{ extensiones|join:',' }}">
+        {% if puede_gestionar %}<input type="file" id="carpeta-input" class="archivo-input-hidden" webkitdirectory>{% endif %}
         {% endif %}
-        {% if carpetas or puede_crear_carpeta or not carpeta_activa %}
-            <div class="carpetas-header">
-                <h2 class="seccion-title">{% if carpeta_activa %}Subcarpetas{% else %}Carpetas{% endif %}</h2>
-                {% if puede_crear_carpeta %}
-                <form action="{% url 'documentos:crear_carpeta' proyecto.pk %}" method="post" class="form-carpeta form-group">
-                    {% csrf_token %}
-                    {% if carpeta_activa %}<input type="hidden" name="padre" value="{{ carpeta_activa.pk }}">{% endif %}
-                    <input type="text" name="nombre" maxlength="100" required placeholder="Nombre de la carpeta" aria-label="Nombre de la carpeta">
-                    <button type="submit" class="btn-secondary btn-naranjo">+ Nueva carpeta</button>
-                </form>
-                {% endif %}
-            </div>
-            {% if carpetas %}
-                <div class="carpetas-grid">
-                    {% for carpeta in carpetas %}
-                        <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}?carpeta={{ carpeta.pk }}" class="carpeta-pastilla" data-carpeta-id="{{ carpeta.pk }}" data-carpeta-nombre="{{ carpeta.nombre }}">
-                            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
-                            <span class="carpeta-nombre">{{ carpeta.nombre }}</span>
-                            <span class="carpeta-conteo">{% if carpeta.n_carpetas %}{{ carpeta.n_carpetas }} carpeta{{ carpeta.n_carpetas|pluralize }} · {% endif %}{{ carpeta.n_archivos }} archivo{{ carpeta.n_archivos|pluralize }}</span>
-                        </a>
-                    {% endfor %}
-                </div>
-            {% elif not carpeta_activa %}
-                <p class="view-subtitle">Este proyecto aún no tiene carpetas.</p>
-            {% endif %}
-        {% endif %}
-    </section>
 
-    {# Filtro por enlaces en el servidor (docs/09 §5.3): conserva la carpeta activa #}
-    <nav class="filtros" aria-label="Filtrar archivos">
-        <a href="?{% if carpeta_activa %}carpeta={{ carpeta_activa.pk }}{% endif %}" class="filtro{% if not tipo %} is-active{% endif %}"{% if not tipo %} aria-current="page"{% endif %}>Todos ({{ n_todos }})</a>
-        <a href="?{% if carpeta_activa %}carpeta={{ carpeta_activa.pk }}&{% endif %}tipo=documentos" class="filtro{% if tipo == 'documentos' %} is-active{% endif %}"{% if tipo == 'documentos' %} aria-current="page"{% endif %}>Documentos ({{ n_documentos }})</a>
-        <a href="?{% if carpeta_activa %}carpeta={{ carpeta_activa.pk }}&{% endif %}tipo=fotos" class="filtro{% if tipo == 'fotos' %} is-active{% endif %}"{% if tipo == 'fotos' %} aria-current="page"{% endif %}>Fotos ({{ n_fotos }})</a>
-    </nav>
-
-    {% if archivos %}
-        {% if destinos_archivos %}
-        {# R4: las casillas de cada archivo apuntan a este formulario (atributo form); funciona sin JS #}
-        <form id="mover-archivos" action="{% url 'documentos:mover_archivos' proyecto.pk %}" method="post" class="mover-archivos">
-            {% csrf_token %}
-            <label for="destino-archivos">Mover los archivos marcados a</label>
-            <select id="destino-archivos" name="destino">
-                {% for valor, etiqueta in destinos_archivos %}<option value="{{ valor }}"{% if valor == carpeta_activa_id %} selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
-            </select>
-            <button type="submit" class="btn-secondary">Mover</button>
-        </form>
-        {% endif %}
-        <div class="archivos-lista">
-            {% for archivo in archivos %}
-                {% include "includes/archivo_item.html" with archivo=archivo puede_borrar=archivo.puede_borrar gestionar=puede_gestionar %}
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="archivos-empty">
-                <p>Aún no hay {% if tipo == 'fotos' %}fotos{% else %}documentos{% endif %} {% if carpeta_activa %}en esta carpeta{% else %}en este proyecto{% endif %}.</p>
+        <div class="ex-barra">
+            <div class="ex-herramientas">
                 {% if puede_subir %}
-                    <button type="button" class="btn-secondary" data-abrir="archivo-input">Subir archivos</button>
-                {% else %}
-                    <p>Tu ejecutivo de BKB los cargará aquí.</p>
+                <details class="menu-desplegable ex-nuevo">
+                    <summary class="btn-primary ex-btn-nuevo">+ Nuevo</summary>
+                    <div class="menu-panel">
+                        {% if puede_crear_carpeta %}
+                        <button type="button" class="menu-item" data-accion="nueva-carpeta">
+                            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
+                            Nueva carpeta
+                        </button>
+                        <hr class="menu-separador">
+                        {% endif %}
+                        <button type="button" class="menu-item" data-abrir="archivo-input">
+                            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#subir"></use></svg>
+                            Subir archivos
+                        </button>
+                        {% if puede_gestionar %}
+                        {# S1: subir.js oculta este botón si el navegador no tiene selector de carpetas #}
+                        <button type="button" class="menu-item" data-abrir="carpeta-input" id="btn-subir-carpeta">
+                            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
+                            Subir carpeta
+                        </button>
+                        {% endif %}
+                        <button type="button" class="menu-item" data-abrir="foto-input">
+                            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#camara"></use></svg>
+                            Tomar foto
+                        </button>
+                    </div>
+                </details>
                 {% endif %}
+                {# C6 y D8: las migas son el título; la última abre las acciones de la carpeta actual #}
+                <nav class="ex-migas" aria-label="Ubicación">
+                    <ol>
+                        <li>{% if carpeta_activa %}<a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" data-carpeta-id="" data-carpeta-nombre="{{ proyecto.nombre }}">{{ proyecto.nombre }}</a>{% else %}<span aria-current="page">{{ proyecto.nombre }}</span>{% endif %}</li>
+                        {% for c in camino %}
+                        <li>{% if not forloop.last %}<a href="?carpeta={{ c.pk }}">{{ c.nombre }}</a>{% elif puede_gestionar %}<button type="button" class="ex-miga-actual" aria-current="page" aria-haspopup="menu" data-objetivo data-tipo="carpeta" data-id="{{ c.pk }}" data-nombre="{{ c.nombre }}" data-padre="{{ c.padre_id|default:'' }}" data-borrable="1">{{ c.nombre }}<svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#flecha"></use></svg></button>{% else %}<span aria-current="page">{{ c.nombre }}</span>{% endif %}</li>
+                        {% endfor %}
+                    </ol>
+                </nav>
+            </div>
+            {% if puede_subir %}
+            {# D5: con algo seleccionado, esta barra reemplaza a la de herramientas #}
+            <div class="ex-seleccion" hidden>
+                <button type="button" class="ex-icono-btn" data-accion="soltar" aria-label="Quitar la selección" title="Quitar la selección (Esc)">&times;</button>
+                <span class="ex-seleccion-n" aria-live="polite"></span>
+                <span class="ex-seleccion-acciones">
+                    <button type="button" class="btn-link" data-accion="descargar">
+                        <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#descargar"></use></svg> Descargar
+                    </button>
+                    {% if puede_gestionar %}
+                    <button type="button" class="btn-link" data-accion="mover">Mover</button>
+                    <button type="button" class="btn-link" data-accion="renombrar">Renombrar</button>
+                    {% endif %}
+                    <button type="button" class="btn-link btn-eliminar" data-accion="eliminar">
+                        <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg> Eliminar
+                    </button>
+                </span>
+            </div>
+            {% endif %}
         </div>
+
+        {# Filtro por enlaces en el servidor (docs/09 §5.3): conserva la carpeta activa #}
+        <nav class="filtros" aria-label="Filtrar archivos">
+            <a href="?{% if carpeta_activa %}carpeta={{ carpeta_activa.pk }}{% endif %}" class="filtro{% if not tipo %} is-active{% endif %}"{% if not tipo %} aria-current="page"{% endif %}>Todos ({{ n_todos }})</a>
+            <a href="?{% if carpeta_activa %}carpeta={{ carpeta_activa.pk }}&{% endif %}tipo=documentos" class="filtro{% if tipo == 'documentos' %} is-active{% endif %}"{% if tipo == 'documentos' %} aria-current="page"{% endif %}>Documentos ({{ n_documentos }})</a>
+            <a href="?{% if carpeta_activa %}carpeta={{ carpeta_activa.pk }}&{% endif %}tipo=fotos" class="filtro{% if tipo == 'fotos' %} is-active{% endif %}"{% if tipo == 'fotos' %} aria-current="page"{% endif %}>Fotos ({{ n_fotos }})</a>
+        </nav>
+
+        {% if puede_subir %}
+        <section id="cola-subida" class="cola-subida" aria-live="polite" aria-label="Archivos en subida" hidden>
+            <ul id="cola-lista" class="cola-lista"></ul>
+            <button type="button" id="ver-nuevos" class="btn-secondary" hidden>Ver archivos nuevos</button>
+        </section>
+        {% endif %}
+
+        {% if carpetas or archivos %}
+        {# D2: una sola lista, primero las carpetas (C5) y después los archivos, con las mismas columnas #}
+        <div class="ex-tabla{% if puede_subir %} ex-con-seleccion{% endif %}">
+            <div class="ex-encabezado">
+                {% if puede_subir %}<input type="checkbox" class="ex-marcar ex-marcar-todo" aria-label="Seleccionar todo">{% endif %}
+                <span class="ex-col-nombre">Nombre</span>
+                <span class="ex-col ex-autor">Subido por</span>
+                <span class="ex-col ex-fecha">Fecha</span>
+                <span class="ex-col ex-tamano">Tamaño</span>
+                <span class="ex-col-acciones" aria-hidden="true"></span>
+            </div>
+            <ul class="ex-lista">
+                {% for carpeta in carpetas %}
+                <li class="ex-fila" data-tipo="carpeta" data-id="{{ carpeta.pk }}" data-nombre="{{ carpeta.nombre }}" data-padre="{{ carpeta_activa.pk|default:'' }}" data-carpeta-id="{{ carpeta.pk }}" data-carpeta-nombre="{{ carpeta.nombre }}"{% if puede_gestionar %} data-borrable="1"{% endif %}>
+                    {% if puede_subir %}<input type="checkbox" class="ex-marcar" aria-label="Seleccionar {{ carpeta.nombre }}">{% endif %}
+                    <a href="?carpeta={{ carpeta.pk }}" class="ex-nombre">
+                        <svg class="icono ex-icono-carpeta" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
+                        <span class="carpeta-nombre">{{ carpeta.nombre }}</span>
+                    </a>
+                    <span class="ex-col ex-autor">{{ carpeta.creado_por.nombre|default:carpeta.creado_por.email }}</span>
+                    <span class="ex-col ex-fecha">{{ carpeta.creado_en|date:"d M Y" }}</span>
+                    {# C7: lo que tiene directamente adentro #}
+                    <span class="ex-col ex-tamano carpeta-conteo">{% if carpeta.n_carpetas %}{{ carpeta.n_carpetas }} carpeta{{ carpeta.n_carpetas|pluralize }} · {% endif %}{{ carpeta.n_archivos }} archivo{{ carpeta.n_archivos|pluralize }}</span>
+                    <span class="ex-col-acciones">
+                        {% if puede_gestionar %}<button type="button" class="ex-icono-btn" data-accion="menu" aria-haspopup="menu" aria-label="Acciones de {{ carpeta.nombre }}">&#8942;</button>{% endif %}
+                    </span>
+                </li>
+                {% endfor %}
+                {% for archivo in archivos %}
+                <li class="ex-fila" data-tipo="archivo" data-id="{{ archivo.pk }}" data-nombre="{{ archivo.nombre_original }}" data-base="{{ archivo.base }}" data-ext="{{ archivo.ext_punto }}" data-padre="{{ carpeta_activa.pk|default:'' }}" data-url-descargar="{% url 'documentos:descargar_archivo' archivo.pk %}"{% if archivo.puede_borrar %} data-borrable="1"{% endif %}>
+                    {% if puede_subir %}<input type="checkbox" class="ex-marcar" aria-label="Seleccionar {{ archivo.nombre_original }}">{% endif %}
+                    <a href="{% url 'documentos:descargar_archivo' archivo.pk %}" class="ex-nombre">
+                        <span class="archivo-ext">{{ archivo.extension|default:"—" }}</span>
+                        <span class="archivo-nombre">{{ archivo.nombre_original }}</span>
+                    </a>
+                    <span class="ex-col ex-autor">{{ archivo.subido_por.nombre|default:archivo.subido_por.email }}</span>
+                    <span class="ex-col ex-fecha" title="{{ archivo.subido_en|date:'d M Y, H:i' }}">{{ archivo.subido_en|date:"d M Y" }}</span>
+                    <span class="ex-col ex-tamano">{{ archivo.tamano|filesizeformat }}</span>
+                    <span class="ex-col-acciones">
+                        <a href="{% url 'documentos:descargar_archivo' archivo.pk %}" class="ex-icono-btn ex-descargar" aria-label="Descargar {{ archivo.nombre_original }}" title="Descargar">
+                            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#descargar"></use></svg>
+                        </a>
+                        {% if puede_subir %}<button type="button" class="ex-icono-btn" data-accion="menu" aria-haspopup="menu" aria-label="Acciones de {{ archivo.nombre_original }}">&#8942;</button>{% endif %}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <div class="archivos-empty">
+            <svg class="icono ex-vacio-icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
+            <p>{% if tipo %}No hay {% if tipo == 'fotos' %}fotos{% else %}documentos{% endif %} aquí.{% elif carpeta_activa %}Esta carpeta está vacía.{% else %}Aún no hay archivos en este proyecto.{% endif %}</p>
+            {% if puede_subir %}
+                <p class="view-subtitle">Arrastra archivos o carpetas aquí, o usa «+ Nuevo».</p>
+            {% else %}
+                <p>Tu ejecutivo de BKB los cargará aquí.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </section>
+
+    {% if puede_subir %}
+    {# Menú de acciones: clic derecho o ⋮ sobre una fila, o la miga de la carpeta actual (explorador.js) #}
+    <div id="ex-menu" class="menu-panel ex-menu" role="menu" hidden>
+        <button type="button" class="menu-item" role="menuitem" data-accion="abrir">Abrir</button>
+        <button type="button" class="menu-item" role="menuitem" data-accion="descargar">
+            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#descargar"></use></svg> Descargar
+        </button>
+        {% if puede_gestionar %}
+        <hr class="menu-separador">
+        <button type="button" class="menu-item" role="menuitem" data-accion="renombrar">Renombrar <kbd>F2</kbd></button>
+        <button type="button" class="menu-item" role="menuitem" data-accion="mover">Mover a…</button>
+        {% endif %}
+        <hr class="menu-separador">
+        <button type="button" class="menu-item menu-item-peligro" role="menuitem" data-accion="eliminar">
+            <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg> Eliminar <kbd>Supr</kbd>
+        </button>
+    </div>
+
+    {# Un solo diálogo para el nombre: nueva carpeta y renombrar (D6) #}
+    <dialog id="ex-dialogo-nombre" class="dialogo" aria-labelledby="ex-dialogo-nombre-titulo">
+        <form method="post" class="ex-form-nombre">
+            {% csrf_token %}
+            <h2 id="ex-dialogo-nombre-titulo" class="seccion-title">Nombre</h2>
+            <input type="hidden" name="desde" value="{{ carpeta_activa.pk|default:'' }}">
+            <input type="hidden" name="padre" value="{{ carpeta_activa.pk|default:'' }}" disabled>
+            <div class="ex-campo-nombre">
+                <input type="text" name="nombre" maxlength="100" required aria-labelledby="ex-dialogo-nombre-titulo" autocomplete="off">
+                <span class="archivo-ext-fija" hidden></span>
+            </div>
+            <div class="dialogo-acciones">
+                <button type="button" class="btn-secondary" data-cerrar-dialogo>Cancelar</button>
+                <button type="submit" class="btn-primary">Guardar</button>
+            </div>
+        </form>
+    </dialog>
+
+    {% if puede_gestionar %}
+    {# D5: «Mover a» navega carpeta por carpeta; las que no sirven de destino quedan deshabilitadas (el servidor vuelve a validar) #}
+    <dialog id="ex-dialogo-mover" class="dialogo ex-dialogo-mover" aria-labelledby="ex-dialogo-mover-titulo">
+        <form method="post" action="{% url 'documentos:mover_archivos' proyecto.pk %}">
+            {% csrf_token %}
+            <h2 id="ex-dialogo-mover-titulo" class="seccion-title">Mover</h2>
+            <input type="hidden" name="desde" value="{{ carpeta_activa.pk|default:'' }}">
+            <input type="hidden" name="destino" value="">
+            <div class="ex-mover-lugar">
+                <button type="button" class="ex-icono-btn" data-mover-subir aria-label="Subir un nivel">&lsaquo;</button>
+                <span class="ex-mover-nombre"></span>
+            </div>
+            <ul class="ex-mover-lista"></ul>
+            <p class="view-subtitle ex-mover-vacio" hidden>Sin subcarpetas.</p>
+            <p class="ex-mover-aviso" role="status"></p>
+            <div class="ex-mover-elegidos" hidden></div>
+            <div class="dialogo-acciones">
+                <button type="button" class="btn-secondary" data-cerrar-dialogo>Cancelar</button>
+                <button type="submit" class="btn-primary" data-mover-aqui>Mover aquí</button>
+            </div>
+        </form>
+    </dialog>
+    {{ arbol_js|json_script:"ex-arbol" }}
     {% endif %}
 
-    {% if not carpeta_activa %}
-    {% include "includes/modificaciones.html" %}
+    <form method="post" id="ex-form-eliminar" action="{% url 'documentos:eliminar_elementos' proyecto.pk %}" hidden>
+        {% csrf_token %}
+        <input type="hidden" name="desde" value="{{ carpeta_activa.pk|default:'' }}">
+    </form>
     {% endif %}
 
+    {% elif vista == 'hitos' %}
     <section class="hitos" id="hitos">
         <h2 class="seccion-title">Hitos</h2>
         {% include "includes/linea_hitos.html" %}
@@ -208,9 +293,13 @@
             {% endif %}
         </div>
     </section>
+
+    {% else %}
+    {% include "includes/modificaciones.html" %}
+    {% endif %}
 </div>
 
-{% if aviso_hito %}
+{% if aviso_hito and vista == 'archivos' %}
 {# Aviso temporal del hito en curso (como el de emergencias del landing): se cierra solo y no vuelve en la sesión #}
 <aside id="aviso-hito" class="aviso-hito" data-clave="bkb-aviso-hito-{{ proyecto.pk }}" aria-label="Hito en curso" hidden>
     <div class="aviso-hito-franja" aria-hidden="true"></div>
@@ -219,17 +308,18 @@
     <p class="aviso-hito-etiqueta">Hito en curso · {{ aviso_hito_n }} de {{ hitos|length }}</p>
     <p class="aviso-hito-nombre">{{ aviso_hito.nombre }}</p>
     <p class="aviso-hito-texto">{% if aviso_hito.es_revision %}Falta la revisión del cliente.{% else %}Recuerda marcarlo cuando se cumpla.{% endif %}</p>
-    <a href="#hitos" class="btn-secondary btn-naranjo" data-cerrar>Ver hitos</a>
+    <a href="?vista=hitos" class="btn-secondary btn-naranjo" data-cerrar>Ver hitos</a>
 </aside>
 {% endif %}
 {% include "includes/marco_logos.html" with empresa=proyecto.empresa %}
 {% endblock %}
 
 {% block extra_js %}
-{% if aviso_hito %}
+{% if aviso_hito and vista == 'archivos' %}
 <script src="{% static 'aviso_hito.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endif %}
-{% if puede_subir %}
+{% if puede_subir and vista == 'archivos' %}
 <script src="{% static 'subir.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'js/explorador.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endif %}
 {% endblock %}

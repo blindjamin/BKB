@@ -11,10 +11,11 @@ from django.db import IntegrityError, transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import Archivo, Carpeta
-from .permisos import archivos_visibles, proyectos_visibles, puede_gestionar_estructura
+from .permisos import archivos_visibles, proyectos_visibles, puede_borrar, puede_gestionar_estructura, puede_subir
 
 MAX_NIVELES = 8  # C3
 MAX_CARPETAS_SUBIDA = 500  # S4: el navegador corta en 500 archivos; las carpetas, aparte
@@ -24,7 +25,7 @@ class Arbol:
     """Todas las carpetas de un proyecto en una sola consulta; caminos, hijos y alturas se arman en memoria."""
 
     def __init__(self, proyecto):
-        self.por_id = {c.pk: c for c in proyecto.carpetas.all()}  # ordenadas por nombre
+        self.por_id = {c.pk: c for c in proyecto.carpetas.select_related('creado_por')}  # ordenadas por nombre
         self.hijos = defaultdict(list)
         for c in self.por_id.values():
             self.hijos[c.padre_id].append(c)
@@ -63,22 +64,10 @@ class Arbol:
     def etiqueta(self, carpeta):
         return ' › '.join(c.nombre for c in self.camino(carpeta)) if carpeta else 'Raíz del proyecto'
 
-    def destinos(self, mover=None):
-        """(id, etiqueta) para el <select> de mover, en orden de árbol. Con `mover` (una carpeta) deja fuera ella
-        misma, sus subcarpetas (ciclo) y los destinos que pasarían de MAX_NIVELES (R3)."""
-        fuera, alto = (self.debajo(mover), self.altura(mover)) if mover else (set(), 0)
-        lista = [('', 'Raíz del proyecto')]
-
-        def recorrer(padre_id, nivel):
-            for c in self.hijos[padre_id]:
-                if c.pk in fuera:
-                    continue
-                if nivel + alto <= MAX_NIVELES:
-                    lista.append((str(c.pk), self.etiqueta(c)))
-                recorrer(c.pk, nivel + 1)
-
-        recorrer(None, 1)
-        return lista
+    def para_js(self):
+        """Las carpetas para el diálogo «Mover a» (explorador.js); el servidor vuelve a validar al mover."""
+        return [{'id': str(c.pk), 'nombre': c.nombre, 'padre': str(c.padre_id) if c.padre_id else None}
+                for c in self.por_id.values()]
 
 
 def validar_nombre(nombre):
@@ -131,6 +120,27 @@ def _url(proyecto, carpeta=None):
     return f'{url}?carpeta={carpeta.pk}' if carpeta else url
 
 
+def _volver(request, proyecto, defecto=None):
+    """A la carpeta desde donde se hizo la acción (campo `desde`, docs/13), o a `defecto`."""
+    if 'desde' not in request.POST:
+        return redirect(_url(proyecto, defecto))
+    try:
+        return redirect(_url(proyecto, Arbol(proyecto).get(request.POST['desde'])))
+    except Http404:
+        return redirect(_url(proyecto))
+
+
+def _ids(request, campo):
+    try:
+        return [uuid.UUID(x) for x in request.POST.getlist(campo)]
+    except ValueError:
+        return []
+
+
+def _plural(n, uno, varios):
+    return f'{n} {uno if n == 1 else varios}'
+
+
 def _solo_estructura(usuario, accion):
     if not puede_gestionar_estructura(usuario):
         raise PermissionDenied(f'No tienes permisos para {accion}.')
@@ -158,7 +168,7 @@ def crear_carpeta(request, pk):
         messages.error(request, str(e))
         return redirect(_url(proyecto, padre))
     carpeta = Carpeta.objects.create(proyecto=proyecto, padre=padre, nombre=nombre, creado_por=request.user)
-    return redirect(_url(proyecto, carpeta))
+    return _volver(request, proyecto, carpeta)
 
 
 @login_required
@@ -167,13 +177,18 @@ def eliminar_carpeta(request, pk):
     _solo_estructura(request.user, 'eliminar carpetas')
     carpeta = _carpeta(request.user, pk)
     padre = carpeta.padre
+    _vaciar_y_borrar(carpeta)
+    return redirect(_url(carpeta.proyecto, padre))
+
+
+def _vaciar_y_borrar(carpeta):
+    """C4: el contenido sube a la carpeta de arriba y la carpeta se borra; el Space no se toca."""
     with transaction.atomic():
-        # Nombre provisional: una subcarpeta que se llame igual puede subir a su lugar sin chocar (C4)
+        # Nombre provisional: una subcarpeta que se llame igual puede subir a su lugar sin chocar
         carpeta.nombre = str(carpeta.pk)
         carpeta.save(update_fields=['nombre'])
-        volcar(carpeta, padre)
-        carpeta.delete()  # ya vacía: el Space no se toca
-    return redirect(_url(carpeta.proyecto, padre))
+        volcar(carpeta, carpeta.padre)
+        carpeta.delete()
 
 
 @login_required
@@ -190,7 +205,7 @@ def renombrar_carpeta(request, pk):
     else:
         carpeta.nombre = nombre
         carpeta.save(update_fields=['nombre'])
-    return redirect(_url(carpeta.proyecto, carpeta))
+    return _volver(request, carpeta.proyecto, carpeta)
 
 
 @login_required
@@ -202,20 +217,25 @@ def mover_carpeta(request, pk):
     carpeta = arbol.por_id[carpeta.pk]
     destino = arbol.get(request.POST.get('destino'))  # R6: solo de este proyecto
     try:
-        if destino and destino.pk in arbol.debajo(carpeta):
-            raise ValueError('Una carpeta no se puede mover dentro de sí misma.')  # R3: sin ciclos
-        if arbol.nivel(destino) + arbol.altura(carpeta) > MAX_NIVELES:
-            raise ValueError(f'Así quedarían más de {MAX_NIVELES} niveles de carpetas.')
-        if hermana(carpeta.proyecto, destino, carpeta.nombre, excluir=carpeta.pk):
-            raise ValueError(f'En {arbol.etiqueta(destino)} ya hay una carpeta "{carpeta.nombre}". '
-                             'Renómbrala primero.')
+        _mover(arbol, carpeta, destino)
     except ValueError as e:
         messages.error(request, str(e))
     else:
-        carpeta.padre = destino
-        carpeta.save(update_fields=['padre'])
         messages.success(request, f'Se movió "{carpeta.nombre}" a {arbol.etiqueta(destino)}.')
-    return redirect(_url(carpeta.proyecto, carpeta))
+    return _volver(request, carpeta.proyecto, carpeta)
+
+
+def _mover(arbol, carpeta, destino):
+    """Mueve la carpeta a `destino` (None = raíz) o lanza ValueError con el motivo."""
+    if destino and destino.pk in arbol.debajo(carpeta):
+        raise ValueError(f'"{carpeta.nombre}" no se puede mover dentro de sí misma.')  # R3: sin ciclos
+    if arbol.nivel(destino) + arbol.altura(carpeta) > MAX_NIVELES:
+        raise ValueError(f'Moviendo "{carpeta.nombre}" quedarían más de {MAX_NIVELES} niveles de carpetas.')
+    if hermana(carpeta.proyecto, destino, carpeta.nombre, excluir=carpeta.pk):
+        raise ValueError(f'En {arbol.etiqueta(destino)} ya hay una carpeta "{carpeta.nombre}". '
+                         'Renómbrala primero.')
+    carpeta.padre = destino
+    carpeta.save(update_fields=['padre'])
 
 
 @login_required
@@ -240,21 +260,58 @@ def renombrar_archivo(request, pk):
 @login_required
 @require_POST
 def mover_archivos(request, pk):
+    """Mueve los `archivos` y `carpetas` marcados a `destino` (R4; docs/13: también carpetas, todo de una vez)."""
     _solo_estructura(request.user, 'mover archivos')
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     arbol = Arbol(proyecto)
     destino = arbol.get(request.POST.get('destino'))
-    try:
-        ids = [uuid.UUID(x) for x in request.POST.getlist('archivos')]
-    except ValueError:
-        ids = []
-    n = archivos_visibles(request.user, proyecto).filter(pk__in=ids).update(carpeta=destino)
+    n = archivos_visibles(request.user, proyecto).filter(pk__in=_ids(request, 'archivos')).update(carpeta=destino)
+    errores = []
+    for cid in _ids(request, 'carpetas'):
+        carpeta = arbol.por_id.get(cid)
+        if carpeta is None:
+            raise Http404('Carpeta no encontrada.')
+        try:
+            _mover(arbol, carpeta, destino)
+            n += 1
+        except ValueError as e:
+            errores.append(str(e))
+    for e in errores:
+        messages.error(request, e)
     if n:
-        messages.success(request, f'Se movi{"eron" if n != 1 else "ó"} {n} archivo{"s" if n != 1 else ""} '
+        messages.success(request, f'Se movi{"eron" if n != 1 else "ó"} {_plural(n, "elemento", "elementos")} '
                                   f'a {arbol.etiqueta(destino)}.')
-    else:
+    elif not errores:
         messages.error(request, 'Marca al menos un archivo para mover.')
-    return redirect(_url(proyecto, destino))
+    return _volver(request, proyecto, destino)
+
+
+@login_required
+@require_POST
+def eliminar_elementos(request, pk):
+    """Elimina varios de una vez (docs/13): los archivos se marcan como eliminados (solo los que el usuario
+    puede borrar) y las carpetas siguen C4."""
+    if not puede_subir(request.user):
+        raise PermissionDenied('No tienes permisos para eliminar.')
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    archivos = list(archivos_visibles(request.user, proyecto).filter(pk__in=_ids(request, 'archivos')))
+    propios = [a.pk for a in archivos if puede_borrar(request.user, a)]
+    Archivo.objects.filter(pk__in=propios).update(eliminado_en=timezone.now(), eliminado_por=request.user)
+    n, ajenos = len(propios), len(archivos) - len(propios)
+    carpetas = _ids(request, 'carpetas')
+    if carpetas:
+        _solo_estructura(request.user, 'eliminar carpetas')
+        for cid in carpetas:  # de a una y releída: una carpeta marcada puede haber subido al vaciar otra
+            carpeta = Carpeta.objects.filter(proyecto=proyecto, pk=cid).first()
+            if carpeta:
+                _vaciar_y_borrar(carpeta)
+                n += 1
+    if n:
+        messages.success(request, f'Se elimin{"aron" if n != 1 else "ó"} {_plural(n, "elemento", "elementos")}.')
+    if ajenos:
+        messages.error(request, f'{_plural(ajenos, "archivo no se eliminó", "archivos no se eliminaron")}: '
+                                'solo puedes eliminar los que subiste tú.')
+    return _volver(request, proyecto)
 
 
 @login_required

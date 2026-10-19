@@ -137,8 +137,9 @@ class ContratoCSPTests(TestCase):
         response = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
         self._verificar_contrato_csp_y_html(response)
         html = response.content.decode('utf-8')
-        # Verificar que el formulario de eliminación incluye data-confirmar
-        self.assertIn('data-confirmar=', html)
+        # Eliminar pasa por explorador.js, que pregunta con el diálogo de confirmar.js (docs/13)
+        self.assertIn('id="ex-form-eliminar"', html)
+        self.assertIn('js/explorador.js', html)
         self.assertNotIn('aviso.js', html)
 
     def test_detalle_archivos_cliente_cumple_contrato(self):

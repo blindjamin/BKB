@@ -145,7 +145,7 @@ class VistaProyectoConCarpetasTests(CarpetasTests):
         response = self._ver(self.carpeta.pk)
         self.assertContains(response, 'informe.pdf')
         self.assertNotContains(response, 'raiz.pdf')
-        self.assertContains(response, reverse('documentos:eliminar_carpeta', args=[self.carpeta.pk]))
+        self.assertContains(response, reverse('documentos:eliminar_elementos', args=[self.proyecto.pk]))
         self.assertContains(response, f'data-carpeta-id="{self.carpeta.pk}"')
 
     def test_carpeta_invalida_o_de_otro_proyecto_da_404(self):
@@ -160,7 +160,7 @@ class VistaProyectoConCarpetasTests(CarpetasTests):
         self.assertContains(response, 'Informes')
         self.assertContains(response, 'informe.pdf')
         self.assertNotContains(response, reverse('documentos:crear_carpeta', args=[self.proyecto.pk]))
-        self.assertNotContains(response, reverse('documentos:eliminar_carpeta', args=[self.carpeta.pk]))
+        self.assertNotContains(response, reverse('documentos:eliminar_elementos', args=[self.proyecto.pk]))
         self.assertNotContains(response, 'archivo-input')
 
     def test_cliente_ajeno_recibe_404(self):
