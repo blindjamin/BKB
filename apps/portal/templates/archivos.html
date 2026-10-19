@@ -397,10 +397,7 @@
         {% include "includes/linea_hitos.html" %}
         <div class="hitos-acciones">
             {% if puede_avanzar %}
-            <form action="{% url 'documentos:avanzar_hito' proyecto.pk %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn-secondary btn-naranjo">Marcar siguiente hito</button>
-            </form>
+            <button type="button" class="btn-secondary btn-naranjo" data-abrir-avanzar-hito>Marcar siguiente hito</button>
             {% endif %}
             {% if puede_retroceder %}
             <form action="{% url 'documentos:retroceder_hito' proyecto.pk %}" method="post" data-confirmar="¿Deshacer el último hito marcado?" data-confirmar-titulo="Deshacer hito" data-confirmar-accion="Deshacer">
@@ -410,6 +407,24 @@
             {% endif %}
         </div>
     </section>
+
+    {% if puede_avanzar %}
+    <dialog id="dialogo-avanzar-hito" class="dialogo" aria-labelledby="dialogo-avanzar-hito-titulo">
+        <form action="{% url 'documentos:avanzar_hito' proyecto.pk %}" method="post">
+            {% csrf_token %}
+            <h2 id="dialogo-avanzar-hito-titulo" class="seccion-title">Marcar siguiente hito{% if siguiente_hito %}: {{ siguiente_hito.nombre }}{% endif %}</h2>
+            <div class="form-group">
+                <label for="id-correos-avanzar-hito">Correos para avisar del avance:</label>
+                <textarea name="correos" id="id-correos-avanzar-hito" rows="3" placeholder="compras@cliente.cl, supervisor@cliente.cl"></textarea>
+                <small class="form-help">Si indicas más de un correo, sepáralos por coma o espacio (ejemplo: compras@cliente.cl, supervisor@cliente.cl). Si no deseas enviar correo, déjalo en blanco.</small>
+            </div>
+            <div class="dialogo-acciones">
+                <button type="button" class="btn-secondary" data-cerrar-dialogo>Cancelar</button>
+                <button type="submit" class="btn-primary">Marcar hito y avisar</button>
+            </div>
+        </form>
+    </dialog>
+    {% endif %}
 
     {% else %}
     {% include "includes/modificaciones.html" %}
@@ -441,5 +456,8 @@
 {% if vista == 'archivos' %}
 {# Para todos: vista lista/cuadrícula; las acciones solo se activan para el personal #}
 <script src="{% static 'js/explorador.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endif %}
+{% if vista == 'hitos' and puede_avanzar %}
+<script src="{% static 'js/avanzar_hito.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endif %}
 {% endblock %}

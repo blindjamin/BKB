@@ -4092,3 +4092,70 @@ a[href^="mailto:"] {
         border-radius: 0;
     }
 }
+
+/* ===== Gestión: Certificados de equipos en arriendo ===== */
+.gestion-pestanas {
+    margin-bottom: var(--space-5, 20px);
+}
+
+.certificado-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3, 12px);
+}
+
+.certificado-form {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+}
+
+.certificado-input-file {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    max-width: 220px;
+}
+
+.certificado-input-file::file-selector-button {
+    padding: 4px 10px;
+    border-radius: var(--bkb-radius-pill);
+    border: 1px solid var(--card-border);
+    background-color: var(--page-bg);
+    color: var(--text-main);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.certificado-input-file::file-selector-button:hover {
+    border-color: var(--bkb-salmon-500);
+    color: var(--accent-text);
+}
+
+.btn-subir-cert {
+    padding: 5px 14px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border-radius: var(--bkb-radius-pill);
+    background-color: var(--bkb-salmon-700);
+    color: #fff;
+    border: 1px solid var(--bkb-salmon-700);
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.btn-subir-cert:hover {
+    background-color: var(--bkb-salmon-800);
+}
+
+.certificado-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+

@@ -246,3 +246,26 @@ class RechazoRevision(models.Model):  # A5: los rechazos no se borran
 
     def __str__(self):
         return f'{self.proyecto.nombre} - rechazo ({self.usuario})'
+
+
+class CertificadoEquipo(models.Model):
+    """Certificado de calibración / vigencia de equipos en arriendo (landing /arriendo)."""
+
+    id = models.CharField(max_length=64, primary_key=True)  # slug: 'fluke-1674-fc', etc.
+    nombre = models.CharField(max_length=200)
+    modelo = models.CharField(max_length=100, blank=True)
+    pdf = models.BinaryField(blank=True, default=b'')
+    nombre_archivo = models.CharField(max_length=255, blank=True, default='')
+    actualizado_en = models.DateTimeField(auto_now=True)
+    actualizado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='certificados_actualizados'
+    )
+
+    class Meta:
+        verbose_name = 'certificado de equipo'
+        verbose_name_plural = 'certificados de equipos'
+        ordering = ['id']
+
+    def __str__(self):
+        return f'{self.nombre} ({self.id})'

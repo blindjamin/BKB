@@ -66,24 +66,37 @@ class CorreosHitosTests(Base):
         Hito.objects.create(proyecto=self.proyecto, orden=1, nombre='Compras')
         self.client.force_login(self.personal)
 
-    def test_guardar_correos_y_avisar_al_avanzar(self):
-        url = reverse('documentos:editar_hitos', args=[self.proyecto.pk])
-        hito = self.proyecto.hitos.get()
-        datos = {'hitos-TOTAL_FORMS': 1, 'hitos-INITIAL_FORMS': 1, 'hitos-MIN_NUM_FORMS': 0, 'hitos-MAX_NUM_FORMS': 1000,
-                 'hitos-0-id': hito.pk, 'hitos-0-nombre': 'Compras', 'hitos-0-posicion': 1}
-        r = self.client.post(url, {**datos, 'correos_hitos': 'no-es-correo'})
-        self.assertContains(r, 'Correo no válido')
-        self.client.post(url, {**datos, 'correos_hitos': 'Ana@cli.cl\nbeto@cli.cl ana@cli.cl'})
-        self.proyecto.refresh_from_db()
-        self.assertEqual(self.proyecto.lista_correos_hitos(), ['ana@cli.cl', 'beto@cli.cl'])
+    def test_avanzar_con_correos_especificos(self):
+        url = reverse('documentos:avanzar_hito', args=[self.proyecto.pk])
         mail.outbox.clear()
-        self.client.post(reverse('documentos:avanzar_hito', args=[self.proyecto.pk]))
+        r = self.client.post(url, {'correos': 'Ana@cli.cl, beto@cli.cl  ana@cli.cl'})
+        self.assertRedirects(r, reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]) + '?vista=hitos')
         self.assertEqual([m.to for m in mail.outbox], [['ana@cli.cl'], ['beto@cli.cl']])
         self.assertIn('Compras: cumplido', mail.outbox[0].body)
+        hito = self.proyecto.hitos.get(nombre='Compras')
+        self.assertTrue(hito.cumplido)
 
     def test_sin_correos_no_envia(self):
-        self.client.post(reverse('documentos:avanzar_hito', args=[self.proyecto.pk]))
+        url = reverse('documentos:avanzar_hito', args=[self.proyecto.pk])
+        mail.outbox.clear()
+        self.client.post(url, {'correos': ''})
         self.assertEqual(mail.outbox, [])
+        hito = self.proyecto.hitos.get(nombre='Compras')
+        self.assertTrue(hito.cumplido)
+
+    def test_correos_invalidos_ignora_o_avisa(self):
+        url = reverse('documentos:avanzar_hito', args=[self.proyecto.pk])
+        mail.outbox.clear()
+        self.client.post(url, {'correos': 'ana@cli.cl, no-es-correo'})
+        self.assertEqual([m.to for m in mail.outbox], [['ana@cli.cl']])
+
+    def test_modal_avanzar_hito_en_html(self):
+        detalle = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]) + '?vista=hitos'
+        r = self.client.get(detalle)
+        self.assertContains(r, 'dialogo-avanzar-hito')
+        self.assertContains(r, 'data-abrir-avanzar-hito')
+        self.assertContains(r, 'js/avanzar_hito.js')
+        self.assertContains(r, 'sepáralos por coma o espacio')
 
 
 class FiltroModificacionesTests(Base):

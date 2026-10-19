@@ -11,7 +11,8 @@ from django.utils.http import urlsafe_base64_encode
 
 from accounts.models import Rol, Usuario
 from documentos.correos import enviar
-from documentos.permisos import es_jefe
+from documentos.models import CertificadoEquipo
+from documentos.permisos import _es_personal, es_jefe
 
 from .forms import UsuarioForm
 
@@ -148,3 +149,43 @@ class CrearContrasenaView(PasswordResetConfirmView):
         if usuario is None or not usuario.is_active or usuario.is_superuser:
             return None
         return usuario
+
+
+@login_required
+def certificados(request):
+    """Lista de equipos en arriendo para ver y actualizar sus certificados PDF."""
+    if not _es_personal(request.user):
+        raise PermissionDenied("Solo el personal autorizado puede gestionar certificados.")
+
+    equipos = CertificadoEquipo.objects.all().order_by('id')
+    return render(request, 'gestion/certificados.html', {'equipos': equipos})
+
+
+@login_required
+@require_POST
+def subir_certificado(request, equipo_id):
+    """Sube o reemplaza el PDF de calibración para un equipo en arriendo."""
+    if not _es_personal(request.user):
+        raise PermissionDenied("Solo el personal autorizado puede actualizar certificados.")
+
+    equipo = get_object_or_404(CertificadoEquipo, pk=equipo_id)
+    archivo = request.FILES.get('archivo')
+    if not archivo:
+        messages.error(request, 'Debes seleccionar un archivo PDF.')
+        return redirect('gestion:certificados')
+
+    if not archivo.name.lower().endswith('.pdf'):
+        messages.error(request, 'El archivo debe ser un documento PDF (.pdf).')
+        return redirect('gestion:certificados')
+
+    if archivo.size > 10 * 1024 * 1024:
+        messages.error(request, 'El archivo no puede superar los 10 MB.')
+        return redirect('gestion:certificados')
+
+    equipo.pdf = archivo.read()
+    equipo.nombre_archivo = archivo.name
+    equipo.actualizado_por = request.user
+    equipo.save()
+
+    messages.success(request, f'Certificado de {equipo.nombre} actualizado correctamente.')
+    return redirect('gestion:certificados')

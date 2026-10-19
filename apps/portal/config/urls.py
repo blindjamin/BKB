@@ -4,6 +4,7 @@ from django.contrib.auth.views import LoginView, LogoutView, PasswordResetDoneVi
 
 from accounts.views import OlvideContrasenaView
 from documentos.cotizacion import cotizar
+from documentos.views import ver_certificado
 from gestion.views import CrearContrasenaView
 
 urlpatterns = [
@@ -20,4 +21,5 @@ urlpatterns = [
     ),
     path('admin/', admin.site.urls),
     path('cotizar/', cotizar, name='cotizar'),
+    path('certificados/<slug:equipo_id>/', ver_certificado, name='ver_certificado_arriendo'),
 ]
