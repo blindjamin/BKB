@@ -3332,6 +3332,17 @@ a[href^="mailto:"] {
     background-color: rgba(250, 90, 54, 0.12);
 }
 
+/* La barra de selección ocupa el lugar de los filtros (fase 2): mismo alto, sin salto */
+.ex-zona > .ex-seleccion {
+    box-sizing: border-box;
+    min-height: 48px;
+    margin-bottom: var(--space-4);
+}
+
+.ex-controles {
+    min-height: 48px;
+}
+
 .ex-seleccion-n {
     font-weight: 600;
 }
@@ -3631,5 +3642,453 @@ a[href^="mailto:"] {
 
     .ex-seleccion-acciones {
         margin-left: 0;
+    }
+
+    /* La píldora, partida en varias líneas, se veía como una mancha: aquí es una tarjeta compacta.
+       Arriba la cuenta y el ⓘ; abajo las acciones en una fila que se desliza */
+    .ex-zona > .ex-seleccion {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: var(--space-2);
+        padding: var(--space-2);
+        border-radius: var(--bkb-radius-input);
+    }
+
+    .ex-seleccion > [data-accion="detalles"] {
+        grid-row: 1;
+        grid-column: 3;
+    }
+
+    .ex-seleccion-acciones {
+        grid-row: 2;
+        grid-column: 1 / -1;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .ex-seleccion-acciones .btn-link {
+        flex: none;
+        min-height: 36px;
+        padding: 0 var(--space-3);
+    }
+}
+
+/* ===== Explorador, fase 2 (docs/13): búsqueda, orden, cuadrícula, arrastrar y detalles ===== */
+.ex-controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.ex-controles .filtros {
+    margin-bottom: 0;
+    margin-right: auto;
+}
+
+.ex-buscar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 0 1 18rem;
+    min-height: 40px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--input-border);
+    border-radius: var(--bkb-radius-pill);
+    background-color: var(--input-bg);
+    color: var(--text-muted);
+}
+
+.ex-buscar:focus-within {
+    border-color: var(--bkb-salmon-500);
+}
+
+.ex-buscar input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    outline: none;
+}
+
+.ex-vistas {
+    display: flex;
+    gap: var(--space-1);
+}
+
+.ex-icono-btn[aria-pressed="true"] {
+    background-color: var(--bkb-salmon-soft);
+    color: var(--accent-text);
+}
+
+[data-theme="dark"] .ex-icono-btn[aria-pressed="true"] {
+    background-color: rgba(250, 90, 54, 0.14);
+}
+
+.ex-icono-btn .icono {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Columnas que ordenan */
+.ex-orden {
+    color: inherit;
+    text-decoration: none;
+}
+
+.ex-orden:hover {
+    color: var(--text-main);
+}
+
+.ex-nombre-texto {
+    display: grid;
+    min-width: 0;
+}
+
+.ex-ubicacion {
+    overflow: hidden;
+    color: var(--text-subtle);
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Miniatura: solo en cuadrícula. En la lista no se muestra, así que el navegador no la pide */
+.ex-miniatura {
+    display: none;
+}
+
+/* Cuadrícula (P5) */
+.ex-cuadricula {
+    background: transparent;
+    border: 0;
+    overflow: visible;
+}
+
+.ex-cuadricula .ex-encabezado {
+    display: none;
+}
+
+.ex-cuadricula .ex-lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-3);
+}
+
+.ex-cuadricula .ex-fila,
+.ex-con-seleccion.ex-cuadricula .ex-fila {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-height: 0;
+    padding: var(--space-2);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-input);
+}
+
+.ex-cuadricula .ex-fila:last-child {
+    border-bottom: 1px solid var(--card-border);
+}
+
+.ex-cuadricula .ex-fila .ex-col {
+    display: none;
+}
+
+.ex-cuadricula .ex-nombre {
+    padding: var(--space-2) var(--space-6) var(--space-1) var(--space-1);
+}
+
+.ex-cuadricula .ex-fila[data-tipo="archivo"] .ex-nombre > .archivo-ext {
+    display: none;  /* ya se ve grande en la miniatura */
+}
+
+.ex-cuadricula .ex-miniatura {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: calc(var(--bkb-radius-input) - 4px);
+    background-color: var(--page-bg);
+}
+
+.ex-cuadricula .ex-miniatura .archivo-ext {
+    font-size: 1rem;
+}
+
+.ex-cuadricula .ex-miniatura img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ex-cuadricula .ex-marcar {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+    z-index: 1;
+}
+
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] .ex-marcar {
+    position: static;
+    margin: var(--space-2) 0 0 var(--space-1);
+}
+
+.ex-cuadricula .ex-col-acciones {
+    position: absolute;
+    right: var(--space-1);
+    bottom: var(--space-1);
+}
+
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] {
+    flex-direction: row;
+    align-items: center;
+    align-self: start;  /* compacta, sin estirarse al alto de las tarjetas de archivo */
+    gap: var(--space-2);
+}
+
+/* Como en Drive: los archivos parten en una fila nueva, debajo de las carpetas */
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] + .ex-fila[data-tipo="archivo"] {
+    grid-column-start: 1;
+}
+
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] .ex-col-acciones {
+    position: static;
+    margin-left: auto;
+}
+
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] .ex-nombre {
+    flex: 1;
+    padding-right: 0;
+}
+
+.ex-cuadricula .ex-descargar {
+    display: none;
+}
+
+/* Arrastrar para mover (D12) */
+.ex-fila[draggable="true"] {
+    cursor: grab;
+}
+
+.ex-fila[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.ex-migas a.es-destino {
+    background-color: var(--bkb-salmon-soft);
+    color: var(--accent-text);
+}
+
+/* Panel de detalles: se desliza desde la derecha */
+.ex-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 40;
+    width: min(22rem, 100%);
+    height: 100dvh;
+    padding: var(--space-5);
+    box-sizing: border-box;
+    overflow-y: auto;
+    background-color: var(--card-bg);
+    border-left: 1px solid var(--card-border);
+    box-shadow: -12px 0 32px rgba(8, 12, 20, 0.16);
+}
+
+.ex-panel-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+}
+
+.ex-panel-cabecera .seccion-title {
+    margin: 0;
+}
+
+.ex-panel-datos {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+}
+
+.ex-panel-datos dt {
+    margin-top: var(--space-3);
+    color: var(--text-subtle);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.ex-panel-datos dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+    .ex-buscar {
+        flex: 1 1 100%;
+        order: 3;
+    }
+
+    .ex-cuadricula .ex-lista {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* En la cuadrícula del celular, la carpeta ocupa toda la fila */
+    .ex-cuadricula .ex-fila[data-tipo="carpeta"] {
+        grid-column: 1 / -1;
+    }
+}
+
+/* ===== Explorador, fase 3 (docs/13): vista previa y Papelera ===== */
+.ex-visor {
+    width: min(64rem, calc(100% - 2 * var(--space-4)));
+    max-width: none;
+    height: min(48rem, calc(100dvh - 2 * var(--space-6)));
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-card);
+}
+
+.ex-visor[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.ex-visor::backdrop {
+    background-color: rgba(8, 12, 20, 0.75);
+}
+
+.ex-visor-barra {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.ex-visor-nombre {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ex-visor-pos {
+    color: var(--text-subtle);
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.ex-visor-cuerpo {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-height: 0;
+    background-color: var(--page-bg);
+}
+
+.ex-visor-contenido {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    height: 100%;
+    min-width: 0;
+}
+
+.ex-visor-contenido img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.ex-visor-contenido iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background-color: #fff;
+}
+
+.ex-visor-paso {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    transform: translateY(-50%);
+    background-color: var(--card-bg);
+    border-color: var(--card-border);
+    font-size: 1.75rem;
+}
+
+.ex-visor-paso[data-paso="-1"] {
+    left: var(--space-3);
+}
+
+.ex-visor-paso[data-paso="1"] {
+    right: var(--space-3);
+}
+
+.ex-visor-paso:active {
+    transform: translateY(-50%) scale(0.96);
+}
+
+/* Papelera (P2) */
+.ex-papelera .view-subtitle {
+    margin-bottom: var(--space-4);
+}
+
+.ex-encabezado-papelera,
+.ex-fila-papelera {
+    grid-template-columns: minmax(0, 1fr) 10rem 10rem 9rem 7rem;
+}
+
+.ex-fila-papelera .ex-nombre {
+    color: var(--text-muted);
+}
+
+.ex-fila-papelera .ex-col-acciones form {
+    margin: 0;
+}
+
+.ex-fila-papelera .ex-col-acciones > *,
+.ex-fila-papelera:not(:hover) .ex-col-acciones > * {
+    opacity: 1;  /* en la Papelera, «Restaurar» se ve siempre */
+}
+
+.ex-fila-papelera .btn-link {
+    min-height: 36px;
+}
+
+@media (max-width: 720px) {
+    .ex-encabezado-papelera,
+    .ex-fila-papelera {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .ex-encabezado-papelera .ex-col,
+    .ex-fila-papelera .ex-col {
+        display: none;
+    }
+
+    .ex-visor {
+        width: 100%;
+        height: 100dvh;
+        max-height: none;
+        border-radius: 0;
     }
 }

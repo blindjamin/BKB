@@ -203,6 +203,8 @@ CONTENT_SECURITY_POLICY = {
         'form-action': [SELF, space_host_url],
         'object-src': [NONE],
         'connect-src': [SELF, space_host_url],
+        'img-src': [SELF, space_host_url],  # miniaturas de la cuadrícula (docs/13 P5)
+        'frame-src': [SELF, space_host_url],  # vista previa de PDF (docs/13 D10): el marco termina en el Space
     },
 }
 

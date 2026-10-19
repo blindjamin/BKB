@@ -107,15 +107,21 @@ class Carpeta(models.Model):
     nombre = models.CharField(max_length=100)
     creado_en = models.DateTimeField(auto_now_add=True)
     creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='carpetas_creadas')
+    # docs/13 P2: en la Papelera, con sus subcarpetas y archivos (misma hora: se restauran juntos)
+    eliminado_en = models.DateTimeField(null=True, blank=True)
+    eliminado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+                                      related_name='carpetas_eliminadas')
 
     class Meta:
         verbose_name = 'carpeta'
         verbose_name_plural = 'carpetas'
         ordering = ['nombre']
         constraints = [
-            # C2: único por lugar sin distinguir mayúsculas; la raíz aparte porque NULL != NULL
-            models.UniqueConstraint(Lower('nombre'), 'padre', name='carpeta_unica_en_padre'),
-            models.UniqueConstraint(Lower('nombre'), 'proyecto', condition=Q(padre__isnull=True),
+            # C2: único por lugar sin distinguir mayúsculas; la raíz aparte porque NULL != NULL.
+            # Las de la Papelera no cuentan: se puede crear otra «Planos» mientras la vieja espera ahí
+            models.UniqueConstraint(Lower('nombre'), 'padre', condition=Q(eliminado_en__isnull=True),
+                                    name='carpeta_unica_en_padre'),
+            models.UniqueConstraint(Lower('nombre'), 'proyecto', condition=Q(padre__isnull=True, eliminado_en__isnull=True),
                                     name='carpeta_unica_en_raiz'),
         ]
 

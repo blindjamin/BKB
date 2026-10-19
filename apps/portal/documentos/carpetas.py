@@ -3,6 +3,7 @@ import json
 import os
 import uuid
 from collections import defaultdict
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -14,7 +15,10 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .models import Archivo, Carpeta
+from botocore.exceptions import ClientError
+
+from . import storage
+from .models import Archivo, Carpeta, EstadoArchivo
 from .permisos import archivos_visibles, proyectos_visibles, puede_borrar, puede_gestionar_estructura, puede_subir
 
 MAX_NIVELES = 8  # C3
@@ -25,7 +29,8 @@ class Arbol:
     """Todas las carpetas de un proyecto en una sola consulta; caminos, hijos y alturas se arman en memoria."""
 
     def __init__(self, proyecto):
-        self.por_id = {c.pk: c for c in proyecto.carpetas.select_related('creado_por')}  # ordenadas por nombre
+        # Ordenadas por nombre y sin las de la Papelera
+        self.por_id = {c.pk: c for c in proyecto.carpetas.filter(eliminado_en__isnull=True).select_related('creado_por')}
         self.hijos = defaultdict(list)
         for c in self.por_id.values():
             self.hijos[c.padre_id].append(c)
@@ -84,7 +89,8 @@ def validar_nombre(nombre):
 
 def hermana(proyecto, padre, nombre, excluir=None):
     """La carpeta con ese nombre (sin mayúsculas) en ese lugar, si existe (C2)."""
-    return Carpeta.objects.filter(proyecto=proyecto, padre=padre, nombre__iexact=nombre).exclude(pk=excluir).first()
+    return Carpeta.objects.filter(proyecto=proyecto, padre=padre, nombre__iexact=nombre,
+                                  eliminado_en__isnull=True).exclude(pk=excluir).first()
 
 
 def nombre_libre(proyecto, padre, nombre):
@@ -125,9 +131,13 @@ def _volver(request, proyecto, defecto=None):
     if 'desde' not in request.POST:
         return redirect(_url(proyecto, defecto))
     try:
-        return redirect(_url(proyecto, Arbol(proyecto).get(request.POST['desde'])))
+        carpeta = Arbol(proyecto).get(request.POST['desde'])
     except Http404:
-        return redirect(_url(proyecto))
+        carpeta = None
+    # Conserva filtro, orden y búsqueda; la vista vuelve a validar cada valor
+    extra = urlencode({k: request.POST[k][:100] for k in ('tipo', 'orden', 'q') if request.POST.get(k)})
+    url = _url(proyecto, carpeta)
+    return redirect(f'{url}{"&" if carpeta else "?"}{extra}' if extra else url)
 
 
 def _ids(request, campo):
@@ -148,7 +158,7 @@ def _solo_estructura(usuario, accion):
 
 def _carpeta(usuario, pk):
     return get_object_or_404(Carpeta.objects.select_related('proyecto').filter(
-        proyecto__in=proyectos_visibles(usuario)), pk=pk)
+        proyecto__in=proyectos_visibles(usuario), eliminado_en__isnull=True), pk=pk)
 
 
 @login_required
@@ -176,19 +186,21 @@ def crear_carpeta(request, pk):
 def eliminar_carpeta(request, pk):
     _solo_estructura(request.user, 'eliminar carpetas')
     carpeta = _carpeta(request.user, pk)
-    padre = carpeta.padre
-    _vaciar_y_borrar(carpeta)
-    return redirect(_url(carpeta.proyecto, padre))
+    _a_papelera(carpeta, request.user, timezone.now())
+    return redirect(_url(carpeta.proyecto, carpeta.padre))
 
 
-def _vaciar_y_borrar(carpeta):
-    """C4: el contenido sube a la carpeta de arriba y la carpeta se borra; el Space no se toca."""
+def _a_papelera(carpeta, usuario, ahora):
+    """P2 (reemplaza a C4): la carpeta, sus subcarpetas y sus archivos van juntos a la Papelera con la misma
+    hora, que es lo que después permite restaurarlos juntos. No se borra nada."""
+    # ponytail: agrupa por hora exacta; un archivo eliminado aparte en el mismo microsegundo volvería con la carpeta.
+    # Si llegara a pasar, un campo «se fue con esta carpeta» en Archivo lo resuelve.
+    arbol = Arbol(carpeta.proyecto)
+    ids = arbol.debajo(arbol.por_id[carpeta.pk])
     with transaction.atomic():
-        # Nombre provisional: una subcarpeta que se llame igual puede subir a su lugar sin chocar
-        carpeta.nombre = str(carpeta.pk)
-        carpeta.save(update_fields=['nombre'])
-        volcar(carpeta, carpeta.padre)
-        carpeta.delete()
+        Archivo.objects.filter(carpeta_id__in=ids, eliminado_en__isnull=True).update(
+            eliminado_en=ahora, eliminado_por=usuario)
+        Carpeta.objects.filter(pk__in=ids).update(eliminado_en=ahora, eliminado_por=usuario)
 
 
 @login_required
@@ -286,32 +298,163 @@ def mover_archivos(request, pk):
     return _volver(request, proyecto, destino)
 
 
+MAX_ARCHIVOS_COPIA = 200  # ponytail: cada archivo es un copy_object en el pedido; más, una tarea en segundo plano
+
+
+def _copiar_archivo(archivo, carpeta, nombre, usuario):
+    nuevo = Archivo(proyecto=archivo.proyecto, carpeta=carpeta, nombre_original=nombre[:255], tamano=archivo.tamano,
+                    tipo=archivo.tipo, subido_por=usuario, estado=EstadoArchivo.DISPONIBLE)
+    nuevo.clave_space = storage.clave_para(archivo.proyecto, nuevo)  # el UUID ya existe antes de guardar
+    storage.copiar(archivo.clave_space, nuevo.clave_space)
+    nuevo.save()
+
+
+def _copiar_carpeta(arbol, carpeta, padre, nombre, usuario, visibles):
+    """Copia la carpeta con todo lo de adentro (lo que el usuario ve) dentro de `padre`."""
+    copia = Carpeta.objects.create(proyecto=carpeta.proyecto, padre=padre, nombre=nombre, creado_por=usuario)
+    for archivo in visibles.filter(carpeta=carpeta):
+        _copiar_archivo(archivo, copia, archivo.nombre_original, usuario)
+    for hija in arbol.hijos[carpeta.pk]:
+        _copiar_carpeta(arbol, hija, copia, hija.nombre, usuario, visibles)  # carpeta nueva: no hay choques
+
+
+@login_required
+@require_POST
+def copiar_elementos(request, pk):
+    """D9: sin `destino`, «Hacer una copia» (al lado del original, «Copia de …»); con `destino`, «Copiar a…».
+    Los archivos se copian dentro del Space con una clave nueva; el original no se toca."""
+    _solo_estructura(request.user, 'copiar')
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    arbol = Arbol(proyecto)
+    aqui = 'destino' not in request.POST
+    destino = None if aqui else arbol.get(request.POST.get('destino'))
+    visibles = archivos_visibles(request.user, proyecto)
+    archivos = list(visibles.filter(pk__in=_ids(request, 'archivos')))
+    carpetas = []
+    for cid in _ids(request, 'carpetas'):
+        if cid not in arbol.por_id:
+            raise Http404('Carpeta no encontrada.')
+        carpetas.append(arbol.por_id[cid])
+    try:
+        for c in carpetas:
+            lugar = arbol.por_id.get(c.padre_id) if aqui else destino
+            if lugar and lugar.pk in arbol.debajo(c):
+                raise ValueError(f'"{c.nombre}" no se puede copiar dentro de sí misma.')
+            if arbol.nivel(lugar) + arbol.altura(c) > MAX_NIVELES:
+                raise ValueError(f'Copiando "{c.nombre}" quedarían más de {MAX_NIVELES} niveles de carpetas.')
+        total = len(archivos) + sum(visibles.filter(carpeta_id__in=arbol.debajo(c)).count() for c in carpetas)
+        if total > MAX_ARCHIVOS_COPIA:
+            raise ValueError(f'Son {total} archivos y se pueden copiar hasta {MAX_ARCHIVOS_COPIA} de una vez.')
+        if not archivos and not carpetas:
+            raise ValueError('Marca al menos un archivo o carpeta para copiar.')
+    except ValueError as e:
+        messages.error(request, str(e))
+        return _volver(request, proyecto, destino)
+    try:
+        # ponytail: si algo falla a medias, la base vuelve atrás pero los objetos ya copiados quedan sueltos en el
+        # Space (a propósito no hay función para borrar); se ven con un listado del prefijo si llegara a importar
+        with transaction.atomic():
+            for a in archivos:
+                lugar = arbol.por_id.get(a.carpeta_id) if aqui else destino
+                _copiar_archivo(a, lugar, f'Copia de {a.nombre_original}' if aqui else a.nombre_original, request.user)
+            for c in carpetas:
+                lugar = arbol.por_id.get(c.padre_id) if aqui else destino
+                nombre = nombre_libre(proyecto, lugar, f'Copia de {c.nombre}'[:100] if aqui else c.nombre)
+                _copiar_carpeta(arbol, c, lugar, nombre, request.user, visibles)
+    except ClientError:
+        messages.error(request, 'No se pudo copiar en el almacenamiento. Reintenta en un momento.')
+    else:
+        n = len(archivos) + len(carpetas)
+        lugar = 'su mismo lugar' if aqui else arbol.etiqueta(destino)
+        messages.success(request, f'Se copi{"aron" if n != 1 else "ó"} {_plural(n, "elemento", "elementos")} en {lugar}.')
+    return _volver(request, proyecto, destino)
+
+
 @login_required
 @require_POST
 def eliminar_elementos(request, pk):
-    """Elimina varios de una vez (docs/13): los archivos se marcan como eliminados (solo los que el usuario
-    puede borrar) y las carpetas siguen C4."""
+    """Elimina varios de una vez (docs/13): todo va a la Papelera. Archivos, solo los que el usuario puede
+    borrar; carpetas, con todo lo de adentro."""
     if not puede_subir(request.user):
         raise PermissionDenied('No tienes permisos para eliminar.')
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     archivos = list(archivos_visibles(request.user, proyecto).filter(pk__in=_ids(request, 'archivos')))
     propios = [a.pk for a in archivos if puede_borrar(request.user, a)]
-    Archivo.objects.filter(pk__in=propios).update(eliminado_en=timezone.now(), eliminado_por=request.user)
+    ahora = timezone.now()
+    Archivo.objects.filter(pk__in=propios).update(eliminado_en=ahora, eliminado_por=request.user)
     n, ajenos = len(propios), len(archivos) - len(propios)
     carpetas = _ids(request, 'carpetas')
     if carpetas:
         _solo_estructura(request.user, 'eliminar carpetas')
-        for cid in carpetas:  # de a una y releída: una carpeta marcada puede haber subido al vaciar otra
-            carpeta = Carpeta.objects.filter(proyecto=proyecto, pk=cid).first()
+        for cid in carpetas:  # releída: una carpeta marcada puede haberse ido ya dentro de otra
+            carpeta = Carpeta.objects.filter(proyecto=proyecto, pk=cid, eliminado_en__isnull=True).first()
             if carpeta:
-                _vaciar_y_borrar(carpeta)
+                _a_papelera(carpeta, request.user, ahora)
                 n += 1
     if n:
-        messages.success(request, f'Se elimin{"aron" if n != 1 else "ó"} {_plural(n, "elemento", "elementos")}.')
+        messages.success(request, f'Se movi{"eron" if n != 1 else "ó"} {_plural(n, "elemento", "elementos")} '
+                                  'a la Papelera.')
     if ajenos:
         messages.error(request, f'{_plural(ajenos, "archivo no se eliminó", "archivos no se eliminaron")}: '
                                 'solo puedes eliminar los que subiste tú.')
     return _volver(request, proyecto)
+
+
+@login_required
+@require_POST
+def restaurar_elementos(request, pk):
+    """P2: saca de la Papelera. Cada cosa vuelve a su lugar; si ese lugar también está en la Papelera, a la raíz.
+    Una carpeta vuelve con lo que se eliminó junto con ella (misma hora), no con lo que ya estaba eliminado antes."""
+    if not puede_subir(request.user):
+        raise PermissionDenied('No tienes permisos para restaurar.')
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    todas = {c.pk: c for c in proyecto.carpetas.all()}
+    hijos = defaultdict(list)
+    for c in todas.values():
+        hijos[c.padre_id].append(c)
+
+    def viva(cid):
+        return cid in todas and todas[cid].eliminado_en is None
+
+    n = ajenos = 0
+    with transaction.atomic():
+        for a in proyecto.archivos.filter(pk__in=_ids(request, 'archivos'), eliminado_en__isnull=False,
+                                          modificacion__isnull=True):
+            if not puede_borrar(request.user, a):  # quien puede eliminarlo, puede restaurarlo
+                ajenos += 1
+                continue
+            if not viva(a.carpeta_id):
+                a.carpeta_id = None
+            a.eliminado_en = a.eliminado_por = None
+            a.save(update_fields=['carpeta', 'eliminado_en', 'eliminado_por'])
+            n += 1
+        carpetas = _ids(request, 'carpetas')
+        if carpetas:
+            _solo_estructura(request.user, 'restaurar carpetas')
+        for cid in carpetas:
+            c = todas.get(cid)
+            if not c or c.eliminado_en is None:
+                continue
+            hora, grupo, pendientes = c.eliminado_en, [], [c]
+            while pendientes:  # la carpeta y lo de abajo que se fue con ella
+                x = pendientes.pop()
+                grupo.append(x.pk)
+                pendientes += [h for h in hijos[x.pk] if h.eliminado_en == hora]
+            if not viva(c.padre_id):
+                c.padre = None
+            c.nombre = nombre_libre(proyecto, c.padre, c.nombre)  # mientras estaba ahí pudo nacer otra igual
+            c.save(update_fields=['padre', 'nombre'])
+            Carpeta.objects.filter(pk__in=grupo).update(eliminado_en=None, eliminado_por=None)
+            Archivo.objects.filter(carpeta_id__in=grupo, eliminado_en=hora).update(eliminado_en=None, eliminado_por=None)
+            for x in grupo:
+                todas[x].eliminado_en = None
+            n += 1
+    if n:
+        messages.success(request, f'Se restaur{"aron" if n != 1 else "ó"} {_plural(n, "elemento", "elementos")}.')
+    if ajenos:
+        messages.error(request, f'{_plural(ajenos, "archivo no se restauró", "archivos no se restauraron")}: '
+                                'solo puedes restaurar los que subiste tú.')
+    return redirect(_url(proyecto) + '?vista=papelera')
 
 
 @login_required

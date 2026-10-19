@@ -38,15 +38,26 @@ def clave_para(proyecto, archivo):
     return _validar(f'{settings.SPACES_PREFIX}{proyecto.pk}/{archivo.pk}')
 
 
-def url_descarga(clave, nombre_original):
-    """URL de 60 s que descarga el objeto como adjunto con su nombre original."""
+def url_descarga(clave, nombre_original, ver_tipo=None):
+    """URL de 60 s que descarga el objeto como adjunto con su nombre original.
+    Con `ver_tipo` (vista previa, docs/13 D10) se muestra en el navegador con ese tipo, sin descargar."""
     _validar(clave)
-    disposicion = f"attachment; filename*=UTF-8''{quote(nombre_original, safe='')}"
+    modo = 'inline' if ver_tipo else 'attachment'
+    params = {'Bucket': settings.SPACES_BUCKET, 'Key': clave,
+              'ResponseContentDisposition': f"{modo}; filename*=UTF-8''{quote(nombre_original, safe='')}"}
+    if ver_tipo:  # los importados pueden venir como octet-stream: el PDF se descargaría en vez de mostrarse
+        params['ResponseContentType'] = ver_tipo
+    return _cliente().generate_presigned_url('get_object', Params=params, ExpiresIn=EXPIRA_SEGUNDOS)
+
+
+MINIATURA_SEGUNDOS = 15 * 60  # la cuadrícula carga las fotos al bajar (lazy): 60 s no alcanzan
+
+
+def url_miniatura(clave):
+    """URL para mostrar la foto en un <img> (docs/13 P5). No es una descarga: no pasa por DescargaLog."""
+    _validar(clave)
     return _cliente().generate_presigned_url(
-        'get_object',
-        Params={'Bucket': settings.SPACES_BUCKET, 'Key': clave, 'ResponseContentDisposition': disposicion},
-        ExpiresIn=EXPIRA_SEGUNDOS,
-    )
+        'get_object', Params={'Bucket': settings.SPACES_BUCKET, 'Key': clave}, ExpiresIn=MINIATURA_SEGUNDOS)
 
 
 def post_subida(clave, tipo):

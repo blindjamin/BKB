@@ -98,8 +98,10 @@ sin JS (los formularios POST siguen siendo la base).
   - `copiar_elementos`: para cada archivo usa `storage.copiar` (ya existe, es `copy_object` del Space) y crea un
     `Archivo` nuevo con la clave nueva; las carpetas se copian recursivamente; los nombres repetidos llevan
     «Copia de …» o « (2)», con `nombre_libre`.
-  - `eliminar_elementos`: borra varios a la vez con las mismas reglas de hoy (los archivos se marcan como
-    eliminados; las carpetas aplican C4 hasta que llegue la Papelera en F3).
+  - `eliminar_elementos`: manda varios a la vez a la Papelera (F3). Una carpeta se va con todo lo de adentro y
+    `restaurar_elementos` la devuelve con lo que se fue junto con ella (misma hora). Migración 0012: `Carpeta`
+    gana `eliminado_en`/`eliminado_por` y la regla de nombre único (C2) ya no cuenta las de la Papelera.
+  - Copiar: hasta 200 archivos por vez (cada uno es un `copy_object` dentro del pedido).
   - En `detalle_proyecto`: los parámetros `orden` y `q`, y fecha y autor en las filas de carpeta (`creado_en` y
     `creado_por` ya existen).
 - **Vista previa (fase 2):** imágenes y PDF se abren desde la URL prefirmada del Space en un `<dialog>`. Hay que
@@ -113,8 +115,8 @@ sin JS (los formularios POST siguen siendo la base).
 | Fase | Contenido | Backend |
 |---|---|---|
 | **F1 · Lista y selección** ✔ | D1, D2, D3, D4, D5, D6, D7, D8, D13: estructura nueva, «+ Nuevo», lista única, selección con barra, menú contextual y diálogos Mover a y Renombrar. Se adelantaron los atajos de teclado de D14. | `mover_archivos` con carpetas, `eliminar_elementos`, `desde` |
-| **F2 · Fluidez** | D11, D12, D14: orden, búsqueda, cuadrícula/lista con miniaturas, arrastrar para mover, atajos de teclado y panel de detalles. | `orden` y `q` en la vista, `img-src` en la CSP |
-| **F3 · Copiar y previsualizar** | D9, D10 y la Papelera con Restaurar (P2). | `copiar_elementos`, CSP y vista previa |
+| **F2 · Fluidez** ✔ | D11, D12, D14: orden, búsqueda, cuadrícula/lista con miniaturas, arrastrar para mover, atajos de teclado y panel de detalles. | `orden` y `q` en la vista, `img-src` en la CSP |
+| **F3 · Copiar y previsualizar** ✔ | D9, D10 y la Papelera con Restaurar (P2). | `copiar_elementos`, CSP y vista previa |
 
 Cada fase va en su propia rama corta desde `origin/main` y con su PR (docs/05). F1 sola ya resuelve la mayor
 parte de la queja de que es «enredado».

@@ -100,7 +100,7 @@ class EliminarCarpetaTests(CarpetasTests):
         return self.client.post(reverse('documentos:eliminar_carpeta', args=[carpeta.pk]))
 
     @patch('documentos.storage._cliente')
-    def test_personal_y_jefe_eliminan_y_archivos_vuelven_a_raiz(self, mock_cliente):
+    def test_personal_y_jefe_eliminan_y_todo_va_a_la_papelera(self, mock_cliente):  # docs/13 P2
         for usuario in (self.personal, self.jefe):
             with self.subTest(usuario=usuario.email):
                 carpeta = Carpeta.objects.create(proyecto=self.proyecto, nombre=f'Temp {usuario.rol}', creado_por=usuario)
@@ -112,12 +112,12 @@ class EliminarCarpetaTests(CarpetasTests):
                 response = self._eliminar(carpeta)
 
                 self.assertRedirects(response, reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
-                self.assertFalse(Carpeta.objects.filter(pk=carpeta.pk).exists())
+                carpeta.refresh_from_db()
                 archivo.refresh_from_db()
-                self.assertIsNone(archivo.carpeta)
+                self.assertIsNotNone(carpeta.eliminado_en)
+                self.assertEqual((archivo.carpeta, archivo.eliminado_en), (carpeta, carpeta.eliminado_en))
                 self.assertEqual(archivo.clave_space, clave)
-                self.assertIsNone(archivo.eliminado_en)
-                self.assertEqual(Archivo.objects.count(), total)
+                self.assertEqual(Archivo.objects.count(), total)  # nada se borra de verdad
         mock_cliente.assert_not_called()
 
     def test_cliente_recibe_403_y_no_elimina(self):

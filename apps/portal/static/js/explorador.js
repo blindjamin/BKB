@@ -2,11 +2,80 @@
 // Las acciones siguen siendo formularios POST con redirección: aquí solo se arman. El servidor vuelve a validar todo.
 // Los nombres se muestran siempre con textContent, nunca con innerHTML.
 document.addEventListener('DOMContentLoaded', () => {
+    // ----- Para todos: lista o cuadrícula (D11), recordada en este navegador -----
+    const tabla = document.querySelector('.ex-tabla');
+    const vistas = document.querySelector('.ex-vistas');
+    if (tabla && vistas) {
+        const poner = (vista) => {
+            tabla.classList.toggle('ex-cuadricula', vista === 'cuadricula');
+            vistas.querySelectorAll('[data-vista]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vista === vista)));
+        };
+        let guardada = null;
+        try { guardada = localStorage.getItem('bkb-explorador-vista'); } catch (e) { /* sin almacenamiento: lista */ }
+        poner(guardada === 'cuadricula' ? 'cuadricula' : 'lista');
+        vistas.hidden = false;
+        vistas.addEventListener('click', (e) => {
+            const boton = e.target.closest('[data-vista]');
+            if (!boton) return;
+            poner(boton.dataset.vista);
+            try { localStorage.setItem('bkb-explorador-vista', boton.dataset.vista); } catch (err) { /* sigue igual */ }
+        });
+    }
+    // Una miniatura que no carga (URL vencida, objeto que no está) deja ver la extensión que tiene debajo
+    document.addEventListener('error', (e) => { if (e.target.matches?.('.ex-miniatura img')) e.target.remove(); }, true);
+
+    // ----- Para todos: vista previa de fotos y PDF (D10); ‹ › y las flechas recorren las de esta lista -----
+    const visor = document.getElementById('ex-visor');
+    const conVista = [...document.querySelectorAll('.ex-fila[data-url-ver]')];
+    let enVisor = -1;
+    const mostrar = (i) => {
+        enVisor = (i + conVista.length) % conVista.length;
+        const d = conVista[enVisor].dataset;
+        visor.querySelector('.ex-visor-nombre').textContent = d.nombre;
+        visor.querySelector('.ex-visor-pos').textContent = conVista.length > 1 ? `${enVisor + 1} de ${conVista.length}` : '';
+        visor.querySelector('.ex-visor-descargar').href = d.urlDescargar;
+        visor.querySelectorAll('.ex-visor-paso').forEach(b => { b.hidden = conVista.length < 2; });
+        let contenido;
+        if (d.ext.toLowerCase() === '.pdf') {
+            contenido = document.createElement('iframe');
+            contenido.title = d.nombre;
+        } else {
+            contenido = document.createElement('img');
+            contenido.alt = d.nombre;
+        }
+        contenido.src = d.urlVer;  // pasa por el portal: mismos permisos y queda en el registro de descargas
+        visor.querySelector('.ex-visor-contenido').replaceChildren(contenido);
+    };
+    const ver = (fila) => {  // true si la abrió; false si ese archivo no tiene vista previa
+        if (!visor || !fila.dataset.urlVer) return false;
+        mostrar(conVista.indexOf(fila));
+        if (!visor.open) visor.showModal();
+        return true;
+    };
+    if (visor) {
+        visor.querySelectorAll('.ex-visor-paso').forEach(b => b.addEventListener('click', () => mostrar(enVisor + Number(b.dataset.paso))));
+        visor.querySelector('[data-cerrar-visor]').addEventListener('click', () => visor.close());
+        visor.addEventListener('keydown', (e) => {
+            if (conVista.length > 1 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                e.preventDefault();
+                mostrar(enVisor + (e.key === 'ArrowRight' ? 1 : -1));
+            }
+        });
+        visor.addEventListener('close', () => visor.querySelector('.ex-visor-contenido').replaceChildren());  // corta el PDF
+    }
+
     const zona = document.querySelector('.ex-zona[data-url-mover]');
-    if (!zona) return;
+    if (!zona) {
+        // El cliente navega y descarga; un clic en una foto o un PDF abre la vista previa
+        document.querySelector('.ex-lista')?.addEventListener('click', (e) => {
+            const nombre = e.target.closest('.ex-nombre');
+            if (nombre && ver(nombre.closest('.ex-fila'))) e.preventDefault();
+        });
+        return;
+    }
     const datos = zona.dataset;
     const filas = [...zona.querySelectorAll('.ex-fila')];
-    const herramientas = zona.querySelector('.ex-herramientas');
+    const herramientas = zona.querySelector('.ex-controles');  // filtros y búsqueda: la selección toma su lugar
     const barraSeleccion = zona.querySelector('.ex-seleccion');
     const cuentaSeleccion = zona.querySelector('.ex-seleccion-n');
     const marcarTodo = zona.querySelector('.ex-marcar-todo');
@@ -26,6 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const una = objs.length === 1 ? objs[0].dataset : null;
         const reglas = {
             abrir: una && una.tipo === 'carpeta' && !('objetivo' in una),  // la miga ya es la carpeta abierta
+            ver: una && !!una.urlVer,
+            duplicar: objs.length > 0,
+            copiar: objs.length > 0,
             descargar: una && una.tipo === 'archivo',  // ponytail: de a uno; varios a la vez pide ZIP por selección
             renombrar: !!una,
             mover: objs.length > 0,
@@ -62,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             marcarTodo.indeterminate = sel.length > 0 && sel.length < filas.length;
         }
         disponibles(barraSeleccion, sel);
+        pintarPanel();
     };
 
     const elegir = (fila, modo) => {  // modo: 'solo' | 'alternar' | 'rango'
@@ -106,6 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (e.target.closest('.ex-descargar')) return;  // el botón de descarga funciona siempre
         // Táctil: el toque abre (enlace normal) y la casilla selecciona. Enter sobre el enlace (detail 0) también abre
+        if (e.detail === 0 && fila.dataset.urlVer) {
+            e.preventDefault();
+            ver(fila);
+            return;
+        }
         if (!fino || e.detail === 0) return;
         e.preventDefault();
         elegir(fila, modo(e));
@@ -127,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clic en un espacio vacío suelta la selección, como en Drive
     document.addEventListener('click', (e) => {
         if (!seleccion().length || dialogoAbierto()) return;
-        if (e.target.closest('.ex-fila, .ex-seleccion, #ex-menu, .ex-encabezado')) return;
+        if (e.target.closest('.ex-fila, .ex-seleccion, #ex-menu, .ex-encabezado, .ex-panel, .ex-controles')) return;
         soltar();
     });
 
@@ -196,10 +274,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-cerrar-dialogo]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
 
     // ----- Acciones -----
-    const abrir = (el) => {
+    const abrir = (el) => {  // carpeta: entra; foto o PDF: vista previa; lo demás: descarga
         const d = el.dataset;
+        if (d.tipo === 'archivo' && ver(el)) return;
         window.location.href = d.tipo === 'carpeta' ? `?carpeta=${d.id}` : d.urlDescargar;
     };
+    const descargar = (el) => { window.location.href = el.dataset.urlDescargar; };
 
     const poner = (form, campo, valores) => {
         form.querySelectorAll(`input[data-extra="${campo}"]`).forEach(i => i.remove());
@@ -217,7 +297,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const ejecutar = (accion, objs) => {
         if (accion === 'nueva-carpeta') return pedirNombre(null);
         if (!objs.length) return;
-        if (accion === 'abrir' || accion === 'descargar') return abrir(objs[0]);
+        if (accion === 'abrir' || accion === 'ver') return abrir(objs[0]);
+        if (accion === 'descargar') return descargar(objs[0]);
+        if (accion === 'duplicar') return duplicar(objs);
+        if (accion === 'copiar' && dialogoMover) return abrirMover(objs, true);
         if (accion === 'renombrar' && objs.length === 1) return pedirNombre(objs[0]);
         if (accion === 'mover' && dialogoMover) return abrirMover(objs);
         if (accion === 'eliminar' && objs.every(o => o.dataset.borrable)) return eliminar(objs);
@@ -246,13 +329,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     zona.querySelector('[data-accion="nueva-carpeta"]')?.addEventListener('click', () => pedirNombre(null));
 
+    const duplicar = (objs) => {
+        const form = document.getElementById('ex-form-copiar');
+        poner(form, 'archivos', ids(objs, 'archivo'));
+        poner(form, 'carpetas', ids(objs, 'carpeta'));
+        form.submit();
+    };
+
     const eliminar = (objs) => {
         const carpetas = ids(objs, 'carpeta');
         const archivos = ids(objs, 'archivo');
         const titulo = objs.length === 1 ? `¿Eliminar «${objs[0].dataset.nombre}»?` : `¿Eliminar ${objs.length} elementos?`;
         const partes = [];
-        if (archivos.length) partes.push(`${archivos.length === 1 ? 'El archivo dejará' : 'Los archivos dejarán'} de verse para todos, incluidos los clientes.`);
-        if (carpetas.length) partes.push(`No se borra ningún archivo de ${carpetas.length === 1 ? 'la carpeta' : 'las carpetas'}: lo que ${carpetas.length === 1 ? 'tiene' : 'tienen'} adentro pasa a la carpeta de arriba.`);
+        partes.push(`${objs.length === 1 ? 'Va' : 'Van'} a la Papelera del proyecto y deja${objs.length === 1 ? '' : 'n'} de verse, también para los clientes.`);
+        if (carpetas.length) partes.push(`${carpetas.length === 1 ? 'La carpeta se va' : 'Las carpetas se van'} con todo lo que ${carpetas.length === 1 ? 'tiene' : 'tienen'} adentro.`);
+        partes.push('Desde la Papelera se puede restaurar.');
         const preguntar = window.confirmar || ((t, x) => Promise.resolve(window.confirm(`${t}\n\n${x}`)));
         preguntar(titulo, partes.join(' '), 'Eliminar').then((ok) => {
             if (!ok) return;
@@ -287,14 +378,21 @@ document.addEventListener('DOMContentLoaded', () => {
         let bloqueadas = new Set();
         let lugar = null;
 
-        const motivo = (destino) => {
-            for (const o of moviendo) {
+        // Por qué `objs` no puede ir a `destino` (null = raíz), o '' si puede. Lo usan el diálogo y arrastrar
+        let copiando = false;
+        const motivo = (destino, objs = moviendo, copia = copiando) => {
+            for (const o of objs) {
                 if (o.dataset.tipo !== 'carpeta') continue;
                 if (destino && debajo(o.dataset.id).has(destino)) return 'Una carpeta no se puede mover dentro de sí misma.';
                 if (nivel(destino) + altura(o.dataset.id) > max) return `Así quedarían más de ${max} niveles de carpetas.`;
             }
-            if (moviendo.every(o => (o.dataset.padre || null) === destino)) return 'Ya está en esta carpeta.';
+            if (!copia && objs.every(o => (o.dataset.padre || null) === destino)) return 'Ya está en esta carpeta.';
             return '';
+        };
+
+        const cargar = (objs) => {
+            poner(formMover, 'archivos', ids(objs, 'archivo'));
+            poner(formMover, 'carpetas', ids(objs, 'carpeta'));
         };
 
         const icono = () => {
@@ -330,18 +428,109 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         subir.addEventListener('click', () => { lugar = porId.get(lugar).padre; pintar(); });
 
-        abrirMover = (objs) => {
+        const accionMover = formMover.action;
+        abrirMover = (objs, copia = false) => {
             moviendo = objs;
+            copiando = copia;
+            formMover.action = copia ? datos.urlCopiar : accionMover;
+            moverAqui.textContent = copia ? 'Copiar aquí' : 'Mover aquí';
             bloqueadas = new Set();
             ids(objs, 'carpeta').forEach(id => debajo(id, bloqueadas));
             lugar = objs[0].dataset.padre || null;
-            dialogoMover.querySelector('h2').textContent = objs.length === 1 ? `Mover «${objs[0].dataset.nombre}»` : `Mover ${plural(objs.length, 'elemento', 'elementos')}`;
-            poner(formMover, 'archivos', ids(objs, 'archivo'));
-            poner(formMover, 'carpetas', ids(objs, 'carpeta'));
+            const verbo = copia ? 'Copiar' : 'Mover';
+            dialogoMover.querySelector('h2').textContent = objs.length === 1 ? `${verbo} «${objs[0].dataset.nombre}»` : `${verbo} ${plural(objs.length, 'elemento', 'elementos')}`;
+            cargar(objs);
             dialogoMover.showModal();
             pintar();
         };
+
+        // Arrastrar para mover (D12): a una carpeta de la lista o a un tramo de las migas
+        let arrastrados = null;
+        let destino = null;
+        const destinoDe = (el) => {
+            const objetivo = el.closest?.('.ex-fila[data-tipo="carpeta"], .ex-migas a[data-carpeta-id]');
+            if (!objetivo || arrastrados.includes(objetivo)) return null;
+            return motivo(objetivo.dataset.carpetaId || null, arrastrados, false) ? null : objetivo;
+        };
+        const marcarDestino = (el) => {
+            destino?.classList.remove('es-destino');
+            destino = el;
+            destino?.classList.add('es-destino');
+        };
+        zona.addEventListener('dragstart', (e) => {
+            const fila = filaDe(e.target);
+            if (!fila || !fila.draggable) return;
+            if (fila.classList.contains('es-seleccionada')) {
+                arrastrados = seleccion();
+            } else {
+                arrastrados = [fila];
+                // Cambiar la página dentro de dragstart (aparece la barra de selección) hace que Chrome cancele el arrastre
+                setTimeout(() => elegir(fila, 'solo'));
+            }
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('application/x-bkb-mover', String(arrastrados.length));  // sin 'Files': subir.js no reacciona
+            cerrarMenu(false);
+        });
+        document.addEventListener('dragover', (e) => {
+            if (!arrastrados) return;
+            const el = destinoDe(e.target);
+            marcarDestino(el);
+            if (el) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            }
+        });
+        document.addEventListener('drop', (e) => {
+            if (!arrastrados || !destino) return;
+            e.preventDefault();
+            cargar(arrastrados);
+            formMover.action = accionMover;
+            formMover.elements.destino.value = destino.dataset.carpetaId || '';
+            formMover.submit();
+        });
+        document.addEventListener('dragend', () => {
+            marcarDestino(null);
+            arrastrados = null;
+        });
     }
+
+    // ----- Panel de detalles (D11) -----
+    const panel = document.getElementById('ex-panel');
+    const botonesPanel = document.querySelectorAll('[data-accion="detalles"]');
+    function pintarPanel() {  // function: actualizar() la llama antes de que se lea esta línea
+        if (!panel || panel.hidden) return;
+        const sel = seleccion();
+        const vacio = panel.querySelector('.ex-panel-vacio');
+        const lista = panel.querySelector('.ex-panel-datos');
+        vacio.hidden = sel.length === 1;
+        lista.hidden = sel.length !== 1;
+        if (sel.length !== 1) {
+            vacio.textContent = sel.length ? `${sel.length} elementos seleccionados.` : 'Selecciona un archivo o carpeta para ver sus detalles.';
+            return;
+        }
+        const d = sel[0].dataset;
+        const carpeta = d.tipo === 'carpeta';
+        const datosPanel = [
+            ['Nombre', d.nombre],
+            ['Tipo', carpeta ? 'Carpeta' : (d.ext || '').slice(1).toUpperCase() || 'Archivo'],
+            ['Ubicación', d.ubicacion],
+            [carpeta ? 'Creada por' : 'Subido por', d.autor],
+            [carpeta ? 'Creada' : 'Subido', d.fecha],
+            [carpeta ? 'Contenido' : 'Tamaño', d.tamano],
+        ];
+        lista.replaceChildren(...datosPanel.flatMap(([titulo, valor]) => {
+            const dt = document.createElement('dt');
+            const dd = document.createElement('dd');
+            dt.textContent = titulo;
+            dd.textContent = valor || '—';
+            return [dt, dd];
+        }));
+    }
+    botonesPanel.forEach(b => b.addEventListener('click', () => {
+        panel.hidden = !panel.hidden;
+        botonesPanel.forEach(x => x.setAttribute('aria-pressed', String(!panel.hidden)));
+        pintarPanel();
+    }));
 
     // ----- Teclado (D14) -----
     const nombres = () => filas.map(f => f.querySelector('.ex-nombre'));

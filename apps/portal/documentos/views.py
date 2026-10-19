@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import zipfile
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
@@ -295,6 +296,43 @@ def _modificaciones(usuario, proyecto):  # M8
     return ms
 
 
+ORDEN_ARCHIVOS = {
+    'nombre': lambda a: a.nombre_original.lower(),
+    'fecha': lambda a: a.subido_en,
+    'tamano': lambda a: a.tamano,
+}
+ORDEN_CARPETAS = {
+    'nombre': lambda c: c.nombre.lower(),
+    'fecha': lambda c: c.creado_en,
+    'tamano': lambda c: c.nombre.lower(),  # las carpetas no tienen tamaño: quedan por nombre
+}
+
+
+def _papelera(usuario, proyecto):
+    """P2: lo eliminado, sin repetir lo que se fue dentro de una carpeta (eso vuelve con ella). Lo más nuevo primero."""
+    carpetas = list(proyecto.carpetas.filter(eliminado_en__isnull=False).select_related('eliminado_por', 'padre'))
+    archivos = list(proyecto.archivos.filter(eliminado_en__isnull=False, estado=EstadoArchivo.DISPONIBLE,
+                                             modificacion__isnull=True).select_related('eliminado_por', 'carpeta'))
+    junto_a = lambda x, carpeta: carpeta is not None and carpeta.eliminado_en == x.eliminado_en  # noqa: E731
+    puede_carpetas = puede_gestionar_estructura(usuario)
+    elementos = []
+    for c in carpetas:
+        if not junto_a(c, c.padre):
+            c.tipo_elemento, c.puede_restaurar = 'carpeta', puede_carpetas
+            elementos.append(c)
+    for a in archivos:
+        if not junto_a(a, a.carpeta):
+            a.tipo_elemento, a.nombre = 'archivo', a.nombre_original
+            a.puede_restaurar = puede_borrar(usuario, a)
+            elementos.append(a)
+    return sorted(elementos, key=lambda x: x.eliminado_en, reverse=True)
+
+
+def _qs(estado, **cambios):
+    """'?carpeta=…&tipo=…' con el estado de la vista y los cambios, sin los vacíos."""
+    return '?' + urlencode({k: v for k, v in {**estado, **cambios}.items() if v})
+
+
 @login_required
 def detalle_proyecto(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
@@ -308,12 +346,21 @@ def detalle_proyecto(request, pk):
         })
 
     arbol = Arbol(proyecto)
-    carpeta_activa = arbol.get(request.GET.get('carpeta'))
+    q = (request.GET.get('q') or '').strip()[:100]  # docs/13 D11: busca en todo el proyecto
+    carpeta_activa = None if q else arbol.get(request.GET.get('carpeta'))
 
+    visibles = archivos_visibles(request.user, proyecto).select_related('subido_por')
     # carpeta_activa=None filtra carpeta IS NULL: los archivos de la raíz
-    todos = list(archivos_visibles(request.user, proyecto).filter(carpeta=carpeta_activa).select_related('subido_por'))
+    todos = list(visibles.filter(nombre_original__icontains=q) if q else visibles.filter(carpeta=carpeta_activa))
     for archivo in todos:
         _preparar_archivo(request.user, archivo)
+        archivo.ubicacion = arbol.etiqueta(arbol.por_id.get(archivo.carpeta_id))
+        archivo.con_vista_previa = archivo.extension in VISTA_PREVIA
+        if archivo.extension in ('JPG', 'JPEG', 'PNG'):  # HEIC no se ve en el navegador
+            try:
+                archivo.miniatura = storage.url_miniatura(archivo.clave_space)
+            except ValueError:  # clave fuera del prefijo: sin miniatura, la página sigue
+                pass
 
     fotos = [a for a in todos if a.tipo.startswith('image/')]
     documentos = [a for a in todos if not a.tipo.startswith('image/')]
@@ -327,22 +374,44 @@ def detalle_proyecto(request, pk):
     conteo = dict(
         archivos_visibles(request.user, proyecto).order_by().values_list('carpeta').annotate(n=Count('id'))
     )
-    carpetas = arbol.hijos[carpeta_activa.pk if carpeta_activa else None]  # C5: solo las de este lugar
+    if q:
+        carpetas = [c for c in arbol.por_id.values() if q.lower() in c.nombre.lower()]
+    else:
+        carpetas = list(arbol.hijos[carpeta_activa.pk if carpeta_activa else None])  # C5: solo las de este lugar
     for c in carpetas:
         c.n_archivos = conteo.get(c.pk, 0)  # C7: lo de adentro directo
         c.n_carpetas = len(arbol.hijos[c.pk])
+        c.ubicacion = arbol.etiqueta(arbol.por_id.get(c.padre_id))
     gestiona = puede_gestionar_estructura(request.user)
+
+    # Orden por columna (D11). Sin `orden`, como siempre: carpetas por nombre y archivos del más nuevo al más viejo
+    orden = request.GET.get('orden', '')
+    campo = orden.lstrip('-')
+    if campo in ORDEN_ARCHIVOS:
+        archivos = sorted(archivos, key=ORDEN_ARCHIVOS[campo], reverse=orden.startswith('-'))
+        carpetas.sort(key=ORDEN_CARPETAS[campo], reverse=orden.startswith('-'))
+    else:
+        orden = ''
+    # Los enlaces de filtros y columnas conservan el resto del estado: carpeta, tipo, orden y búsqueda
+    estado = {'carpeta': carpeta_activa.pk if carpeta_activa else '', 'tipo': tipo or '', 'orden': orden, 'q': q}
+    filtro_urls = {nombre: _qs(estado, tipo=valor)
+                   for nombre, valor in (('todos', ''), ('documentos', 'documentos'), ('fotos', 'fotos'))}
+    orden_urls = {c: _qs(estado, orden=c if orden != c else f'-{c}') for c in ORDEN_ARCHIVOS}
+    if not orden:  # la fecha parte de la más nueva, como en Drive
+        orden_urls['fecha'] = _qs(estado, orden='-fecha')
 
     edita = puede_editar_proyecto(request.user, proyecto)  # E3
     hitos = _hitos_con_actual(proyecto)
     actual = next((h for h in hitos if h.es_actual), None)
     vista = request.GET.get('vista')  # docs/13 P3: pestañas por enlace, sirven sin JS
-    if vista not in ('hitos', 'modificaciones'):
+    if vista not in ('hitos', 'modificaciones') and not (vista == 'papelera' and puede_subir(request.user)):
         vista = 'archivos'
+    papelera = _papelera(request.user, proyecto) if vista == 'papelera' else None
 
     context = {
         'proyecto': proyecto,
         'vista': vista,
+        'papelera': papelera,
         'hitos': hitos,
         # Aviso flotante del hito en curso: solo personal y jefe, y en la vista raíz del proyecto
         'aviso_hito': actual if puede_subir(request.user) and not carpeta_activa and not proyecto.finalizado else None,
@@ -359,6 +428,12 @@ def detalle_proyecto(request, pk):
         'max_niveles': MAX_NIVELES,
         'archivos': archivos,
         'tipo': tipo,
+        'q': q,
+        'orden': orden,
+        'filtro_urls': filtro_urls,
+        'orden_urls': orden_urls,
+        # Para volver al mismo filtro, orden y búsqueda después de una acción (carpetas._volver)
+        'volver': [(k, estado[k]) for k in ('tipo', 'orden', 'q') if estado[k]],
         'n_todos': len(todos),
         'n_documentos': len(documentos),
         'n_fotos': len(fotos),
@@ -465,6 +540,20 @@ def descargar_archivo(request, pk):
 
     url = url_descarga(archivo.clave_space, archivo.nombre_original)
     return redirect(url)
+
+
+VISTA_PREVIA = {'JPG': 'image/jpeg', 'JPEG': 'image/jpeg', 'PNG': 'image/png', 'PDF': 'application/pdf'}
+
+
+@login_required
+def ver_archivo(request, pk):
+    """D10: muestra la foto o el PDF en el navegador. Mismos permisos y registro que descargar."""
+    archivo = get_object_or_404(archivos_visibles_para(request.user), pk=pk)
+    tipo = VISTA_PREVIA.get(_preparar_archivo(request.user, archivo).extension)
+    if not tipo:
+        raise Http404('Este tipo de archivo no tiene vista previa.')
+    DescargaLog.objects.create(usuario=request.user, archivo=archivo, ip=_get_client_ip(request))
+    return redirect(url_descarga(archivo.clave_space, archivo.nombre_original, ver_tipo=tipo))
 
 
 def _rutas_zip(proyecto, archivos):
