@@ -90,7 +90,7 @@ class FiltroModificacionesTests(Base):
     def test_lista_lleva_filtro_y_datos(self):
         Modificacion.objects.create(proyecto=self.proyecto, titulo='Tablero Nuevo', descripcion='x', creada_por=self.jefe)
         self.client.force_login(self.personal)
-        r = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+        r = self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]), {'vista': 'modificaciones'})
         self.assertContains(r, 'data-filtro-modificaciones')
         self.assertContains(r, 'data-titulo="tablero nuevo" data-estado="borrador"')
         self.assertContains(r, 'js/modificaciones.js')

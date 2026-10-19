@@ -239,7 +239,7 @@ def editar_hitos(request, pk):
     proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
     if not puede_editar_proyecto(request.user, proyecto):
         raise PermissionDenied("Solo los encargados BKB del proyecto pueden editar sus hitos.")  # E3
-    url = reverse('documentos:detalle_proyecto', args=[proyecto.pk])
+    url = reverse('documentos:detalle_proyecto', args=[proyecto.pk]) + '?vista=hitos'
     if proyecto.finalizado:
         messages.error(request, 'El proyecto está finalizado; sus hitos no se pueden cambiar.')
         return redirect(url)
@@ -336,9 +336,13 @@ def detalle_proyecto(request, pk):
     edita = puede_editar_proyecto(request.user, proyecto)  # E3
     hitos = _hitos_con_actual(proyecto)
     actual = next((h for h in hitos if h.es_actual), None)
+    vista = request.GET.get('vista')  # docs/13 P3: pestañas por enlace, sirven sin JS
+    if vista not in ('hitos', 'modificaciones'):
+        vista = 'archivos'
 
     context = {
         'proyecto': proyecto,
+        'vista': vista,
         'hitos': hitos,
         # Aviso flotante del hito en curso: solo personal y jefe, y en la vista raíz del proyecto
         'aviso_hito': actual if puede_subir(request.user) and not carpeta_activa and not proyecto.finalizado else None,
@@ -350,11 +354,9 @@ def detalle_proyecto(request, pk):
         'carpeta_activa': carpeta_activa,
         'camino': arbol.camino(carpeta_activa),
         'carpeta_padre': arbol.por_id.get(carpeta_activa.padre_id) if carpeta_activa else None,
-        'padre_id': str(carpeta_activa.padre_id or '') if carpeta_activa else '',
-        'carpeta_activa_id': str(carpeta_activa.pk) if carpeta_activa else '',
         'puede_crear_carpeta': gestiona and arbol.nivel(carpeta_activa) < MAX_NIVELES,  # C3
-        'destinos_archivos': arbol.destinos() if gestiona and todos else None,
-        'destinos_carpeta': arbol.destinos(carpeta_activa) if gestiona and carpeta_activa else None,
+        'arbol_js': arbol.para_js() if gestiona else None,
+        'max_niveles': MAX_NIVELES,
         'archivos': archivos,
         'tipo': tipo,
         'n_todos': len(todos),
@@ -387,7 +389,11 @@ def avanzar_hito(request, pk):
             hito.save(update_fields=['cumplido_en', 'cumplido_por'])
     if hito:
         correos.avisar_hitos(request, proyecto)
-    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+    return _a_hitos(proyecto)
+
+
+def _a_hitos(proyecto):
+    return redirect(reverse('documentos:detalle_proyecto', args=[proyecto.pk]) + '?vista=hitos')
 
 
 @login_required
@@ -400,7 +406,7 @@ def retroceder_hito(request, pk):
         proyecto = Proyecto.objects.select_for_update().get(pk=proyecto.pk)  # serializa; lee finalizado_en ya bloqueado
         if proyecto.finalizado:  # A6
             messages.error(request, 'El proyecto está finalizado: los hitos no se pueden deshacer.')
-            return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+            return _a_hitos(proyecto)
         hito = proyecto.hitos.filter(cumplido_en__isnull=False).order_by('-orden').first()
         if hito:
             hito.cumplido_en = None
@@ -408,7 +414,7 @@ def retroceder_hito(request, pk):
             hito.save(update_fields=['cumplido_en', 'cumplido_por'])
     if hito:
         correos.avisar_hitos(request, proyecto)
-    return redirect('documentos:detalle_proyecto', pk=proyecto.pk)
+    return _a_hitos(proyecto)
 
 
 @login_required
@@ -524,7 +530,8 @@ def eliminar_archivo(request, pk):
 
     if archivo.modificacion_id:  # M1: vuelve al borrador
         return redirect('documentos:detalle_modificacion', pk=archivo.modificacion_id)
-    return redirect('documentos:detalle_proyecto', pk=archivo.proyecto.pk)
+    url = reverse('documentos:detalle_proyecto', args=[archivo.proyecto_id])
+    return redirect(f'{url}?carpeta={archivo.carpeta_id}' if archivo.carpeta_id else url)  # a la carpeta donde estaba
 
 
 def _confirmar_eliminacion(request, objeto, tipo, perdidas, url_volver, borrar, bloqueo=None):

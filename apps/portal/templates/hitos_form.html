@@ -6,7 +6,7 @@
 {% block content %}
 <div class="proyectos-container">
     <nav class="breadcrumbs" aria-label="Navegación secundaria">
-        <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-volver">&larr; Volver al Proyecto</a>
+        <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}?vista=hitos" class="btn-volver">&larr; Volver al Proyecto</a>
     </nav>
 
     <div class="form-container">
@@ -58,7 +58,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Guardar hitos</button>
-                <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="btn-secondary">Cancelar</a>
+                <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}?vista=hitos" class="btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>

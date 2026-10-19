@@ -195,7 +195,7 @@ class EditorDeHitosTests(Base):
         r = self.post(filas)
         self.assertEqual(r.status_code, 302)
         self.assertEqual(self.nombres(), HITOS_ESTANDAR)
-        self.assertRedirects(self.client.get(self.url()), reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+        self.assertRedirects(self.client.get(self.url()), reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]) + '?vista=hitos')
 
 
 class AvanzarYDeshacerTests(Base):
@@ -394,6 +394,7 @@ class VistaDelClienteTests(Base):
         r = self.client.get(self.url, {'carpeta': self.carpeta.pk})
         self.assertTemplateUsed(r, 'archivos.html')
         self.assertContains(r, 'secreto.pdf')
+        r = self.client.get(self.url, {'vista': 'hitos'})  # docs/13 P3: los hitos van en su pestaña
         self.assertContains(r, 'Compras')
         self.assertNotContains(r, 'Marcar siguiente hito')
 

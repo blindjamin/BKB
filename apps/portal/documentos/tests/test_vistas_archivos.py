@@ -240,10 +240,11 @@ class ArchivosYFlujoTests(TestCase):
         self.personal.save()
         response = self._ver(self.personal)
         self.assertContains(response, '<span class="archivo-ext">PDF</span>', html=False)
-        self.assertContains(response, 'Subido por Pedro Terreno')
+        self.assertContains(response, '<span class="ex-col ex-autor">Pedro Terreno</span>', html=False)
 
     def test_vacios_del_cliente(self):
         Archivo.objects.all().delete()
+        Carpeta.objects.all().delete()  # con carpetas se ve la lista, como en Drive
         self._recibido()
         self.assertContains(self._ver(self.cliente), 'Tu ejecutivo de BKB los cargará aquí')
 

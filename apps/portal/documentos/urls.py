@@ -20,6 +20,7 @@ urlpatterns = [
     path('proyectos/<uuid:pk>/carpetas/nueva/', carpetas.crear_carpeta, name='crear_carpeta'),
     path('proyectos/<uuid:pk>/carpetas/arbol/', carpetas.crear_arbol, name='crear_arbol'),
     path('proyectos/<uuid:pk>/archivos/mover/', carpetas.mover_archivos, name='mover_archivos'),
+    path('proyectos/<uuid:pk>/eliminar-elementos/', carpetas.eliminar_elementos, name='eliminar_elementos'),
     path('proyectos/<uuid:pk>/hitos/avanzar/', views.avanzar_hito, name='avanzar_hito'),
     path('proyectos/<uuid:pk>/hitos/retroceder/', views.retroceder_hito, name='retroceder_hito'),
     path('proyectos/<uuid:pk>/revision/', views.responder_revision, name='responder_revision'),

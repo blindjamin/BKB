@@ -44,7 +44,7 @@ class AvanzarHitoTests(HitosTests):
                 self.proyecto.hitos.update(cumplido_en=None, cumplido_por=None)
                 self.client.force_login(usuario)
                 response = self._post('avanzar')
-                self.assertRedirects(response, reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+                self.assertRedirects(response, reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]) + '?vista=hitos')
                 hito = self.proyecto.hitos.get(orden=1)
                 self.assertIsNotNone(hito.cumplido_en)
                 self.assertEqual(hito.cumplido_por, usuario)
@@ -86,7 +86,7 @@ class RetrocederHitoTests(HitosTests):
                 self._marcar(1, 2)
                 self.client.force_login(usuario)
                 response = self._post('retroceder')
-                self.assertRedirects(response, reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+                self.assertRedirects(response, reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]) + '?vista=hitos')
                 self.assertEqual(self._cumplidos(), [1])
                 hito = self.proyecto.hitos.get(orden=2)
                 self.assertIsNone(hito.cumplido_por)
@@ -121,8 +121,8 @@ class RetrocederHitoTests(HitosTests):
 
 
 class PanelHitosTests(HitosTests):
-    def _ver(self):
-        return self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]))
+    def _ver(self):  # docs/13 P3: los hitos van en su pestaña
+        return self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]), {'vista': 'hitos'})
 
     def _urls(self):
         return (

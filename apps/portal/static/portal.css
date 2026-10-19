@@ -3027,3 +3027,609 @@ a[href^="mailto:"] {
 .borrador-aviso span {
     flex: 1 1 16rem;
 }
+
+/* ===== Explorador tipo Drive (docs/13) ===== */
+/* Las clases con display propio le ganan a [hidden]: dentro del explorador manda [hidden] */
+.explorador [hidden],
+.ex-menu[hidden] {
+    display: none !important;
+}
+
+.archivos-container.explorador {
+    max-width: var(--contenedor);
+}
+
+.ex-cabecera {
+    display: grid;
+    justify-content: stretch;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.ex-cabecera > .btn-volver {
+    justify-self: start;
+}
+
+.ex-titulo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.ex-titulo .archivos-title {
+    margin: 0;
+    text-wrap: balance;
+}
+
+.ex-menu-proyecto {
+    margin-left: auto;
+}
+
+/* Botón redondo solo con ícono: ⋮, ⋯, ×, ‹ y descargar */
+.ex-icono-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 1.25rem;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.ex-icono-btn::-webkit-details-marker {
+    display: none;
+}
+
+.ex-icono-btn:hover {
+    background-color: var(--input-bg);
+    border-color: var(--card-border);
+    color: var(--text-main);
+}
+
+.ex-icono-btn:active {
+    transform: scale(0.96);
+}
+
+.ex-icono-btn:focus-visible,
+.menu-item:focus-visible,
+.ex-nombre:focus-visible,
+.ex-pestana:focus-visible,
+.ex-miga-actual:focus-visible,
+.ex-mover-carpeta:focus-visible {
+    outline: 2px solid var(--bkb-salmon-500);
+    outline-offset: 2px;
+}
+
+/* Detalles del proyecto: lo que antes ocupaba toda la cabecera, ahora plegado (D1) */
+.proyecto-detalles summary {
+    width: fit-content;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.proyecto-detalles .proyecto-datos {
+    margin-top: var(--space-3);
+}
+
+/* Pestañas Archivos · Hitos · Modificaciones (P3) */
+.ex-pestanas {
+    display: flex;
+    gap: var(--space-1);
+    border-bottom: 1px solid var(--card-border);
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.ex-pestana {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 150ms ease, border-color 150ms ease;
+}
+
+.ex-pestana:hover {
+    color: var(--text-main);
+}
+
+.ex-pestana[aria-current="page"] {
+    color: var(--accent-text);
+    border-bottom-color: var(--bkb-salmon-500);
+}
+
+/* Menús desplegables: + Nuevo, ⋯ del proyecto y el menú contextual */
+.menu-desplegable {
+    position: relative;
+}
+
+.menu-desplegable > summary {
+    list-style: none;
+}
+
+.menu-desplegable > summary::-webkit-details-marker {
+    display: none;
+}
+
+.menu-panel {
+    position: absolute;
+    top: calc(100% + var(--space-1));
+    left: 0;
+    z-index: 30;
+    display: grid;
+    min-width: 13rem;
+    padding: var(--space-2) 0;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-input);
+    box-shadow: 0 12px 32px rgba(8, 12, 20, 0.18);
+}
+
+.menu-panel-derecha {
+    left: auto;
+    right: 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 40px;
+    padding: 0 var(--space-4);
+    border: 0;
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.95rem;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+    background-color: var(--input-bg);
+}
+
+[data-theme="light"] .menu-item:hover,
+[data-theme="light"] .menu-item:focus-visible {
+    background-color: var(--page-bg);
+}
+
+.menu-item kbd {
+    margin-left: auto;
+    color: var(--text-subtle);
+    font-family: var(--bkb-font-mono);
+    font-size: 0.75rem;
+}
+
+.menu-item-peligro {
+    color: var(--bkb-danger);
+}
+
+.menu-separador {
+    width: 100%;
+    margin: var(--space-1) 0;
+    border: 0;
+    border-top: 1px solid var(--card-border);
+}
+
+.ex-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+/* Barra: herramientas (+ Nuevo y migas) o, con algo seleccionado, las acciones (D5) */
+.ex-barra {
+    display: flex;
+    align-items: center;
+    min-height: 56px;
+    margin-bottom: var(--space-3);
+}
+
+.ex-herramientas,
+.ex-seleccion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+}
+
+.ex-btn-nuevo.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    min-height: 44px;
+    padding: 0 var(--space-5);
+    border-radius: var(--bkb-radius-pill);
+    cursor: pointer;
+}
+
+.ex-btn-nuevo.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.ex-migas ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--bkb-font-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.ex-migas li + li::before {
+    content: "›";
+    margin: 0 var(--space-2);
+    color: var(--text-subtle);
+}
+
+.ex-migas a {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--space-2);
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+.ex-migas a:hover {
+    background-color: var(--input-bg);
+    color: var(--text-main);
+}
+
+.ex-migas [aria-current="page"] {
+    padding: var(--space-1) var(--space-2);
+    color: var(--text-main);
+}
+
+.ex-miga-actual {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    border: 1px solid transparent;
+    border-radius: var(--space-2);
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+}
+
+.ex-miga-actual:hover {
+    background-color: var(--input-bg);
+    border-color: var(--card-border);
+}
+
+.ex-miga-actual .icono {
+    width: 1rem;
+    height: 1rem;
+    transform: rotate(90deg);
+}
+
+.ex-seleccion {
+    padding: var(--space-1) var(--space-2);
+    background-color: var(--bkb-salmon-soft);
+    border-radius: var(--bkb-radius-pill);
+}
+
+[data-theme="dark"] .ex-seleccion {
+    background-color: rgba(250, 90, 54, 0.12);
+}
+
+.ex-seleccion-n {
+    font-weight: 600;
+}
+
+.ex-seleccion-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-left: auto;
+}
+
+.ex-seleccion-acciones .btn-link {
+    min-height: 40px;
+}
+
+/* Lista única: carpetas y archivos con las mismas columnas (D2) */
+.ex-tabla {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-input);
+    overflow: hidden;
+}
+
+.ex-encabezado,
+.ex-fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 11rem 7rem 8rem 5.5rem;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-3) 0 var(--space-4);
+}
+
+.ex-con-seleccion .ex-encabezado,
+.ex-con-seleccion .ex-fila {
+    grid-template-columns: 1.25rem minmax(0, 1fr) 11rem 7rem 8rem 5.5rem;
+}
+
+.ex-encabezado {
+    min-height: 40px;
+    border-bottom: 1px solid var(--card-border);
+    color: var(--text-subtle);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.ex-lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ex-fila {
+    min-height: 52px;
+    border-bottom: 1px solid var(--card-border);
+    cursor: default;
+    user-select: none;
+    transition: background-color 120ms ease;
+}
+
+.ex-fila:last-child {
+    border-bottom: 0;
+}
+
+.ex-fila:hover {
+    background-color: var(--input-bg);
+}
+
+[data-theme="light"] .ex-fila:hover {
+    background-color: #F8FAFC;
+}
+
+.ex-fila.es-seleccionada,
+[data-theme="light"] .ex-fila.es-seleccionada {
+    background-color: var(--bkb-salmon-soft);
+}
+
+[data-theme="dark"] .ex-fila.es-seleccionada {
+    background-color: rgba(250, 90, 54, 0.14);
+}
+
+/* Al arrastrar archivos del computador sobre una carpeta (subir.js) */
+.ex-fila.es-destino,
+.ex-migas a.es-destino {
+    outline: 2px dashed var(--bkb-salmon-500);
+    outline-offset: -2px;
+}
+
+.ex-nombre {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+    padding: var(--space-3) 0;
+    color: var(--text-main);
+    text-decoration: none;
+}
+
+.ex-nombre .carpeta-nombre,
+.ex-nombre .archivo-nombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.ex-icono-carpeta {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--accent-text);
+}
+
+.ex-nombre .archivo-ext {
+    flex: none;
+    min-width: 2.75rem;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 0.7rem;
+}
+
+.ex-col {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ex-fecha,
+.ex-tamano {
+    font-variant-numeric: tabular-nums;
+}
+
+.ex-fila .carpeta-conteo {
+    grid-column: auto;  /* la regla vieja de .carpeta-pastilla la mandaba a la columna 2 */
+    font-size: 0.875rem;
+}
+
+.ex-col-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-1);
+}
+
+/* Con mouse, descargar y ⋮ aparecen al pasar por la fila o con foco; en táctil se ven siempre */
+@media (pointer: fine) {
+    .ex-fila .ex-col-acciones > * {
+        opacity: 0;
+        transition: opacity 120ms ease;
+    }
+
+    .ex-fila:hover .ex-col-acciones > *,
+    .ex-fila.es-seleccionada .ex-col-acciones > *,
+    .ex-fila:focus-within .ex-col-acciones > * {
+        opacity: 1;
+    }
+}
+
+.ex-marcar {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
+    accent-color: var(--bkb-salmon-700);
+    cursor: pointer;
+}
+
+.archivos-empty .ex-vacio-icono {
+    width: 3rem;
+    height: 3rem;
+    color: var(--text-subtle);
+}
+
+/* Diálogos: nombre y Mover a */
+.ex-campo-nombre {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-4) 0;
+}
+
+.ex-campo-nombre input {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--input-border);
+    border-radius: var(--bkb-radius-input);
+    background-color: var(--input-bg);
+    color: var(--text-main);
+    font: inherit;
+}
+
+.dialogo-acciones .btn-primary {
+    width: auto;
+    padding: 0.65rem 1.25rem;
+}
+
+.ex-dialogo-mover {
+    max-width: 32rem;
+}
+
+.ex-mover-lugar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 40px;
+    margin-top: var(--space-3);
+    font-weight: 600;
+}
+
+.ex-mover-lista {
+    display: grid;
+    max-height: 18rem;
+    margin: var(--space-2) 0;
+    padding: var(--space-1);
+    overflow-y: auto;
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-input);
+    list-style: none;
+}
+
+.ex-mover-lista:empty {
+    display: none;
+}
+
+.ex-mover-carpeta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: 40px;
+    padding: 0 var(--space-3);
+    border: 0;
+    border-radius: var(--space-2);
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ex-mover-carpeta:hover:not(:disabled) {
+    background-color: var(--input-bg);
+}
+
+.ex-mover-carpeta:disabled {
+    color: var(--text-subtle);
+    cursor: not-allowed;
+}
+
+.ex-mover-carpeta .icono {
+    color: var(--accent-text);
+}
+
+.ex-mover-aviso {
+    min-height: 1.25rem;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+[data-mover-aqui]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Celular (D13): solo el nombre y las acciones */
+@media (max-width: 720px) {
+    .ex-encabezado .ex-autor,
+    .ex-encabezado .ex-tamano,
+    .ex-encabezado .ex-fecha,
+    .ex-fila .ex-autor,
+    .ex-fila .ex-tamano {
+        display: none;
+    }
+
+    .ex-encabezado,
+    .ex-fila {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        padding-left: var(--space-3);
+    }
+
+    .ex-con-seleccion .ex-encabezado,
+    .ex-con-seleccion .ex-fila {
+        grid-template-columns: 1.25rem minmax(0, 1fr) auto auto;
+    }
+
+    /* El nombre manda: sin fecha, y el personal descarga desde el menú ⋮ */
+    .ex-fila .ex-fecha,
+    .ex-con-seleccion .ex-descargar {
+        display: none;
+    }
+
+    .ex-migas ol {
+        font-size: 1.05rem;
+    }
+
+    .ex-seleccion-acciones {
+        margin-left: 0;
+    }
+}
