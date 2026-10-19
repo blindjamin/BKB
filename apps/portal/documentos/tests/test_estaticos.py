@@ -16,7 +16,7 @@ class EstaticosTests(SimpleTestCase):
                 self.assertIsNotNone(finders.find(url))
 
     def test_sprite_y_logo_existen(self):
-        for ruta in ('icons.svg', 'img/logo-bkb.png'):
+        for ruta in ('icons.svg', 'img/logo-bkb.png', 'favicon.ico', 'favicon.png', 'favicon.svg'):
             with self.subTest(ruta=ruta):
                 self.assertIsNotNone(finders.find(ruta))
         with open(finders.find('icons.svg'), encoding='utf-8') as sprite:

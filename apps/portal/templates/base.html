@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}BKB Portal{% endblock %}</title>
 
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="icon" type="image/png" sizes="64x64" href="{% static 'favicon.png' %}">
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/logo-bkb.png' %}">
+
     <link rel="stylesheet" href="{% static 'portal.css' %}">
 
     <script nonce="{{ request.csp_nonce }}">
