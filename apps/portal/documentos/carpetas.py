@@ -3,6 +3,7 @@ import json
 import os
 import uuid
 from collections import defaultdict
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -125,9 +126,13 @@ def _volver(request, proyecto, defecto=None):
     if 'desde' not in request.POST:
         return redirect(_url(proyecto, defecto))
     try:
-        return redirect(_url(proyecto, Arbol(proyecto).get(request.POST['desde'])))
+        carpeta = Arbol(proyecto).get(request.POST['desde'])
     except Http404:
-        return redirect(_url(proyecto))
+        carpeta = None
+    # Conserva filtro, orden y búsqueda; la vista vuelve a validar cada valor
+    extra = urlencode({k: request.POST[k][:100] for k in ('tipo', 'orden', 'q') if request.POST.get(k)})
+    url = _url(proyecto, carpeta)
+    return redirect(f'{url}{"&" if carpeta else "?"}{extra}' if extra else url)
 
 
 def _ids(request, campo):

@@ -113,7 +113,7 @@ sin JS (los formularios POST siguen siendo la base).
 | Fase | Contenido | Backend |
 |---|---|---|
 | **F1 · Lista y selección** ✔ | D1, D2, D3, D4, D5, D6, D7, D8, D13: estructura nueva, «+ Nuevo», lista única, selección con barra, menú contextual y diálogos Mover a y Renombrar. Se adelantaron los atajos de teclado de D14. | `mover_archivos` con carpetas, `eliminar_elementos`, `desde` |
-| **F2 · Fluidez** | D11, D12, D14: orden, búsqueda, cuadrícula/lista con miniaturas, arrastrar para mover, atajos de teclado y panel de detalles. | `orden` y `q` en la vista, `img-src` en la CSP |
+| **F2 · Fluidez** ✔ | D11, D12, D14: orden, búsqueda, cuadrícula/lista con miniaturas, arrastrar para mover, atajos de teclado y panel de detalles. | `orden` y `q` en la vista, `img-src` en la CSP |
 | **F3 · Copiar y previsualizar** | D9, D10 y la Papelera con Restaurar (P2). | `copiar_elementos`, CSP y vista previa |
 
 Cada fase va en su propia rama corta desde `origin/main` y con su PR (docs/05). F1 sola ya resuelve la mayor
