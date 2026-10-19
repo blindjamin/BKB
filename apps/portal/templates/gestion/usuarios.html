@@ -14,6 +14,11 @@
         </div>
     </div>
 
+    <nav class="ex-pestanas gestion-pestanas" aria-label="Secciones de gestión">
+        <a href="{% url 'gestion:usuarios' %}" class="ex-pestana" aria-current="page">Usuarios</a>
+        <a href="{% url 'gestion:certificados' %}" class="ex-pestana">Certificados de arriendo</a>
+    </nav>
+
     {# Cada grupo se limpia por separado: su "Todos" conserva el filtro del otro grupo. #}
     <nav class="filtros" aria-label="Filtrar por tipo">
         <span>Tipo:</span>

@@ -325,3 +325,66 @@ class FiltrosSeparadosTests(GestionTests):
         for href in re.findall(r'href="([^"]*)"', html):
             self.assertNotIn('xyz', href)
             self.assertNotIn('activo=9', href)
+
+
+class CertificadosGestionTests(GestionTests):
+    def setUp(self):
+        super().setUp()
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from documentos.models import CertificadoEquipo
+        self.SimpleUploadedFile = SimpleUploadedFile
+        self.CertificadoEquipo = CertificadoEquipo
+        self.url_certificados = reverse('gestion:certificados')
+        self.equipo, _ = CertificadoEquipo.objects.get_or_create(
+            id='fluke-test',
+            defaults={'nombre': 'Equipo de Prueba', 'modelo': 'Fluke 1000'}
+        )
+
+    def test_acceso_jefe_y_personal(self):
+        for usuario in (self.jefe, self.personal):
+            with self.subTest(usuario=usuario.email):
+                self.client.force_login(usuario)
+                resp = self.client.get(self.url_certificados)
+                self.assertEqual(resp.status_code, 200)
+                self.assertContains(resp, 'Equipo de Prueba')
+
+    def test_cliente_recibe_403(self):
+        self.client.force_login(self.cliente)
+        resp = self.client.get(self.url_certificados)
+        self.assertEqual(resp.status_code, 403)
+
+    def test_anonimo_redirige_al_login(self):
+        resp = self.client.get(self.url_certificados)
+        self.assertRedirects(resp, f"{reverse('login')}?next={self.url_certificados}")
+
+    def test_subir_certificado_pdf_exitoso(self):
+        self.client.force_login(self.personal)
+        url_subir = reverse('gestion:subir_certificado', args=[self.equipo.pk])
+        pdf_contenido = b'%PDF-1.4 test certificate content'
+        archivo = self.SimpleUploadedFile('certificado-nuevo.pdf', pdf_contenido, content_type='application/pdf')
+
+        resp = self.client.post(url_subir, {'archivo': archivo})
+        self.assertRedirects(resp, self.url_certificados)
+
+        self.equipo.refresh_from_db()
+        self.assertEqual(bytes(self.equipo.pdf), pdf_contenido)
+        self.assertEqual(self.equipo.nombre_archivo, 'certificado-nuevo.pdf')
+        self.assertEqual(self.equipo.actualizado_por, self.personal)
+
+    def test_subir_rechaza_archivo_no_pdf(self):
+        self.client.force_login(self.jefe)
+        url_subir = reverse('gestion:subir_certificado', args=[self.equipo.pk])
+        archivo = self.SimpleUploadedFile('documento.txt', b'no soy pdf', content_type='text/plain')
+
+        resp = self.client.post(url_subir, {'archivo': archivo})
+        self.assertRedirects(resp, self.url_certificados)
+
+        self.equipo.refresh_from_db()
+        self.assertEqual(bytes(self.equipo.pdf), b'')
+
+    def test_ver_certificado_publico(self):
+        url_publico = reverse('ver_certificado_arriendo', args=[self.equipo.pk])
+        resp = self.client.get(url_publico)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')
+        self.assertIn('frame-ancestors', resp.headers['Content-Security-Policy'])

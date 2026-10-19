@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Certificados de Equipos - BKB Portal{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <div class="view-header">
+        <div>
+            <h1 class="proyectos-title">Certificados de Equipos</h1>
+            <p class="view-subtitle">Calibración y vigencia de equipos en arriendo (landing /arriendo)</p>
+        </div>
+    </div>
+
+    <nav class="ex-pestanas gestion-pestanas" aria-label="Secciones de gestión">
+        {% if es_jefe %}
+        <a href="{% url 'gestion:usuarios' %}" class="ex-pestana">Usuarios</a>
+        {% endif %}
+        <a href="{% url 'gestion:certificados' %}" class="ex-pestana" aria-current="page">Certificados de arriendo</a>
+    </nav>
+
+    <div class="usuarios-table-wrapper">
+        <table class="usuarios-table">
+            <thead>
+                <tr>
+                    <th scope="col">Equipo</th>
+                    <th scope="col">Identificador</th>
+                    <th scope="col">Certificado actual</th>
+                    <th scope="col" class="usuarios-th-acciones">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for equipo in equipos %}
+                    <tr>
+                        <td class="usuarios-col-nombre">
+                            <strong>{{ equipo.nombre }}</strong>
+                            {% if equipo.modelo %}<div class="usuarios-email-mono">{{ equipo.modelo }}</div>{% endif %}
+                        </td>
+                        <td>
+                            <code class="usuarios-email-mono">{{ equipo.id }}</code>
+                        </td>
+                        <td>
+                            {% if equipo.pdf %}
+                                <span class="badge badge-activo">Personalizado</span>
+                                <div class="certificado-meta">
+                                    <span>{{ equipo.nombre_archivo }}</span>
+                                    <span>Actualizado el {{ equipo.actualizado_en|date:"d/m/Y H:i" }}{% if equipo.actualizado_por %} por {{ equipo.actualizado_por.nombre|default:equipo.actualizado_por.email }}{% endif %}</span>
+                                </div>
+                            {% else %}
+                                <span class="badge badge-cerrado">Estándar</span>
+                                <div class="certificado-meta">
+                                    <span>Certificado base oficial</span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="usuarios-col-acciones">
+                            <div class="certificado-acciones">
+                                <a href="{% url 'ver_certificado_arriendo' equipo.pk %}" target="_blank" rel="noopener" class="btn-link">Ver PDF &nearr;</a>
+                                <form method="post" action="{% url 'gestion:subir_certificado' equipo.pk %}" enctype="multipart/form-data" class="certificado-form">
+                                    {% csrf_token %}
+                                    <input type="file" name="archivo" accept=".pdf" class="certificado-input-file" required>
+                                    <button type="submit" class="btn-subir-cert">Subir</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Vista móvil (< 768px): tarjetas de equipos -->
+    <div class="usuarios-cards">
+        {% for equipo in equipos %}
+            <article class="usuario-card">
+                <div class="usuario-card-header">
+                    <div>
+                        <h2 class="usuario-card-nombre">{{ equipo.nombre }}</h2>
+                        {% if equipo.modelo %}<p class="usuarios-email-mono">{{ equipo.modelo }}</p>{% endif %}
+                    </div>
+                    {% if equipo.pdf %}
+                        <span class="badge badge-activo">Personalizado</span>
+                    {% else %}
+                        <span class="badge badge-cerrado">Estándar</span>
+                    {% endif %}
+                </div>
+                <div class="usuario-card-body">
+                    <p class="usuario-card-campo">
+                        <span class="usuario-card-etiqueta">Identificador:</span>
+                        <code class="usuarios-email-mono">{{ equipo.id }}</code>
+                    </p>
+                    {% if equipo.pdf %}
+                        <p class="usuario-card-campo">
+                            <span class="usuario-card-etiqueta">Archivo:</span>
+                            <span>{{ equipo.nombre_archivo }}</span>
+                        </p>
+                        <p class="usuario-card-campo">
+                            <span class="usuario-card-etiqueta">Actualizado:</span>
+                            <span>{{ equipo.actualizado_en|date:"d/m/Y H:i" }}{% if equipo.actualizado_por %} ({{ equipo.actualizado_por.nombre|default:equipo.actualizado_por.email }}){% endif %}</span>
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="usuario-card-footer">
+                    <a href="{% url 'ver_certificado_arriendo' equipo.pk %}" target="_blank" rel="noopener" class="btn-link">Ver PDF &nearr;</a>
+                    <form method="post" action="{% url 'gestion:subir_certificado' equipo.pk %}" enctype="multipart/form-data" class="certificado-form">
+                        {% csrf_token %}
+                        <input type="file" name="archivo" accept=".pdf" class="certificado-input-file" required>
+                        <button type="submit" class="btn-subir-cert">Subir</button>
+                    </form>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

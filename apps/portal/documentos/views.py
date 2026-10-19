@@ -16,6 +16,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.utils import timezone
 
 from . import correos, storage
@@ -250,31 +251,32 @@ def editar_hitos(request, pk):
     # La Revisión solo cambia de nombre: sigue siendo el hito final que responde el cliente
     revision = proyecto.hitos.filter(es_revision=True).first()
     revision_nombre = request.POST.get('revision_nombre', '').strip()[:200] or (revision.nombre if revision else '')
-    correos_hitos = request.POST.get('correos_hitos', proyecto.correos_hitos)
-    malos = _correos_invalidos(correos_hitos)
-    if request.method == 'POST' and formset.is_valid() and not malos:
+    if request.method == 'POST' and formset.is_valid():
         with transaction.atomic():
             Proyecto.objects.select_for_update().get(pk=proyecto.pk)
             formset.guardar()
-            proyecto.hitos.filter(es_revision=True).update(nombre=revision_nombre)
-            proyecto.correos_hitos = '\n'.join(dict.fromkeys(c.lower() for c in correos_hitos.split()))
-            proyecto.save(update_fields=['correos_hitos'])
-        correos.avisar_hitos(request, proyecto)
+            if revision:
+                proyecto.hitos.filter(es_revision=True).update(nombre=revision_nombre)
         messages.success(request, 'Hitos actualizados.')
         return redirect(url)
     return render(request, 'hitos_form.html', {
-        'proyecto': proyecto, 'formset': formset, 'revision': revision, 'revision_nombre': revision_nombre,
-        'correos_hitos': correos_hitos, 'correos_malos': malos})
+        'proyecto': proyecto, 'formset': formset, 'revision': revision, 'revision_nombre': revision_nombre})
 
 
-def _correos_invalidos(texto):
-    malos = []
-    for c in texto.split():
+def _parsear_correos(texto):
+    """Devuelve (validos, invalidos) a partir de una cadena con correos separados por coma, espacio o salto."""
+    import re
+    tokens = list(dict.fromkeys(
+        c.lower().strip() for c in re.split(r'[\s,;]+', texto) if c.strip()
+    ))
+    validos, invalidos = [], []
+    for c in tokens:
         try:
             validate_email(c)
+            validos.append(c)
         except ValidationError:
-            malos.append(c)
-    return malos
+            invalidos.append(c)
+    return validos, invalidos
 
 
 def _hitos_con_actual(proyecto):
@@ -413,6 +415,7 @@ def detalle_proyecto(request, pk):
         'vista': vista,
         'papelera': papelera,
         'hitos': hitos,
+        'siguiente_hito': actual if actual and not actual.es_revision else None,
         # Aviso flotante del hito en curso: solo personal y jefe, y en la vista raíz del proyecto
         'aviso_hito': actual if puede_subir(request.user) and not carpeta_activa and not proyecto.finalizado else None,
         'aviso_hito_n': hitos.index(actual) + 1 if actual else 0,
@@ -463,7 +466,26 @@ def avanzar_hito(request, pk):
             hito.cumplido_por = request.user
             hito.save(update_fields=['cumplido_en', 'cumplido_por'])
     if hito:
-        correos.avisar_hitos(request, proyecto)
+        correos_raw = request.POST.get('correos', '').strip()
+        if correos_raw:
+            validos, invalidos = _parsear_correos(correos_raw)
+            if validos:
+                correos.avisar_hitos(request, proyecto, destinatarios=validos, hito=hito)
+                if invalidos:
+                    messages.warning(
+                        request,
+                        f'Hito "{hito.nombre}" marcado. Aviso enviado a: {", ".join(validos)}, '
+                        f'pero se ignoraron los correos no válidos: {", ".join(invalidos)}.'
+                    )
+                else:
+                    messages.success(request, f'Hito "{hito.nombre}" marcado y aviso enviado a: {", ".join(validos)}.')
+            else:
+                messages.warning(
+                    request,
+                    f'Hito "{hito.nombre}" marcado, pero no se enviaron correos porque no eran válidos: {", ".join(invalidos)}.'
+                )
+        else:
+            messages.success(request, f'Hito "{hito.nombre}" marcado.')
     return _a_hitos(proyecto)
 
 
@@ -488,7 +510,7 @@ def retroceder_hito(request, pk):
             hito.cumplido_por = None
             hito.save(update_fields=['cumplido_en', 'cumplido_por'])
     if hito:
-        correos.avisar_hitos(request, proyecto)
+        messages.success(request, f'Hito "{hito.nombre}" deshecho.')
     return _a_hitos(proyecto)
 
 
@@ -684,3 +706,14 @@ def eliminar_empresa(request, pk):
 
     return _confirmar_eliminacion(request, empresa, 'la empresa', [(empresa.encargados.count(), 'encargado asignado', 'encargados asignados')],
                                   reverse('documentos:editar_empresa', args=[empresa.pk]), borrar, bloqueo)
+
+
+@xframe_options_exempt
+def ver_certificado(request, equipo_id):
+    """Entrega el PDF de calibración/vigencia del equipo para el visor de la landing."""
+    from .certificados_pdf import obtener_pdf_certificado
+    pdf, nombre = obtener_pdf_certificado(equipo_id)
+    resp = HttpResponse(pdf, content_type='application/pdf')
+    resp['Content-Disposition'] = f'inline; filename="{nombre}"'
+    resp.headers['Content-Security-Policy'] = "frame-ancestors 'self' http://localhost:3000 http://localhost:3001 https://www.bkb.cl https://blindjamin.github.io https://empresabkb.cl;"
+    return resp

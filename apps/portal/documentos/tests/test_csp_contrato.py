@@ -186,6 +186,7 @@ class ContratoCSPTests(TestCase):
             reverse('gestion:usuarios'),
             reverse('gestion:crear_usuario'),
             reverse('gestion:editar_usuario', args=[self.cliente.pk]),
+            reverse('gestion:certificados'),
         ):
             with self.subTest(url=url):
                 self._verificar_contrato_csp_y_html(self.client.get(url))

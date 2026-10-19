@@ -46,14 +46,19 @@ def avisar_inicio(request, proyecto):  # V2
                                      proyecto.correos_encargados()), 'inicio')
 
 
-def avisar_hitos(request, proyecto):
-    """La línea de hitos a los correos del proyecto, cada vez que BKB la cambia. Uno por correo: no se ven entre sí.
+def avisar_hitos(request, proyecto, destinatarios=None, hito=None):
+    """Envía la línea de hitos a los correos indicados para este avance. Uno por correo: no se ven entre sí.
     Sin botón: pueden no tener cuenta en el portal."""
-    para = proyecto.lista_correos_hitos()
+    para = [d.strip() for d in (destinatarios or []) if d.strip()]
     if not para:
         return
-    ctx = {'proyecto': proyecto, 'hitos': list(proyecto.hitos.select_related('cumplido_por'))}
-    enviados = [enviar(f'Avance del proyecto {proyecto.nombre}', 'hitos', ctx, [c], cc=False) for c in para]
+    ctx = {
+        'proyecto': proyecto,
+        'hitos': list(proyecto.hitos.select_related('cumplido_por')),
+        'hito_marcado': hito,
+    }
+    asunto = f'Hito cumplido: {hito.nombre} ({proyecto.nombre})' if hito else f'Avance del proyecto {proyecto.nombre}'
+    enviados = [enviar(asunto, 'hitos', ctx, [c], cc=False) for c in para]
     _avisar_si_falla(request, all(enviados), 'hitos')
 
 

@@ -1,5 +1,6 @@
 {% extends 'correos/base.html' %}
 {% block contenido %}
 <p>Se actualizó el avance del proyecto <strong>{{ proyecto.nombre }}</strong> de {{ proyecto.empresa.nombre }}.</p>
+{% if hito_marcado %}<p><strong>Hito cumplido:</strong> {{ hito_marcado.nombre }} ({{ hito_marcado.cumplido_en|date:"d-m-Y" }}).</p>{% endif %}
 <ol>{% for hito in hitos %}<li>{% if hito.cumplido %}<strong>{{ hito.nombre }}</strong>: cumplido el {{ hito.cumplido_en|date:"d-m-Y" }}{% else %}{{ hito.nombre }}: pendiente{% endif %}</li>{% endfor %}</ol>
 {% endblock %}

@@ -11,4 +11,6 @@ urlpatterns = [
     path('usuarios/<uuid:pk>/desactivar/', views.desactivar_usuario, name='desactivar_usuario'),
     path('usuarios/<uuid:pk>/reactivar/', views.reactivar_usuario, name='reactivar_usuario'),
     path('usuarios/<uuid:pk>/invitacion/', views.reenviar_invitacion, name='reenviar_invitacion'),
+    path('certificados/', views.certificados, name='certificados'),
+    path('certificados/<slug:equipo_id>/subir/', views.subir_certificado, name='subir_certificado'),
 ]

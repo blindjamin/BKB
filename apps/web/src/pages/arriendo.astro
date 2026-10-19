@@ -16,6 +16,7 @@ const foto = (id: string) => fotos[`../assets/arriendo/${id}.jpg`]?.default;
 const digits = SITE.phoneHref.replace(/\D/g, '');
 const waGeneral = `https://wa.me/${digits}?text=${encodeURIComponent('Hola, quisiera cotizar el arriendo de equipos con técnico BKB.')}`;
 const etiqueta = (e: EquipoArriendo) => (e.modelo ? `${e.nombre} (${e.modelo})` : e.nombre);
+const PORTAL = import.meta.env.PUBLIC_PORTAL_URL || 'http://localhost:8000';
 ---
 
 <Layout
@@ -62,14 +63,32 @@ const etiqueta = (e: EquipoArriendo) => (e.modelo ? `${e.nombre} (${e.modelo})` 
                   {e.modelo && <p class="font-mono text-[12px] text-muted mt-1 mb-0">{e.modelo}</p>}
                 </div>
                 <p class="text-[14.5px] leading-[1.55] text-muted m-0">{e.uso}</p>
-                <!-- mt-auto: el botón queda al fondo y alineado entre tarjetas de la misma fila -->
-                <div class="mt-auto">
+                <!-- mt-auto: los botones quedan al fondo y alineados entre tarjetas de la misma fila -->
+                <div class="mt-auto flex flex-wrap items-center gap-2.5">
                   <button
                     type="button"
                     data-agregar
                     aria-pressed="false"
                     class="js-only inline-flex items-center justify-center min-h-[44px] px-5 rounded-pill border border-salmon-700 bg-salmon-700 text-white text-[14px] font-semibold cursor-pointer transition-colors hover:bg-salmon-800 aria-pressed:bg-transparent aria-pressed:border-salmon-500 aria-pressed:text-[var(--accent-text)] aria-pressed:hover:bg-transparent focus-bkb"
                   ><span class="sr-only">Agregar a la cotización</span><span data-texto aria-hidden="true">Agregar a la cotización</span></button>
+
+                  {e.certificacion && (
+                    <button
+                      type="button"
+                      data-certificacion
+                      data-id={e.id}
+                      data-nombre={e.nombre}
+                      data-modelo={e.modelo || ''}
+                      data-portal-url={`${PORTAL}/certificados/${e.id}/`}
+                      data-static-url={getPath(`/certificados/${e.id}.pdf`)}
+                      class="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-pill border border-card-border bg-page text-main text-[13.5px] font-semibold cursor-pointer transition-all duration-150 hover:border-salmon-500 hover:text-[var(--accent-text)] focus-bkb"
+                    >
+                      <svg class="w-4 h-4 text-salmon-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span>Certificación</span>
+                    </button>
+                  )}
                 </div>
               </article>
             </li>
@@ -104,6 +123,28 @@ const etiqueta = (e: EquipoArriendo) => (e.modelo ? `${e.nombre} (${e.modelo})` 
       <PillButton href={waGeneral} id="cotizacion-wa" target="_blank" rel="noopener noreferrer" class="shrink-0">Cotizar por WhatsApp</PillButton>
     </div>
   </div>
+  <!-- Modal de Certificación (<dialog> nativo) -->
+  <dialog id="modal-certificacion" class="modal-certificacion" aria-labelledby="modal-cert-titulo">
+    <div class="modal-cert-barra">
+      <div class="modal-cert-info">
+        <span class="modal-cert-etiqueta">Certificación BKB</span>
+        <h3 id="modal-cert-titulo" class="modal-cert-nombre"></h3>
+        <p id="modal-cert-modelo" class="modal-cert-modelo"></p>
+      </div>
+      <div class="modal-cert-acciones">
+        <a id="modal-cert-descargar" href="#" target="_blank" rel="noopener noreferrer" class="btn-cert-descargar">
+          <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Abrir / Descargar</span>
+        </a>
+        <button type="button" class="btn-cert-cerrar" data-cerrar-cert aria-label="Cerrar certificación">&times;</button>
+      </div>
+    </div>
+    <div class="modal-cert-cuerpo">
+      <iframe id="modal-cert-visor" class="modal-cert-iframe" title="Visor de certificación"></iframe>
+    </div>
+  </dialog>
 </Layout>
 
 <style>
@@ -115,6 +156,146 @@ const etiqueta = (e: EquipoArriendo) => (e.modelo ? `${e.nombre} (${e.modelo})` 
   /* Con la barra visible se ocultan el WhatsApp flotante y el aviso de emergencia, para que no se tapen */
   :global(html.has-cotizacion .whatsapp-fab),
   :global(html.has-cotizacion .emergency-notice) { display: none; }
+
+  /* Modal de Certificación */
+  .modal-certificacion {
+    width: min(64rem, calc(100% - 2rem));
+    max-width: none;
+    height: min(52rem, calc(100dvh - 3rem));
+    margin: auto;
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-card);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-certificacion[open] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-certificacion::backdrop {
+    background-color: rgba(8, 12, 20, 0.75);
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-cert-barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--card-border);
+    background-color: var(--card-bg);
+  }
+
+  .modal-cert-info {
+    min-width: 0;
+  }
+
+  .modal-cert-etiqueta {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--bkb-salmon-500);
+    margin-bottom: 2px;
+  }
+
+  .modal-cert-nombre {
+    margin: 0;
+    font-family: var(--bkb-font-display);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.25;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .modal-cert-modelo {
+    margin: 2px 0 0;
+    font-family: var(--bkb-font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .modal-cert-acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .btn-cert-descargar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: var(--bkb-radius-pill);
+    border: 1px solid var(--card-border);
+    background-color: var(--page-bg);
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .btn-cert-descargar:hover {
+    border-color: var(--bkb-salmon-500);
+    color: var(--accent-text);
+  }
+
+  .btn-cert-cerrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--bkb-radius-pill);
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: var(--text-main);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-cert-cerrar:hover {
+    border-color: var(--bkb-salmon-500);
+    color: var(--bkb-salmon-500);
+    background-color: var(--page-bg);
+  }
+
+  .modal-cert-cuerpo {
+    flex: 1;
+    min-height: 0;
+    background-color: #333;
+    position: relative;
+  }
+
+  .modal-cert-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: #fff;
+  }
+
+  @media (max-width: 640px) {
+    .modal-certificacion {
+      width: 100%;
+      height: 100dvh;
+      border-radius: 0;
+      border: none;
+    }
+  }
 </style>
 
 <script>
@@ -133,6 +314,32 @@ const etiqueta = (e: EquipoArriendo) => (e.modelo ? `${e.nombre} (${e.modelo})` 
     const lista = document.getElementById('cotizacion-lista');
     const wa = document.getElementById('cotizacion-wa') as HTMLAnchorElement | null;
     if (!barra || !contador || !estado || !lista || !wa) return;
+
+    const modalCert = document.getElementById('modal-certificacion') as HTMLDialogElement | null;
+    const modalTitulo = document.getElementById('modal-cert-titulo');
+    const modalModelo = document.getElementById('modal-cert-modelo');
+    const modalDescargar = document.getElementById('modal-cert-descargar') as HTMLAnchorElement | null;
+    const modalVisor = document.getElementById('modal-cert-visor') as HTMLIFrameElement | null;
+
+    const cerrarModalCert = () => {
+      if (!modalCert) return;
+      modalCert.close();
+      if (modalVisor) modalVisor.src = 'about:blank';
+    };
+
+    if (modalCert) {
+      modalCert.addEventListener('click', (e) => {
+        const rect = modalCert.getBoundingClientRect();
+        const enCaja = (
+          rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+          rect.left <= e.clientX && e.clientX <= rect.left + rect.width
+        );
+        if (!enCaja) cerrarModalCert();
+      });
+      modalCert.addEventListener('close', () => {
+        if (modalVisor) modalVisor.src = 'about:blank';
+      });
+    }
 
     const tarjetas = Array.from(document.querySelectorAll<HTMLElement>('.equipo'));
     const waBase = wa.href.split('?')[0];
@@ -184,6 +391,28 @@ const etiqueta = (e: EquipoArriendo) => (e.modelo ? `${e.nombre} (${e.modelo})` 
 
     document.addEventListener('click', (ev) => {
       const el = ev.target as HTMLElement;
+
+      const certBtn = el.closest<HTMLButtonElement>('[data-certificacion]');
+      if (certBtn && modalCert && modalTitulo && modalModelo && modalDescargar && modalVisor) {
+        const nombre = certBtn.dataset.nombre || '';
+        const modelo = certBtn.dataset.modelo || '';
+        const portalUrl = certBtn.dataset.portalUrl || '';
+        const staticUrl = certBtn.dataset.staticUrl || '';
+        const url = portalUrl || staticUrl;
+
+        modalTitulo.textContent = nombre;
+        modalModelo.textContent = modelo;
+        modalDescargar.href = url;
+        modalVisor.src = url;
+        modalCert.showModal();
+        return;
+      }
+
+      const cerrarBtn = el.closest<HTMLButtonElement>('[data-cerrar-cert]');
+      if (cerrarBtn) {
+        cerrarModalCert();
+        return;
+      }
 
       const agregar = el.closest<HTMLButtonElement>('[data-agregar]');
       if (agregar) {
