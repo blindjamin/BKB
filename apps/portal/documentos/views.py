@@ -308,6 +308,26 @@ ORDEN_CARPETAS = {
 }
 
 
+def _papelera(usuario, proyecto):
+    """P2: lo eliminado, sin repetir lo que se fue dentro de una carpeta (eso vuelve con ella). Lo más nuevo primero."""
+    carpetas = list(proyecto.carpetas.filter(eliminado_en__isnull=False).select_related('eliminado_por', 'padre'))
+    archivos = list(proyecto.archivos.filter(eliminado_en__isnull=False, estado=EstadoArchivo.DISPONIBLE,
+                                             modificacion__isnull=True).select_related('eliminado_por', 'carpeta'))
+    junto_a = lambda x, carpeta: carpeta is not None and carpeta.eliminado_en == x.eliminado_en  # noqa: E731
+    puede_carpetas = puede_gestionar_estructura(usuario)
+    elementos = []
+    for c in carpetas:
+        if not junto_a(c, c.padre):
+            c.tipo_elemento, c.puede_restaurar = 'carpeta', puede_carpetas
+            elementos.append(c)
+    for a in archivos:
+        if not junto_a(a, a.carpeta):
+            a.tipo_elemento, a.nombre = 'archivo', a.nombre_original
+            a.puede_restaurar = puede_borrar(usuario, a)
+            elementos.append(a)
+    return sorted(elementos, key=lambda x: x.eliminado_en, reverse=True)
+
+
 def _qs(estado, **cambios):
     """'?carpeta=…&tipo=…' con el estado de la vista y los cambios, sin los vacíos."""
     return '?' + urlencode({k: v for k, v in {**estado, **cambios}.items() if v})
@@ -335,6 +355,7 @@ def detalle_proyecto(request, pk):
     for archivo in todos:
         _preparar_archivo(request.user, archivo)
         archivo.ubicacion = arbol.etiqueta(arbol.por_id.get(archivo.carpeta_id))
+        archivo.con_vista_previa = archivo.extension in VISTA_PREVIA
         if archivo.extension in ('JPG', 'JPEG', 'PNG'):  # HEIC no se ve en el navegador
             try:
                 archivo.miniatura = storage.url_miniatura(archivo.clave_space)
@@ -383,12 +404,14 @@ def detalle_proyecto(request, pk):
     hitos = _hitos_con_actual(proyecto)
     actual = next((h for h in hitos if h.es_actual), None)
     vista = request.GET.get('vista')  # docs/13 P3: pestañas por enlace, sirven sin JS
-    if vista not in ('hitos', 'modificaciones'):
+    if vista not in ('hitos', 'modificaciones') and not (vista == 'papelera' and puede_subir(request.user)):
         vista = 'archivos'
+    papelera = _papelera(request.user, proyecto) if vista == 'papelera' else None
 
     context = {
         'proyecto': proyecto,
         'vista': vista,
+        'papelera': papelera,
         'hitos': hitos,
         # Aviso flotante del hito en curso: solo personal y jefe, y en la vista raíz del proyecto
         'aviso_hito': actual if puede_subir(request.user) and not carpeta_activa and not proyecto.finalizado else None,
@@ -517,6 +540,20 @@ def descargar_archivo(request, pk):
 
     url = url_descarga(archivo.clave_space, archivo.nombre_original)
     return redirect(url)
+
+
+VISTA_PREVIA = {'JPG': 'image/jpeg', 'JPEG': 'image/jpeg', 'PNG': 'image/png', 'PDF': 'application/pdf'}
+
+
+@login_required
+def ver_archivo(request, pk):
+    """D10: muestra la foto o el PDF en el navegador. Mismos permisos y registro que descargar."""
+    archivo = get_object_or_404(archivos_visibles_para(request.user), pk=pk)
+    tipo = VISTA_PREVIA.get(_preparar_archivo(request.user, archivo).extension)
+    if not tipo:
+        raise Http404('Este tipo de archivo no tiene vista previa.')
+    DescargaLog.objects.create(usuario=request.user, archivo=archivo, ip=_get_client_ip(request))
+    return redirect(url_descarga(archivo.clave_space, archivo.nombre_original, ver_tipo=tipo))
 
 
 def _rutas_zip(proyecto, archivos):

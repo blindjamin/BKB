@@ -51,7 +51,7 @@ def iniciar_subida(request, pk):
     carpeta = None
     if carpeta_id:
         try:
-            carpeta = proyecto.carpetas.get(pk=uuid.UUID(str(carpeta_id)))
+            carpeta = proyecto.carpetas.get(pk=uuid.UUID(str(carpeta_id)), eliminado_en__isnull=True)
         except (ValueError, Carpeta.DoesNotExist):
             return JsonResponse({'error': 'Carpeta no válida.'}, status=400)
 

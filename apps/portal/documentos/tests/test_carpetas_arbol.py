@@ -1,11 +1,14 @@
 """Carpetas anidadas, subir carpeta, mover y renombrar (docs/12)."""
 import json
+from datetime import timedelta
 from io import StringIO
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from accounts.models import Rol, Usuario
 from documentos.carpetas import MAX_NIVELES
@@ -105,28 +108,53 @@ class EliminarTests(Base):
     def eliminar(self, carpeta):
         return self.client.post(reverse('documentos:eliminar_carpeta', args=[carpeta.pk]))
 
-    def test_el_contenido_sube_un_nivel(self):  # C4
+    def test_va_a_la_papelera_con_todo_y_se_restaura_junto(self):  # P2 (reemplaza a C4)
         a = self.archivo('a.pdf', self.planos)
         b = self.archivo('b.pdf', self.rev_a)
+        antes = self.archivo('antes.pdf', self.rev_a)
+        self.client.post(reverse('documentos:eliminar_archivo', args=[antes.pk]))  # ya estaba en la Papelera
+        # Un minuto antes: en Windows el reloj es grueso y las dos eliminaciones podían caer en la misma hora
+        Archivo.objects.filter(pk=antes.pk).update(eliminado_en=timezone.now() - timedelta(minutes=1))
         DescargaLog.objects.create(usuario=self.cliente, archivo=b)
         self.eliminar(self.planos)
-        a.refresh_from_db(); b.refresh_from_db(); self.rev_a.refresh_from_db()
-        self.assertIsNone(a.carpeta)
-        self.assertIsNone(self.rev_a.padre)  # Rev A pasa a la raíz con su archivo
-        self.assertEqual(b.carpeta, self.rev_a)
-        self.assertEqual((Archivo.objects.count(), DescargaLog.objects.count()), (2, 1))
+        for x in (a, b, self.planos, self.rev_a):
+            x.refresh_from_db()
+            self.assertIsNotNone(x.eliminado_en)
+        self.assertNotContains(self.ver(), 'class="carpeta-nombre">Planos<')
+        self.assertEqual((Archivo.objects.count(), DescargaLog.objects.count()), (3, 1))  # nada se borra
 
-    def test_subcarpeta_con_nombre_repetido_se_fusiona(self):  # C4
-        fotos = self.carpeta('Fotos')
-        sub_fotos = self.carpeta('fotos', self.planos)  # al subir choca con «Fotos» de la raíz
-        a = self.archivo('a.jpg', sub_fotos)
-        self.carpeta('Planos', self.planos)  # y una que se llama igual que la que se elimina
+        self.client.post(reverse('documentos:restaurar_elementos', args=[self.proyecto.pk]), {'carpetas': [self.planos.pk]})
+        for x in (a, b, self.planos, self.rev_a, antes):
+            x.refresh_from_db()
+        self.assertEqual([x.eliminado_en for x in (a, b, self.planos, self.rev_a)], [None] * 4)
+        self.assertIsNotNone(antes.eliminado_en)  # lo eliminado antes no vuelve con la carpeta
+
+    def test_en_la_papelera_no_ocupa_el_nombre_y_al_volver_se_numera(self):
         self.eliminar(self.planos)
-        a.refresh_from_db()
-        self.assertEqual(a.carpeta, fotos)
-        self.assertFalse(Carpeta.objects.filter(pk=sub_fotos.pk).exists())
-        self.assertEqual(sorted(Carpeta.objects.filter(proyecto=self.proyecto, padre=None).values_list('nombre', flat=True)),
-                         ['Fotos', 'Planos', 'Rev A'])
+        nueva = self.carpeta('Planos')  # se puede: la vieja está en la Papelera
+        self.client.post(reverse('documentos:restaurar_elementos', args=[self.proyecto.pk]), {'carpetas': [self.planos.pk]})
+        self.planos.refresh_from_db()
+        self.assertEqual((self.planos.nombre, self.planos.eliminado_en), ('Planos (2)', None))
+        self.assertEqual(nueva.nombre, 'Planos')
+
+    def test_vuelve_a_la_raiz_si_su_lugar_sigue_en_la_papelera(self):
+        b = self.archivo('b.pdf', self.rev_a)
+        self.client.post(reverse('documentos:eliminar_archivo', args=[b.pk]))
+        self.eliminar(self.planos)
+        self.client.post(reverse('documentos:restaurar_elementos', args=[self.proyecto.pk]), {'archivos': [b.pk]})
+        b.refresh_from_db()
+        self.assertEqual((b.carpeta, b.eliminado_en), (None, None))
+
+    def test_la_papelera_lista_sin_repetir_y_solo_para_el_personal(self):
+        self.archivo('b.pdf', self.rev_a)
+        self.eliminar(self.planos)
+        url = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])
+        r = self.client.get(url, {'vista': 'papelera'})
+        self.assertEqual([x.nombre for x in r.context['papelera']], ['Planos'])  # Rev A y b.pdf vuelven con ella
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.client.get(url, {'vista': 'papelera'}).context['vista'], 'archivos')
+        r = self.client.post(reverse('documentos:restaurar_elementos', args=[self.proyecto.pk]), {'carpetas': [self.planos.pk]})
+        self.assertEqual(r.status_code, 403)
 
     def test_cliente_403(self):
         self.client.force_login(self.cliente)
@@ -285,18 +313,19 @@ class ExploradorTests(Base):
         r = self.client.post(self.url('eliminar_elementos'), {
             'archivos': [b.pk], 'carpetas': [self.rev_a.pk], 'desde': self.planos.pk})
         self.assertRedirects(r, self.detalle(self.planos), fetch_redirect_response=False)
-        a.refresh_from_db(); b.refresh_from_db()
+        a.refresh_from_db(); b.refresh_from_db(); self.rev_a.refresh_from_db()
         self.assertIsNotNone(b.eliminado_en)
-        self.assertFalse(Carpeta.objects.filter(pk=self.rev_a.pk).exists())
-        self.assertEqual((a.carpeta, a.eliminado_en), (self.planos, None))  # C4: el contenido sube, no se borra
+        self.assertIsNotNone(self.rev_a.eliminado_en)
+        self.assertEqual((a.carpeta, a.eliminado_en), (self.rev_a, self.rev_a.eliminado_en))  # se va con su carpeta
 
     def test_eliminar_carpeta_y_su_subcarpeta_marcadas(self):
         detalles = self.carpeta('Detalles', self.rev_a)
         a = self.archivo('a.pdf', detalles)
         self.client.post(self.url('eliminar_elementos'), {'carpetas': [self.rev_a.pk, detalles.pk]})
-        a.refresh_from_db()
-        self.assertEqual(a.carpeta, self.planos)
-        self.assertEqual(list(Carpeta.objects.values_list('nombre', flat=True)), ['Planos'])
+        a.refresh_from_db(); detalles.refresh_from_db()
+        self.assertEqual((a.carpeta, a.eliminado_en), (detalles, detalles.eliminado_en))
+        self.assertEqual(list(Carpeta.objects.filter(eliminado_en__isnull=True).values_list('nombre', flat=True)),
+                         ['Planos'])
 
     def test_eliminar_solo_los_archivos_propios(self):  # el personal borra lo que subió
         otro = Usuario.objects.create_user('otro@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
@@ -413,6 +442,66 @@ class ExploradorFase2Tests(Base):
         self.assertContains(r, 'data-vista="cuadricula"')
         self.assertNotContains(r, 'id="ex-arbol"')
         self.assertNotContains(r, 'draggable="true"')
+
+
+class ExploradorFase3Tests(Base):
+    """docs/13 F3: copiar y vista previa."""
+
+    def setUp(self):
+        super().setUp()
+        parche = patch('documentos.storage._cliente')
+        self.cliente_s3 = parche.start()
+        self.addCleanup(parche.stop)
+
+    def copiar(self, **datos):
+        return self.client.post(reverse('documentos:copiar_elementos', args=[self.proyecto.pk]), datos)
+
+    def test_hacer_una_copia_queda_al_lado_con_otra_clave(self):  # D9
+        a = self.archivo('plano.pdf', self.rev_a)
+        self.copiar(archivos=[a.pk])
+        copia = Archivo.objects.get(nombre_original='Copia de plano.pdf')
+        self.assertEqual((copia.carpeta, copia.subido_por, copia.tamano), (self.rev_a, self.personal, a.tamano))
+        self.assertNotEqual(copia.clave_space, a.clave_space)
+        self.cliente_s3.return_value.copy_object.assert_called_once()
+        kwargs = self.cliente_s3.return_value.copy_object.call_args.kwargs
+        self.assertEqual((kwargs['CopySource']['Key'], kwargs['Key']), (a.clave_space, copia.clave_space))
+
+    def test_copiar_carpeta_a_otro_lugar_con_todo_lo_de_adentro(self):
+        fotos = self.carpeta('Fotos')
+        self.archivo('a.pdf', self.planos)
+        self.archivo('b.pdf', self.rev_a)
+        self.copiar(carpetas=[self.planos.pk], destino=fotos.pk)
+        copia = Carpeta.objects.get(padre=fotos, nombre='Planos')
+        self.assertTrue(Carpeta.objects.filter(padre=copia, nombre='Rev A').exists())
+        self.assertEqual(Archivo.objects.filter(carpeta__padre=fotos).count() + Archivo.objects.filter(carpeta__padre=copia).count(), 2)
+        self.copiar(carpetas=[self.planos.pk])  # «Hacer una copia» al lado
+        self.assertTrue(Carpeta.objects.filter(padre=None, nombre='Copia de Planos').exists())
+
+    def test_copiar_dentro_de_si_misma_no(self):
+        r = self.copiar(carpetas=[self.planos.pk], destino=self.rev_a.pk)
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(Carpeta.objects.filter(nombre='Planos').count(), 1)
+        self.cliente_s3.return_value.copy_object.assert_not_called()
+
+    def test_copiar_cliente_403(self):
+        a = self.archivo('a.pdf')
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.copiar(archivos=[a.pk]).status_code, 403)
+
+    def test_vista_previa_solo_fotos_y_pdf_y_queda_registrada(self):  # D10
+        self.cliente_s3.return_value.generate_presigned_url.return_value = 'https://space/x'
+        pdf, dwg = self.archivo('plano.pdf'), self.archivo('plano.dwg')
+        r = self.client.get(reverse('documentos:ver_archivo', args=[pdf.pk]))
+        self.assertRedirects(r, 'https://space/x', fetch_redirect_response=False)
+        params = self.cliente_s3.return_value.generate_presigned_url.call_args.kwargs['Params']
+        self.assertTrue(params['ResponseContentDisposition'].startswith('inline;'))
+        self.assertEqual(params['ResponseContentType'], 'application/pdf')
+        self.assertEqual(DescargaLog.objects.filter(archivo=pdf).count(), 1)
+        self.assertEqual(self.client.get(reverse('documentos:ver_archivo', args=[dwg.pk])).status_code, 404)
+        self.assertContains(self.ver(), f'data-url-ver="{reverse("documentos:ver_archivo", args=[pdf.pk])}"')
+
+    def test_csp_permite_el_pdf_en_un_marco(self):
+        self.assertIn('frame-src', self.ver().headers['Content-Security-Policy'])
 
 
 class AnidarCarpetasTests(Base):

@@ -24,8 +24,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // Una miniatura que no carga (URL vencida, objeto que no está) deja ver la extensión que tiene debajo
     document.addEventListener('error', (e) => { if (e.target.matches?.('.ex-miniatura img')) e.target.remove(); }, true);
 
+    // ----- Para todos: vista previa de fotos y PDF (D10); ‹ › y las flechas recorren las de esta lista -----
+    const visor = document.getElementById('ex-visor');
+    const conVista = [...document.querySelectorAll('.ex-fila[data-url-ver]')];
+    let enVisor = -1;
+    const mostrar = (i) => {
+        enVisor = (i + conVista.length) % conVista.length;
+        const d = conVista[enVisor].dataset;
+        visor.querySelector('.ex-visor-nombre').textContent = d.nombre;
+        visor.querySelector('.ex-visor-pos').textContent = conVista.length > 1 ? `${enVisor + 1} de ${conVista.length}` : '';
+        visor.querySelector('.ex-visor-descargar').href = d.urlDescargar;
+        visor.querySelectorAll('.ex-visor-paso').forEach(b => { b.hidden = conVista.length < 2; });
+        let contenido;
+        if (d.ext.toLowerCase() === '.pdf') {
+            contenido = document.createElement('iframe');
+            contenido.title = d.nombre;
+        } else {
+            contenido = document.createElement('img');
+            contenido.alt = d.nombre;
+        }
+        contenido.src = d.urlVer;  // pasa por el portal: mismos permisos y queda en el registro de descargas
+        visor.querySelector('.ex-visor-contenido').replaceChildren(contenido);
+    };
+    const ver = (fila) => {  // true si la abrió; false si ese archivo no tiene vista previa
+        if (!visor || !fila.dataset.urlVer) return false;
+        mostrar(conVista.indexOf(fila));
+        if (!visor.open) visor.showModal();
+        return true;
+    };
+    if (visor) {
+        visor.querySelectorAll('.ex-visor-paso').forEach(b => b.addEventListener('click', () => mostrar(enVisor + Number(b.dataset.paso))));
+        visor.querySelector('[data-cerrar-visor]').addEventListener('click', () => visor.close());
+        visor.addEventListener('keydown', (e) => {
+            if (conVista.length > 1 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                e.preventDefault();
+                mostrar(enVisor + (e.key === 'ArrowRight' ? 1 : -1));
+            }
+        });
+        visor.addEventListener('close', () => visor.querySelector('.ex-visor-contenido').replaceChildren());  // corta el PDF
+    }
+
     const zona = document.querySelector('.ex-zona[data-url-mover]');
-    if (!zona) return;  // el cliente solo navega y descarga
+    if (!zona) {
+        // El cliente navega y descarga; un clic en una foto o un PDF abre la vista previa
+        document.querySelector('.ex-lista')?.addEventListener('click', (e) => {
+            const nombre = e.target.closest('.ex-nombre');
+            if (nombre && ver(nombre.closest('.ex-fila'))) e.preventDefault();
+        });
+        return;
+    }
     const datos = zona.dataset;
     const filas = [...zona.querySelectorAll('.ex-fila')];
     const herramientas = zona.querySelector('.ex-controles');  // filtros y búsqueda: la selección toma su lugar
@@ -48,6 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const una = objs.length === 1 ? objs[0].dataset : null;
         const reglas = {
             abrir: una && una.tipo === 'carpeta' && !('objetivo' in una),  // la miga ya es la carpeta abierta
+            ver: una && !!una.urlVer,
+            duplicar: objs.length > 0,
+            copiar: objs.length > 0,
             descargar: una && una.tipo === 'archivo',  // ponytail: de a uno; varios a la vez pide ZIP por selección
             renombrar: !!una,
             mover: objs.length > 0,
@@ -129,6 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (e.target.closest('.ex-descargar')) return;  // el botón de descarga funciona siempre
         // Táctil: el toque abre (enlace normal) y la casilla selecciona. Enter sobre el enlace (detail 0) también abre
+        if (e.detail === 0 && fila.dataset.urlVer) {
+            e.preventDefault();
+            ver(fila);
+            return;
+        }
         if (!fino || e.detail === 0) return;
         e.preventDefault();
         elegir(fila, modo(e));
@@ -219,10 +274,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-cerrar-dialogo]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
 
     // ----- Acciones -----
-    const abrir = (el) => {
+    const abrir = (el) => {  // carpeta: entra; foto o PDF: vista previa; lo demás: descarga
         const d = el.dataset;
+        if (d.tipo === 'archivo' && ver(el)) return;
         window.location.href = d.tipo === 'carpeta' ? `?carpeta=${d.id}` : d.urlDescargar;
     };
+    const descargar = (el) => { window.location.href = el.dataset.urlDescargar; };
 
     const poner = (form, campo, valores) => {
         form.querySelectorAll(`input[data-extra="${campo}"]`).forEach(i => i.remove());
@@ -240,7 +297,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const ejecutar = (accion, objs) => {
         if (accion === 'nueva-carpeta') return pedirNombre(null);
         if (!objs.length) return;
-        if (accion === 'abrir' || accion === 'descargar') return abrir(objs[0]);
+        if (accion === 'abrir' || accion === 'ver') return abrir(objs[0]);
+        if (accion === 'descargar') return descargar(objs[0]);
+        if (accion === 'duplicar') return duplicar(objs);
+        if (accion === 'copiar' && dialogoMover) return abrirMover(objs, true);
         if (accion === 'renombrar' && objs.length === 1) return pedirNombre(objs[0]);
         if (accion === 'mover' && dialogoMover) return abrirMover(objs);
         if (accion === 'eliminar' && objs.every(o => o.dataset.borrable)) return eliminar(objs);
@@ -269,13 +329,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     zona.querySelector('[data-accion="nueva-carpeta"]')?.addEventListener('click', () => pedirNombre(null));
 
+    const duplicar = (objs) => {
+        const form = document.getElementById('ex-form-copiar');
+        poner(form, 'archivos', ids(objs, 'archivo'));
+        poner(form, 'carpetas', ids(objs, 'carpeta'));
+        form.submit();
+    };
+
     const eliminar = (objs) => {
         const carpetas = ids(objs, 'carpeta');
         const archivos = ids(objs, 'archivo');
         const titulo = objs.length === 1 ? `¿Eliminar «${objs[0].dataset.nombre}»?` : `¿Eliminar ${objs.length} elementos?`;
         const partes = [];
-        if (archivos.length) partes.push(`${archivos.length === 1 ? 'El archivo dejará' : 'Los archivos dejarán'} de verse para todos, incluidos los clientes.`);
-        if (carpetas.length) partes.push(`No se borra ningún archivo de ${carpetas.length === 1 ? 'la carpeta' : 'las carpetas'}: lo que ${carpetas.length === 1 ? 'tiene' : 'tienen'} adentro pasa a la carpeta de arriba.`);
+        partes.push(`${objs.length === 1 ? 'Va' : 'Van'} a la Papelera del proyecto y deja${objs.length === 1 ? '' : 'n'} de verse, también para los clientes.`);
+        if (carpetas.length) partes.push(`${carpetas.length === 1 ? 'La carpeta se va' : 'Las carpetas se van'} con todo lo que ${carpetas.length === 1 ? 'tiene' : 'tienen'} adentro.`);
+        partes.push('Desde la Papelera se puede restaurar.');
         const preguntar = window.confirmar || ((t, x) => Promise.resolve(window.confirm(`${t}\n\n${x}`)));
         preguntar(titulo, partes.join(' '), 'Eliminar').then((ok) => {
             if (!ok) return;
@@ -311,13 +379,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let lugar = null;
 
         // Por qué `objs` no puede ir a `destino` (null = raíz), o '' si puede. Lo usan el diálogo y arrastrar
-        const motivo = (destino, objs = moviendo) => {
+        let copiando = false;
+        const motivo = (destino, objs = moviendo, copia = copiando) => {
             for (const o of objs) {
                 if (o.dataset.tipo !== 'carpeta') continue;
                 if (destino && debajo(o.dataset.id).has(destino)) return 'Una carpeta no se puede mover dentro de sí misma.';
                 if (nivel(destino) + altura(o.dataset.id) > max) return `Así quedarían más de ${max} niveles de carpetas.`;
             }
-            if (objs.every(o => (o.dataset.padre || null) === destino)) return 'Ya está en esta carpeta.';
+            if (!copia && objs.every(o => (o.dataset.padre || null) === destino)) return 'Ya está en esta carpeta.';
             return '';
         };
 
@@ -359,12 +428,17 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         subir.addEventListener('click', () => { lugar = porId.get(lugar).padre; pintar(); });
 
-        abrirMover = (objs) => {
+        const accionMover = formMover.action;
+        abrirMover = (objs, copia = false) => {
             moviendo = objs;
+            copiando = copia;
+            formMover.action = copia ? datos.urlCopiar : accionMover;
+            moverAqui.textContent = copia ? 'Copiar aquí' : 'Mover aquí';
             bloqueadas = new Set();
             ids(objs, 'carpeta').forEach(id => debajo(id, bloqueadas));
             lugar = objs[0].dataset.padre || null;
-            dialogoMover.querySelector('h2').textContent = objs.length === 1 ? `Mover «${objs[0].dataset.nombre}»` : `Mover ${plural(objs.length, 'elemento', 'elementos')}`;
+            const verbo = copia ? 'Copiar' : 'Mover';
+            dialogoMover.querySelector('h2').textContent = objs.length === 1 ? `${verbo} «${objs[0].dataset.nombre}»` : `${verbo} ${plural(objs.length, 'elemento', 'elementos')}`;
             cargar(objs);
             dialogoMover.showModal();
             pintar();
@@ -376,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const destinoDe = (el) => {
             const objetivo = el.closest?.('.ex-fila[data-tipo="carpeta"], .ex-migas a[data-carpeta-id]');
             if (!objetivo || arrastrados.includes(objetivo)) return null;
-            return motivo(objetivo.dataset.carpetaId || null, arrastrados) ? null : objetivo;
+            return motivo(objetivo.dataset.carpetaId || null, arrastrados, false) ? null : objetivo;
         };
         const marcarDestino = (el) => {
             destino?.classList.remove('es-destino');
@@ -410,6 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!arrastrados || !destino) return;
             e.preventDefault();
             cargar(arrastrados);
+            formMover.action = accionMover;
             formMover.elements.destino.value = destino.dataset.carpetaId || '';
             formMover.submit();
         });

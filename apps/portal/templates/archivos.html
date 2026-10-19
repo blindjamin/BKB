@@ -48,6 +48,7 @@
             <a href="{% url 'documentos:detalle_proyecto' proyecto.pk %}" class="ex-pestana"{% if vista == 'archivos' %} aria-current="page"{% endif %}>Archivos</a>
             <a href="?vista=hitos" class="ex-pestana"{% if vista == 'hitos' %} aria-current="page"{% endif %}>Hitos</a>
             <a href="?vista=modificaciones" class="ex-pestana"{% if vista == 'modificaciones' %} aria-current="page"{% endif %}>Modificaciones{% if modificaciones %} ({{ modificaciones|length }}){% endif %}</a>
+            {% if puede_subir %}<a href="?vista=papelera" class="ex-pestana ex-pestana-papelera"{% if vista == 'papelera' %} aria-current="page"{% endif %}>Papelera</a>{% endif %}
         </nav>
     </div>
 
@@ -60,6 +61,7 @@
         data-url-crear="{% url 'documentos:crear_carpeta' proyecto.pk %}"
         data-url-mover="{% url 'documentos:mover_archivos' proyecto.pk %}"
         data-url-eliminar="{% url 'documentos:eliminar_elementos' proyecto.pk %}"
+        data-url-copiar="{% url 'documentos:copiar_elementos' proyecto.pk %}"
         data-url-renombrar-carpeta="{% url 'documentos:renombrar_carpeta' '00000000-0000-0000-0000-000000000000' %}"
         data-url-renombrar-archivo="{% url 'documentos:renombrar_archivo' '00000000-0000-0000-0000-000000000000' %}"
         {% endif %}>
@@ -126,6 +128,7 @@
                 </button>
                 {% if puede_gestionar %}
                 <button type="button" class="btn-link" data-accion="mover">Mover</button>
+                <button type="button" class="btn-link" data-accion="copiar">Copiar</button>
                 <button type="button" class="btn-link" data-accion="renombrar">Renombrar</button>
                 {% endif %}
                 <button type="button" class="btn-link btn-eliminar" data-accion="eliminar">
@@ -204,7 +207,7 @@
                 </li>
                 {% endfor %}
                 {% for archivo in archivos %}
-                <li class="ex-fila" data-tipo="archivo" data-id="{{ archivo.pk }}" data-nombre="{{ archivo.nombre_original }}" data-base="{{ archivo.base }}" data-ext="{{ archivo.ext_punto }}" data-padre="{{ archivo.carpeta_id|default:'' }}" data-url-descargar="{% url 'documentos:descargar_archivo' archivo.pk %}" data-ubicacion="{{ archivo.ubicacion }}" data-autor="{{ archivo.subido_por.nombre|default:archivo.subido_por.email }}" data-fecha="{{ archivo.subido_en|date:'d M Y, H:i' }}" data-tamano="{{ archivo.tamano|filesizeformat }}"{% if archivo.puede_borrar %} data-borrable="1"{% endif %}{% if puede_gestionar %} draggable="true"{% endif %}>
+                <li class="ex-fila" data-tipo="archivo" data-id="{{ archivo.pk }}" data-nombre="{{ archivo.nombre_original }}" data-base="{{ archivo.base }}" data-ext="{{ archivo.ext_punto }}" data-padre="{{ archivo.carpeta_id|default:'' }}" data-url-descargar="{% url 'documentos:descargar_archivo' archivo.pk %}"{% if archivo.con_vista_previa %} data-url-ver="{% url 'documentos:ver_archivo' archivo.pk %}"{% endif %} data-ubicacion="{{ archivo.ubicacion }}" data-autor="{{ archivo.subido_por.nombre|default:archivo.subido_por.email }}" data-fecha="{{ archivo.subido_en|date:'d M Y, H:i' }}" data-tamano="{{ archivo.tamano|filesizeformat }}"{% if archivo.puede_borrar %} data-borrable="1"{% endif %}{% if puede_gestionar %} draggable="true"{% endif %}>
                     {# P5: en cuadrícula, foto en miniatura (lazy: en la lista está oculta y no se pide al Space) #}
                     <span class="ex-miniatura" aria-hidden="true">
                         <span class="archivo-ext">{{ archivo.extension|default:"—" }}</span>
@@ -245,6 +248,7 @@
     {# Menú de acciones: clic derecho o ⋮ sobre una fila, o la miga de la carpeta actual (explorador.js) #}
     <div id="ex-menu" class="menu-panel ex-menu" role="menu" hidden>
         <button type="button" class="menu-item" role="menuitem" data-accion="abrir">Abrir</button>
+        <button type="button" class="menu-item" role="menuitem" data-accion="ver">Vista previa</button>
         <button type="button" class="menu-item" role="menuitem" data-accion="descargar">
             <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#descargar"></use></svg> Descargar
         </button>
@@ -252,6 +256,8 @@
         <hr class="menu-separador">
         <button type="button" class="menu-item" role="menuitem" data-accion="renombrar">Renombrar <kbd>F2</kbd></button>
         <button type="button" class="menu-item" role="menuitem" data-accion="mover">Mover a…</button>
+        <button type="button" class="menu-item" role="menuitem" data-accion="duplicar">Hacer una copia</button>
+        <button type="button" class="menu-item" role="menuitem" data-accion="copiar">Copiar a…</button>
         {% endif %}
         <hr class="menu-separador">
         <button type="button" class="menu-item menu-item-peligro" role="menuitem" data-accion="eliminar">
@@ -312,11 +318,78 @@
     {{ arbol_js|json_script:"ex-arbol" }}
     {% endif %}
 
+    <form method="post" id="ex-form-copiar" action="{% url 'documentos:copiar_elementos' proyecto.pk %}" hidden>
+        {% csrf_token %}
+        <input type="hidden" name="desde" value="{{ carpeta_activa.pk|default:'' }}">{% for k, v in volver %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    </form>
+
     <form method="post" id="ex-form-eliminar" action="{% url 'documentos:eliminar_elementos' proyecto.pk %}" hidden>
         {% csrf_token %}
         <input type="hidden" name="desde" value="{{ carpeta_activa.pk|default:'' }}">{% for k, v in volver %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
     </form>
     {% endif %}
+
+    {# D10: vista previa de fotos y PDF, para todos; ‹ › recorre las de esta lista #}
+    <dialog id="ex-visor" class="ex-visor" aria-labelledby="ex-visor-nombre">
+        <div class="ex-visor-barra">
+            <span id="ex-visor-nombre" class="ex-visor-nombre"></span>
+            <span class="ex-visor-pos" aria-live="polite"></span>
+            <a href="#" class="btn-link ex-visor-descargar">
+                <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#descargar"></use></svg> Descargar
+            </a>
+            <button type="button" class="ex-icono-btn" data-cerrar-visor aria-label="Cerrar vista previa">&times;</button>
+        </div>
+        <div class="ex-visor-cuerpo">
+            <button type="button" class="ex-icono-btn ex-visor-paso" data-paso="-1" aria-label="Anterior">&lsaquo;</button>
+            <div class="ex-visor-contenido"></div>
+            <button type="button" class="ex-icono-btn ex-visor-paso" data-paso="1" aria-label="Siguiente">&rsaquo;</button>
+        </div>
+    </dialog>
+
+    {% elif vista == 'papelera' %}
+    {# P2: lo eliminado espera aquí y se puede restaurar. Nada se borra del almacenamiento #}
+    <section class="ex-papelera" aria-labelledby="papelera-titulo">
+        <h2 id="papelera-titulo" class="seccion-title">Papelera</h2>
+        <p class="view-subtitle">Lo que se elimina queda aquí y se puede restaurar a su lugar. Los clientes no ven nada de esto.</p>
+        {% if papelera %}
+        <div class="ex-tabla">
+            <div class="ex-encabezado ex-encabezado-papelera">
+                <span class="ex-col-nombre">Nombre</span>
+                <span class="ex-col">Estaba en</span>
+                <span class="ex-col">Eliminado por</span>
+                <span class="ex-col">Eliminado</span>
+                <span class="ex-col-acciones" aria-hidden="true"></span>
+            </div>
+            <ul class="ex-lista">
+                {% for x in papelera %}
+                <li class="ex-fila ex-fila-papelera">
+                    <span class="ex-nombre">
+                        {% if x.tipo_elemento == 'carpeta' %}<svg class="icono ex-icono-carpeta" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>{% else %}<svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#archivo"></use></svg>{% endif %}
+                        <span class="ex-nombre-texto"><span class="archivo-nombre">{{ x.nombre }}</span></span>
+                    </span>
+                    <span class="ex-col">{% if x.tipo_elemento == 'carpeta' %}{{ x.padre.nombre|default:"Raíz del proyecto" }}{% else %}{{ x.carpeta.nombre|default:"Raíz del proyecto" }}{% endif %}</span>
+                    <span class="ex-col">{{ x.eliminado_por.nombre|default:x.eliminado_por.email }}</span>
+                    <span class="ex-col">{{ x.eliminado_en|date:"d M Y, H:i" }}</span>
+                    <span class="ex-col-acciones">
+                        {% if x.puede_restaurar %}
+                        <form method="post" action="{% url 'documentos:restaurar_elementos' proyecto.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="{% if x.tipo_elemento == 'carpeta' %}carpetas{% else %}archivos{% endif %}" value="{{ x.pk }}">
+                            <button type="submit" class="btn-link">Restaurar</button>
+                        </form>
+                        {% endif %}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <div class="archivos-empty">
+            <svg class="icono ex-vacio-icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg>
+            <p>La Papelera está vacía.</p>
+        </div>
+        {% endif %}
+    </section>
 
     {% elif vista == 'hitos' %}
     <section class="hitos" id="hitos">
