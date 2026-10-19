@@ -148,7 +148,7 @@ class VistasArchivosTests(TestCase):
         self.assertContains(response, 'foto-carpeta.jpg')
         self.assertNotContains(response, 'doc-carpeta.pdf')
         self.assertNotContains(response, 'foto.jpg')  # la de la raíz
-        self.assertContains(response, f'href="?carpeta={carpeta.pk}&tipo=documentos"')
+        self.assertContains(response, f'href="?carpeta={carpeta.pk}&amp;tipo=documentos"')
 
 
 class ArchivosYFlujoTests(TestCase):

@@ -85,7 +85,7 @@ class ArbolTests(Base):
         self.assertContains(r, 'Rev A')
         self.assertContains(r, '1 carpeta · 1 archivo')
         r = self.ver(self.rev_a)
-        self.assertContains(r, f'?carpeta={self.planos.pk}">Planos</a>')  # migas con enlace a la de arriba
+        self.assertContains(r, f'<a href="?carpeta={self.planos.pk}" data-carpeta-id="{self.planos.pk}" data-carpeta-nombre="Planos">Planos</a>')  # migas con enlace a la de arriba
         self.assertContains(r, f'data-objetivo data-tipo="carpeta" data-id="{self.rev_a.pk}"')  # la miga actual abre sus acciones
         self.assertContains(self.ver(self.rev_a, usuario=self.cliente), '<span aria-current="page">Rev A</span>', html=True)
 
@@ -340,6 +340,79 @@ class ExploradorTests(Base):
         r = self.client.get(url, {'vista': 'modificaciones'})
         self.assertContains(r, 'id="modificaciones"')
         self.assertNotContains(r, 'id="ex-arbol"')
+
+
+class ExploradorFase2Tests(Base):
+    """docs/13 F2: búsqueda, orden, estado en los enlaces, miniaturas."""
+
+    def get(self, **params):
+        return self.client.get(reverse('documentos:detalle_proyecto', args=[self.proyecto.pk]), params)
+
+    def nombres(self, r):
+        return [a.nombre_original for a in r.context['archivos']]
+
+    def test_buscar_recorre_todo_el_proyecto_y_dice_donde_esta(self):
+        self.archivo('plano-rev-a.pdf', self.rev_a)
+        self.archivo('memoria.pdf')
+        self.archivo('plano-general.pdf')
+        r = self.get(q='PLANO', carpeta=self.planos.pk)  # la carpeta abierta no limita la búsqueda
+        self.assertEqual(sorted(self.nombres(r)), ['plano-general.pdf', 'plano-rev-a.pdf'])
+        self.assertEqual([c.nombre for c in r.context['carpetas']], ['Planos'])
+        self.assertContains(r, 'en Planos › Rev A')
+        self.assertContains(r, 'Resultados de «PLANO»')
+
+    def test_buscar_respeta_el_bloqueo_del_cliente(self):  # A8
+        from documentos.models import Proyecto
+        Proyecto.objects.filter(pk=self.proyecto.pk).update(finalizado_en=None)
+        self.archivo('plano.pdf')
+        self.client.force_login(self.cliente)
+        self.assertNotContains(self.get(q='plano'), 'plano.pdf')
+
+    def test_ordenar_por_columna(self):
+        for nombre, tamano in (('b.pdf', 30), ('a.pdf', 10), ('c.pdf', 20)):
+            a = self.archivo(nombre)
+            Archivo.objects.filter(pk=a.pk).update(tamano=tamano)
+        self.assertEqual(self.nombres(self.get(orden='nombre')), ['a.pdf', 'b.pdf', 'c.pdf'])
+        self.assertEqual(self.nombres(self.get(orden='-nombre')), ['c.pdf', 'b.pdf', 'a.pdf'])
+        self.assertEqual(self.nombres(self.get(orden='-tamano')), ['b.pdf', 'c.pdf', 'a.pdf'])
+        r = self.get(orden='otra')  # cualquier otro valor: el orden de siempre
+        self.assertEqual(r.context['orden'], '')
+
+    def test_enlaces_conservan_carpeta_orden_y_busqueda(self):
+        r = self.get(carpeta=self.planos.pk, orden='nombre')
+        self.assertEqual(r.context['filtro_urls']['fotos'], f'?carpeta={self.planos.pk}&tipo=fotos&orden=nombre')
+        self.assertEqual(r.context['orden_urls']['nombre'], f'?carpeta={self.planos.pk}&orden=-nombre')
+        self.assertEqual(r.context['orden_urls']['fecha'], f'?carpeta={self.planos.pk}&orden=fecha')
+        self.assertEqual(self.get().context['orden_urls']['fecha'], '?orden=-fecha')  # la fecha parte por la más nueva
+
+    def test_despues_de_una_accion_vuelve_a_la_busqueda(self):
+        a = self.archivo('plano.pdf')
+        r = self.client.post(reverse('documentos:mover_archivos', args=[self.proyecto.pk]), {
+            'archivos': [a.pk], 'destino': self.rev_a.pk, 'desde': '', 'q': 'plano', 'orden': '-fecha'})
+        url = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])
+        self.assertRedirects(r, f'{url}?orden=-fecha&q=plano', fetch_redirect_response=False)
+
+    def test_miniatura_solo_para_fotos_que_el_navegador_muestra(self):
+        foto, heic, pdf = self.archivo('foto.jpg'), self.archivo('foto.heic'), self.archivo('plano.pdf')
+        r = self.get()
+        miniaturas = {a.nombre_original: getattr(a, 'miniatura', None) for a in r.context['archivos']}
+        self.assertIn(foto.clave_space, miniaturas['foto.jpg'])
+        self.assertIsNone(miniaturas['foto.heic'])
+        self.assertIsNone(miniaturas['plano.pdf'])
+        self.assertContains(r, 'loading="lazy"')
+
+    def test_csp_permite_imagenes_del_space(self):
+        from django.conf import settings
+        csp = self.get().headers['Content-Security-Policy']
+        self.assertIn(f"img-src 'self' https://{settings.SPACES_BUCKET}.", csp)
+
+    def test_cliente_tiene_vistas_pero_no_acciones(self):
+        self.archivo('a.pdf')
+        r = self.ver(usuario=self.cliente)
+        self.assertContains(r, 'js/explorador.js')
+        self.assertContains(r, 'data-vista="cuadricula"')
+        self.assertNotContains(r, 'id="ex-arbol"')
+        self.assertNotContains(r, 'draggable="true"')
 
 
 class AnidarCarpetasTests(Base):

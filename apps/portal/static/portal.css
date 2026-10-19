@@ -3332,6 +3332,17 @@ a[href^="mailto:"] {
     background-color: rgba(250, 90, 54, 0.12);
 }
 
+/* La barra de selección ocupa el lugar de los filtros (fase 2): mismo alto, sin salto */
+.ex-zona > .ex-seleccion {
+    box-sizing: border-box;
+    min-height: 48px;
+    margin-bottom: var(--space-4);
+}
+
+.ex-controles {
+    min-height: 48px;
+}
+
 .ex-seleccion-n {
     font-weight: 600;
 }
@@ -3631,5 +3642,281 @@ a[href^="mailto:"] {
 
     .ex-seleccion-acciones {
         margin-left: 0;
+    }
+}
+
+/* ===== Explorador, fase 2 (docs/13): búsqueda, orden, cuadrícula, arrastrar y detalles ===== */
+.ex-controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.ex-controles .filtros {
+    margin-bottom: 0;
+    margin-right: auto;
+}
+
+.ex-buscar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 0 1 18rem;
+    min-height: 40px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--input-border);
+    border-radius: var(--bkb-radius-pill);
+    background-color: var(--input-bg);
+    color: var(--text-muted);
+}
+
+.ex-buscar:focus-within {
+    border-color: var(--bkb-salmon-500);
+}
+
+.ex-buscar input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    outline: none;
+}
+
+.ex-vistas {
+    display: flex;
+    gap: var(--space-1);
+}
+
+.ex-icono-btn[aria-pressed="true"] {
+    background-color: var(--bkb-salmon-soft);
+    color: var(--accent-text);
+}
+
+[data-theme="dark"] .ex-icono-btn[aria-pressed="true"] {
+    background-color: rgba(250, 90, 54, 0.14);
+}
+
+.ex-icono-btn .icono {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Columnas que ordenan */
+.ex-orden {
+    color: inherit;
+    text-decoration: none;
+}
+
+.ex-orden:hover {
+    color: var(--text-main);
+}
+
+.ex-nombre-texto {
+    display: grid;
+    min-width: 0;
+}
+
+.ex-ubicacion {
+    overflow: hidden;
+    color: var(--text-subtle);
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Miniatura: solo en cuadrícula. En la lista no se muestra, así que el navegador no la pide */
+.ex-miniatura {
+    display: none;
+}
+
+/* Cuadrícula (P5) */
+.ex-cuadricula {
+    background: transparent;
+    border: 0;
+    overflow: visible;
+}
+
+.ex-cuadricula .ex-encabezado {
+    display: none;
+}
+
+.ex-cuadricula .ex-lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-3);
+}
+
+.ex-cuadricula .ex-fila,
+.ex-con-seleccion.ex-cuadricula .ex-fila {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-height: 0;
+    padding: var(--space-2);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--bkb-radius-input);
+}
+
+.ex-cuadricula .ex-fila:last-child {
+    border-bottom: 1px solid var(--card-border);
+}
+
+.ex-cuadricula .ex-fila .ex-col {
+    display: none;
+}
+
+.ex-cuadricula .ex-nombre {
+    padding: var(--space-2) var(--space-6) var(--space-1) var(--space-1);
+}
+
+.ex-cuadricula .ex-fila[data-tipo="archivo"] .ex-nombre > .archivo-ext {
+    display: none;  /* ya se ve grande en la miniatura */
+}
+
+.ex-cuadricula .ex-miniatura {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: calc(var(--bkb-radius-input) - 4px);
+    background-color: var(--page-bg);
+}
+
+.ex-cuadricula .ex-miniatura .archivo-ext {
+    font-size: 1rem;
+}
+
+.ex-cuadricula .ex-miniatura img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ex-cuadricula .ex-marcar {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+    z-index: 1;
+}
+
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] .ex-marcar {
+    position: static;
+    margin: var(--space-2) 0 0 var(--space-1);
+}
+
+.ex-cuadricula .ex-col-acciones {
+    position: absolute;
+    right: var(--space-1);
+    bottom: var(--space-1);
+}
+
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] {
+    flex-direction: row;
+    align-items: center;
+    align-self: start;  /* compacta, sin estirarse al alto de las tarjetas de archivo */
+    gap: var(--space-2);
+}
+
+/* Como en Drive: los archivos parten en una fila nueva, debajo de las carpetas */
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] + .ex-fila[data-tipo="archivo"] {
+    grid-column-start: 1;
+}
+
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] .ex-col-acciones {
+    position: static;
+    margin-left: auto;
+}
+
+.ex-cuadricula .ex-fila[data-tipo="carpeta"] .ex-nombre {
+    flex: 1;
+    padding-right: 0;
+}
+
+.ex-cuadricula .ex-descargar {
+    display: none;
+}
+
+/* Arrastrar para mover (D12) */
+.ex-fila[draggable="true"] {
+    cursor: grab;
+}
+
+.ex-fila[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.ex-migas a.es-destino {
+    background-color: var(--bkb-salmon-soft);
+    color: var(--accent-text);
+}
+
+/* Panel de detalles: se desliza desde la derecha */
+.ex-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 40;
+    width: min(22rem, 100%);
+    height: 100dvh;
+    padding: var(--space-5);
+    box-sizing: border-box;
+    overflow-y: auto;
+    background-color: var(--card-bg);
+    border-left: 1px solid var(--card-border);
+    box-shadow: -12px 0 32px rgba(8, 12, 20, 0.16);
+}
+
+.ex-panel-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+}
+
+.ex-panel-cabecera .seccion-title {
+    margin: 0;
+}
+
+.ex-panel-datos {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+}
+
+.ex-panel-datos dt {
+    margin-top: var(--space-3);
+    color: var(--text-subtle);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.ex-panel-datos dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+    .ex-buscar {
+        flex: 1 1 100%;
+        order: 3;
+    }
+
+    .ex-cuadricula .ex-lista {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* En la cuadrícula del celular, la carpeta ocupa toda la fila */
+    .ex-cuadricula .ex-fila[data-tipo="carpeta"] {
+        grid-column: 1 / -1;
     }
 }

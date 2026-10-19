@@ -49,6 +49,16 @@ def url_descarga(clave, nombre_original):
     )
 
 
+MINIATURA_SEGUNDOS = 15 * 60  # la cuadrícula carga las fotos al bajar (lazy): 60 s no alcanzan
+
+
+def url_miniatura(clave):
+    """URL para mostrar la foto en un <img> (docs/13 P5). No es una descarga: no pasa por DescargaLog."""
+    _validar(clave)
+    return _cliente().generate_presigned_url(
+        'get_object', Params={'Bucket': settings.SPACES_BUCKET, 'Key': clave}, ExpiresIn=MINIATURA_SEGUNDOS)
+
+
 def post_subida(clave, tipo):
     """POST prefirmado de 60 s: el Space rechaza otro tipo, o menos de 1 byte o más de MAX_UPLOAD_MB.
 
