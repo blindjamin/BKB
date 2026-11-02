@@ -5,7 +5,7 @@ const isGitHubPages = process.env.GITHUB_PAGES === 'true';
 
 // https://astro.build/config
 export default defineConfig({
-  site: isGitHubPages ? 'https://blindjamin.github.io' : 'https://www.bkb.cl',
+  site: isGitHubPages ? 'https://blindjamin.github.io' : 'https://empresabkb.cl',
   base: isGitHubPages ? '/BKB' : '/',
   output: 'static',
   server: {
