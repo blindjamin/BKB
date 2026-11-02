@@ -75,6 +75,9 @@ const { links, cotizarHref } = Astro.props;
     const links = document.querySelectorAll('.mobile-nav-link');
     
     if (!toggle || !panel || !backdrop) return;
+
+    // Fuera del header: su backdrop-filter hace que `fixed` sea relativo a él y el panel oculto desborde la página
+    document.body.append(backdrop, panel);
     
     let isOpen = false;
 
