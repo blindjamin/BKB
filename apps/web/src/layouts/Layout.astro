@@ -20,7 +20,7 @@ const {
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
-const siteUrl = Astro.site || 'https://www.bkb.cl';
+const siteUrl = Astro.site || 'https://empresabkb.cl';
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
 
 // Schema.org LocalBusiness actualizado
@@ -29,7 +29,7 @@ const schemaOrg = {
   "@type": "Electrician",
   "name": SITE.name,
   "url": siteUrl.toString(),
-  "logo": new URL(getPath('/logo.svg'), siteUrl).toString(),
+  "logo": new URL(getPath('/assets/bkb-logo-final.png'), siteUrl).toString(),
   "description": description,
   "areaServed": SITE.coverage,
   "hasCredential": "SEC Clase A",
