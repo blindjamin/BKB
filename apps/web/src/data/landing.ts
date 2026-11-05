@@ -15,9 +15,10 @@ import ingefrio from '../assets/clients/brand-ingefrio.png';
 import ingenproyect from '../assets/clients/brand-ingenproyect.png';
 import shs from '../assets/clients/brand-shs.jpg';
 
-import faena1 from '../assets/landing/faena-1.jpg';
 import faena2 from '../assets/landing/faena-2.jpg';
-import faena3 from '../assets/landing/faena-3.jpg';
+import obraPlano from '../assets/landing/obra-plano.jpg';
+import obraLubricacion from '../assets/landing/obra-lubricacion.jpg';
+import obraTablero from '../assets/landing/obra-tablero.jpg';
 import faenaHero from '../assets/landing/faena-hero.jpg';
 // Fotos reales de BKB (29-09-2026)
 import servicioIngenieria from '../assets/landing/servicio-ingenieria.jpg';
@@ -73,9 +74,9 @@ export interface PortfolioItem {
 }
 
 export const portafolio: PortfolioItem[] = [
-  { img: faena1, title: 'Ampliación Planta Faenadora y Cecinas Sopraval', spec: 'Industria · La Calera' },
-  { img: faena2, title: 'Estación de Bombeo e Impulsión ESVAL', spec: 'Sanitaria · Valparaíso' },
-  { img: faena3, title: 'Línea de Envasado Alimentos Castaño', spec: 'Agroindustria · Santiago' }
+  { img: obraPlano, title: 'Ampliación Planta Faenadora y Cecinas Sopraval', spec: 'Industria · La Calera' },
+  { img: obraTablero, title: 'Estación de Bombeo e Impulsión ESVAL', spec: 'Sanitaria · Valparaíso' },
+  { img: obraLubricacion, title: 'Sistema de Lubricación', spec: 'Industria' }
 ];
 
 export interface BrandItem {
