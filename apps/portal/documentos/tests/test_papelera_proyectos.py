@@ -171,3 +171,32 @@ class HistorialArchivosTests(TestCase):
     def test_filtro_invalido_muestra_todo(self):
         self.client.post(reverse('documentos:eliminar_archivo', args=[self.archivo.pk]))
         self.assertContains(self.client.get(reverse('gestion:historial') + '?proyecto=basura'), 'plano.pdf')
+
+
+class BotonesVisiblesTests(TestCase):
+    """El botón está en el menú «⋯» del proyecto y Gestión lleva a la Papelera, también para el superusuario."""
+
+    def setUp(self):
+        self.proyecto = crear_proyecto(crear_empresa(nombre='Tecfluid'), nombre='NV 1')
+        self.url = reverse('documentos:detalle_proyecto', args=[self.proyecto.pk])
+        self.eliminar = reverse('documentos:eliminar_proyecto', args=[self.proyecto.pk])
+
+    def test_jefe_y_superusuario_ven_eliminar_y_la_papelera(self):
+        jefe = Usuario.objects.create_user('jefe@bkb.cl', 'Clave123!', rol=Rol.JEFE)
+        su = Usuario.objects.create_user('su@bkb.cl', 'Clave123!', rol=Rol.PERSONAL, is_superuser=True)
+        for usuario in (jefe, su):
+            with self.subTest(usuario=usuario.email):
+                self.client.force_login(usuario)
+                r = self.client.get(self.url)
+                self.assertContains(r, self.eliminar)
+                self.assertContains(r, reverse('gestion:papelera') if usuario == su else reverse('gestion:usuarios'))
+                r = self.client.get(reverse('gestion:papelera'))
+                self.assertContains(r, reverse('gestion:historial'))
+
+    def test_personal_no_ve_eliminar(self):
+        personal = Usuario.objects.create_user('p@bkb.cl', 'Clave123!', rol=Rol.PERSONAL)
+        self.proyecto.encargados_bkb.add(personal)
+        self.client.force_login(personal)
+        r = self.client.get(self.url)
+        self.assertNotContains(r, self.eliminar)
+        self.assertNotContains(r, reverse('gestion:papelera'))

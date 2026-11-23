@@ -1,7 +1,7 @@
 <nav class="ex-pestanas gestion-pestanas" aria-label="Secciones de gestión">
     {% if es_jefe %}<a href="{% url 'gestion:usuarios' %}" class="ex-pestana"{% if activa == 'usuarios' %} aria-current="page"{% endif %}>Usuarios</a>{% endif %}
     <a href="{% url 'gestion:certificados' %}" class="ex-pestana"{% if activa == 'certificados' %} aria-current="page"{% endif %}>Certificados de arriendo</a>
-    {% if es_jefe %}
+    {% if puede_eliminar %}
     <a href="{% url 'gestion:papelera' %}" class="ex-pestana"{% if activa == 'papelera' %} aria-current="page"{% endif %}>Papelera</a>
     <a href="{% url 'gestion:historial' %}" class="ex-pestana"{% if activa == 'historial' %} aria-current="page"{% endif %}>Historial</a>
     {% endif %}

@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from documentos.permisos import _es_personal, es_jefe
+from documentos.permisos import _es_personal, es_jefe, puede_eliminar_estructura
 
 
 def jefe(request):
@@ -8,6 +8,7 @@ def jefe(request):
     return {
         'es_jefe': es_jefe(request.user),
         'es_personal': _es_personal(request.user),
+        'puede_eliminar': puede_eliminar_estructura(request.user),  # Papelera e Historial: jefe y superusuario
     }
 
 
