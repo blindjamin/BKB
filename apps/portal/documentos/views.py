@@ -695,7 +695,7 @@ def eliminar_proyecto(request, pk):
         return reverse('documentos:detalle_empresa', args=[proyecto.empresa_id])
 
     return _confirmar_eliminacion(request, proyecto, 'el proyecto', _perdidas_proyecto(proyecto),
-                                  reverse('documentos:editar_proyecto', args=[proyecto.pk]), a_papelera,
+                                  reverse('documentos:detalle_proyecto', args=[proyecto.pk]), a_papelera,
                                   definitivo=False)
 
 

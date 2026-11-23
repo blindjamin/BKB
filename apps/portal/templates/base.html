@@ -39,6 +39,8 @@
             {% endif %}
             {% if es_jefe %}
             <a href="{% url 'gestion:usuarios' %}" class="btn-link">Gestión</a>
+            {% elif puede_eliminar %}
+            <a href="{% url 'gestion:papelera' %}" class="btn-link">Gestión</a>
             {% elif es_personal %}
             <a href="{% url 'gestion:certificados' %}" class="btn-link">Certificados</a>
             {% endif %}

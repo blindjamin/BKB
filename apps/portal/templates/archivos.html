@@ -16,7 +16,7 @@
             <span class="pastilla-flujo pastilla-flujo-{% if proyecto.finalizado %}finalizado{% else %}en_curso{% endif %}">
                 {% if proyecto.finalizado %}Finalizado{% else %}En curso{% endif %}
             </span>
-            {% if puede_editar or puede_descargar_proyecto %}
+            {% if puede_editar or puede_descargar_proyecto or puede_eliminar %}
             <details class="menu-desplegable ex-menu-proyecto">
                 <summary class="ex-icono-btn" aria-label="Más acciones del proyecto" title="Más acciones">&#8943;</summary>
                 <div class="menu-panel menu-panel-derecha">
@@ -28,6 +28,12 @@
                     <a href="{% url 'documentos:descargar_proyecto' proyecto.pk %}" class="menu-item">
                         <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#descargar"></use></svg>
                         Descargar proyecto (ZIP)
+                    </a>
+                    {% endif %}
+                    {% if puede_eliminar %}
+                    <a href="{% url 'documentos:eliminar_proyecto' proyecto.pk %}" class="menu-item menu-item-peligro">
+                        <svg class="icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg>
+                        Eliminar proyecto…
                     </a>
                     {% endif %}
                 </div>
