@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import default_token_generator
@@ -5,14 +7,16 @@ from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator
+from django.views.decorators.http import require_http_methods, require_POST
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from accounts.models import Rol, Usuario
 from documentos.correos import enviar
-from documentos.models import CertificadoEquipo
-from documentos.permisos import _es_personal, es_jefe
+from documentos.historial import registrar
+from documentos.models import Accion, CertificadoEquipo, Proyecto, RegistroAccion
+from documentos.permisos import _es_personal, es_jefe, puede_eliminar_estructura
 
 from .forms import UsuarioForm
 
@@ -189,3 +193,58 @@ def subir_certificado(request, equipo_id):
 
     messages.success(request, f'Certificado de {equipo.nombre} actualizado correctamente.')
     return redirect('gestion:certificados')
+
+
+def _solo_quien_elimina(usuario):
+    if not puede_eliminar_estructura(usuario):
+        raise PermissionDenied('Solo el jefe puede ver la Papelera y el historial.')
+
+
+@login_required
+def papelera(request):
+    """Proyectos eliminados: se restauran o se borran de verdad desde aquí."""
+    _solo_quien_elimina(request.user)
+    proyectos = (Proyecto.objects.filter(eliminado_en__isnull=False)
+                 .select_related('empresa', 'eliminado_por').order_by('-eliminado_en'))
+    return render(request, 'gestion/papelera.html', {'proyectos': proyectos})
+
+
+def _en_papelera(pk):
+    return get_object_or_404(Proyecto.objects.filter(eliminado_en__isnull=False).select_related('empresa'), pk=pk)
+
+
+@login_required
+@require_POST
+def restaurar_proyecto(request, pk):
+    _solo_quien_elimina(request.user)
+    proyecto = _en_papelera(pk)
+    if Proyecto.objects.filter(pk=proyecto.pk, eliminado_en__isnull=False).update(eliminado_en=None, eliminado_por=None):
+        registrar(request.user, Accion.PROYECTO_RESTAURADO, proyecto, proyecto)
+    messages.success(request, f'Se restauró el proyecto «{proyecto.nombre}». Vuelve a verse como antes.')
+    return redirect('gestion:papelera')
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def eliminar_definitivo(request, pk):
+    _solo_quien_elimina(request.user)
+    from documentos.views import borrar_proyecto_definitivo  # aquí: documentos.views ya importa de gestion
+    return borrar_proyecto_definitivo(request, _en_papelera(pk))
+
+
+@login_required
+def historial(request):
+    """Quién eliminó o restauró qué y cuándo. Se puede ver solo lo de un proyecto (?proyecto=<id>)."""
+    _solo_quien_elimina(request.user)
+    registros = RegistroAccion.objects.select_related('usuario')
+    proyecto = request.GET.get('proyecto')
+    try:
+        proyecto = uuid.UUID(proyecto) if proyecto else None
+    except ValueError:
+        proyecto = None
+    if proyecto:
+        registros = registros.filter(proyecto_pk=proyecto)
+    pagina = Paginator(registros, 100).get_page(request.GET.get('pagina'))
+    return render(request, 'gestion/historial.html', {
+        'pagina': pagina, 'proyecto': proyecto,
+        'proyecto_nombre': registros[0].proyecto_nombre if proyecto and registros else ''})

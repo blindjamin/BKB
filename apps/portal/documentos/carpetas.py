@@ -18,7 +18,8 @@ from django.views.decorators.http import require_POST
 from botocore.exceptions import ClientError
 
 from . import storage
-from .models import Archivo, Carpeta, EstadoArchivo
+from .historial import registrar
+from .models import Accion, Archivo, Carpeta, EstadoArchivo
 from .permisos import archivos_visibles, proyectos_visibles, puede_borrar, puede_gestionar_estructura, puede_subir
 
 MAX_NIVELES = 8  # C3
@@ -198,9 +199,11 @@ def _a_papelera(carpeta, usuario, ahora):
     arbol = Arbol(carpeta.proyecto)
     ids = arbol.debajo(arbol.por_id[carpeta.pk])
     with transaction.atomic():
-        Archivo.objects.filter(carpeta_id__in=ids, eliminado_en__isnull=True).update(
+        n = Archivo.objects.filter(carpeta_id__in=ids, eliminado_en__isnull=True).update(
             eliminado_en=ahora, eliminado_por=usuario)
         Carpeta.objects.filter(pk__in=ids).update(eliminado_en=ahora, eliminado_por=usuario)
+        registrar(usuario, Accion.CARPETA_PAPELERA, carpeta, carpeta.proyecto,
+                  f'con {len(ids) - 1} subcarpeta(s) y {n} archivo(s)' if n or len(ids) > 1 else '')
 
 
 @login_required
@@ -382,6 +385,7 @@ def eliminar_elementos(request, pk):
     propios = [a.pk for a in archivos if puede_borrar(request.user, a)]
     ahora = timezone.now()
     Archivo.objects.filter(pk__in=propios).update(eliminado_en=ahora, eliminado_por=request.user)
+    registrar(request.user, Accion.ARCHIVO_PAPELERA, [a for a in archivos if a.pk in propios], proyecto)
     n, ajenos = len(propios), len(archivos) - len(propios)
     carpetas = _ids(request, 'carpetas')
     if carpetas:
@@ -417,6 +421,7 @@ def restaurar_elementos(request, pk):
         return cid in todas and todas[cid].eliminado_en is None
 
     n = ajenos = 0
+    restaurados = []  # (acción, elemento) para el historial
     with transaction.atomic():
         for a in proyecto.archivos.filter(pk__in=_ids(request, 'archivos'), eliminado_en__isnull=False,
                                           modificacion__isnull=True):
@@ -427,6 +432,7 @@ def restaurar_elementos(request, pk):
                 a.carpeta_id = None
             a.eliminado_en = a.eliminado_por = None
             a.save(update_fields=['carpeta', 'eliminado_en', 'eliminado_por'])
+            restaurados.append((Accion.ARCHIVO_RESTAURADO, a))
             n += 1
         carpetas = _ids(request, 'carpetas')
         if carpetas:
@@ -448,7 +454,10 @@ def restaurar_elementos(request, pk):
             Archivo.objects.filter(carpeta_id__in=grupo, eliminado_en=hora).update(eliminado_en=None, eliminado_por=None)
             for x in grupo:
                 todas[x].eliminado_en = None
+            restaurados.append((Accion.CARPETA_RESTAURADA, c))
             n += 1
+        for accion, x in restaurados:
+            registrar(request.user, accion, x, proyecto)
     if n:
         messages.success(request, f'Se restaur{"aron" if n != 1 else "ó"} {_plural(n, "elemento", "elementos")}.')
     if ajenos:

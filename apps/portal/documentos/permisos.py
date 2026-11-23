@@ -37,11 +37,16 @@ def _a_cargo(usuario):  # E1, E6: subconsultas, así los conteos de la lista no 
             | Q(empresa__in=Empresa.objects.filter(encargados=usuario).values('pk')))
 
 
+def vivos():
+    """Los proyectos fuera de la Papelera. Todo lo que muestra o toca un proyecto parte de aquí."""
+    return Proyecto.objects.filter(eliminado_en__isnull=True)
+
+
 def proyectos_visibles(usuario):
     if _es_personal(usuario):
-        return Proyecto.objects.all()
+        return vivos()
     if _activo(usuario):  # cliente: los proyectos a su cargo, o de una empresa a su cargo
-        return Proyecto.objects.filter(_a_cargo(usuario))
+        return vivos().filter(_a_cargo(usuario))
     return Proyecto.objects.none()
 
 
@@ -55,7 +60,7 @@ def empresas_visibles(usuario):
         return Empresa.objects.all()
     if _activo(usuario):
         return Empresa.objects.filter(Q(pk__in=Empresa.objects.filter(encargados=usuario).values('pk'))
-                                      | Q(pk__in=Proyecto.objects.filter(encargados=usuario).values('empresa')))
+                                      | Q(pk__in=vivos().filter(encargados=usuario).values('empresa')))
     return Empresa.objects.none()
 
 
@@ -64,16 +69,17 @@ def puede_ver_empresa(usuario, empresa):
     if _es_personal(usuario):
         return True
     if _activo(usuario):
-        return empresa.encargados.filter(pk=usuario.pk).exists() or empresa.proyectos.filter(encargados=usuario).exists()
+        return (empresa.encargados.filter(pk=usuario.pk).exists()
+                or empresa.proyectos.filter(encargados=usuario, eliminado_en__isnull=True).exists())
     return False
 
 
 def proyectos_de_empresa(usuario, empresa):
     """Proyectos visibles de una empresa para un usuario específico."""
     if _es_personal(usuario):
-        return empresa.proyectos.all()
+        return vivos().filter(empresa=empresa)
     if _activo(usuario):
-        return empresa.proyectos.filter(_a_cargo(usuario))
+        return vivos().filter(_a_cargo(usuario), empresa=empresa)
     return Proyecto.objects.none()
 
 
@@ -144,7 +150,7 @@ def puede_responder_cliente(usuario, proyecto):
 
 def modificaciones_visibles(usuario):  # M1, M8: el cliente no ve borradores
     if _es_personal(usuario):
-        return Modificacion.objects.all()
+        return Modificacion.objects.filter(proyecto__eliminado_en__isnull=True)
     if _activo(usuario):
         return Modificacion.objects.filter(proyecto__in=proyectos_visibles(usuario), enviada_en__isnull=False)
     return Modificacion.objects.none()
@@ -164,7 +170,8 @@ def leer_enlace(token):
     except (BadSignature, ValueError):
         raise Http404
     m = Modificacion.objects.select_related(
-        'proyecto__empresa', 'respondida_por').filter(pk=mod_pk, enviada_en__isnull=False).first()
+        'proyecto__empresa', 'respondida_por').filter(
+        pk=mod_pk, enviada_en__isnull=False, proyecto__eliminado_en__isnull=True).first()  # en la Papelera: 404
     usuario = Usuario.objects.filter(pk=usuario_pk).first()
     if not m or not usuario or not puede_responder_cliente(usuario, m.proyecto):
         raise Http404

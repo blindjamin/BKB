@@ -19,13 +19,20 @@
         <div class="form-error" role="alert">
             <svg class="icono form-error-icon" aria-hidden="true"><use href="{% static 'icons.svg' %}#alerta"></use></svg>
             <div class="form-error-content">
+                {% if definitivo %}
                 <p><strong>Esta acción no se puede deshacer.</strong> Se perderá para todos, también para los clientes:</p>
+                {% else %}
+                <p><strong>Dejará de verse para todos, también para los clientes.</strong> Queda en la Papelera
+                    (Gestión → Papelera) con todo lo suyo, desde donde el jefe puede restaurarlo:</p>
+                {% endif %}
                 <ul>
                     {% for n, uno, varios in perdidas %}<li>{{ n }} {% if n == 1 %}{{ uno }}{% else %}{{ varios }}{% endif %}</li>{% endfor %}
                 </ul>
             </div>
         </div>
+        {% if not definitivo %}
         <p>Si solo quieres sacarlo de la vista, cámbiale el estado a <strong>Cerrado</strong> en vez de eliminarlo.</p>
+        {% endif %}
 
         <form method="post" class="form-eliminar">
             {% csrf_token %}
@@ -42,7 +49,7 @@
             </div>
             <div class="dialogo-acciones">
                 <a href="{{ url_volver }}" class="btn-secondary">Cancelar</a>
-                <button type="submit" class="btn-peligro">Eliminar definitivamente</button>
+                <button type="submit" class="btn-peligro">{% if definitivo %}Eliminar definitivamente{% else %}Enviar a la Papelera{% endif %}</button>
             </div>
         </form>
     {% endif %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Historial - BKB Portal{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <div class="view-header">
+        <div>
+            <h1 class="proyectos-title">Historial</h1>
+            <p class="view-subtitle">Quién eliminó o restauró qué y cuándo: proyectos, empresas, carpetas y archivos. No se puede borrar.</p>
+        </div>
+    </div>
+
+    {% include 'gestion/_pestanas.html' with activa='historial' %}
+
+    {% if proyecto %}
+    <nav class="filtros" aria-label="Filtro del historial">
+        <span>Proyecto: <strong>{{ proyecto_nombre|default:"sin registros" }}</strong></span>
+        <a href="{% url 'gestion:historial' %}" class="filtro">Ver todo</a>
+    </nav>
+    {% endif %}
+
+    {% if pagina.object_list %}
+    <div class="ex-tabla">
+        <div class="ex-encabezado ex-encabezado-papelera gp-historial">
+            <span class="ex-col-nombre">Elemento</span>
+            <span class="ex-col">Acción</span>
+            <span class="ex-col">Proyecto</span>
+            <span class="ex-col">Quién</span>
+            <span class="ex-col">Cuándo</span>
+        </div>
+        <ul class="ex-lista">
+            {% for r in pagina.object_list %}
+            <li class="ex-fila ex-fila-papelera gp-historial">
+                <span class="ex-nombre"><span class="ex-nombre-texto"><span class="archivo-nombre">{{ r.objeto }}</span></span></span>
+                <span class="ex-col">{{ r.get_accion_display }}</span>
+                <span class="ex-col">{% if r.proyecto_pk %}<a href="?proyecto={{ r.proyecto_pk }}" class="gp-enlace" title="Ver solo este proyecto">{{ r.proyecto_nombre }}</a>{% else %}—{% endif %}</span>
+                <span class="ex-col">{% if r.usuario %}{{ r.usuario.nombre|default:r.usuario.email }}{% else %}(usuario eliminado){% endif %}</span>
+                <span class="ex-col">{{ r.fecha|date:"d M Y, H:i" }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% if pagina.has_other_pages %}
+    <nav class="filtros" aria-label="Páginas del historial">
+        {% if pagina.has_previous %}<a href="?{% if proyecto %}proyecto={{ proyecto }}&{% endif %}pagina={{ pagina.previous_page_number }}" class="filtro">&larr; Más recientes</a>{% endif %}
+        <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+        {% if pagina.has_next %}<a href="?{% if proyecto %}proyecto={{ proyecto }}&{% endif %}pagina={{ pagina.next_page_number }}" class="filtro">Más antiguos &rarr;</a>{% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="archivos-empty"><p>Todavía no hay nada en el historial.</p></div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -4093,6 +4093,68 @@ a[href^="mailto:"] {
     }
 }
 
+/* ===== Gestión: Papelera de proyectos e Historial ===== */
+.ex-encabezado-papelera.gp-papelera,
+.ex-fila-papelera.gp-papelera {
+    grid-template-columns: minmax(0, 1fr) 9rem 9rem 8rem 15rem;
+}
+
+.gp-papelera .ex-col-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1, 4px) var(--space-3, 12px);
+    justify-content: flex-end;
+}
+
+.ex-encabezado-papelera.gp-historial,
+.ex-fila-papelera.gp-historial {
+    grid-template-columns: minmax(0, 1fr) 14rem minmax(0, 1fr) 10rem 8rem;
+}
+
+.gp-enlace {
+    color: var(--text-main);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    overflow-wrap: anywhere;
+}
+
+.gp-enlace:hover {
+    color: var(--accent-text);
+}
+
+.ex-fila-papelera.gp-historial .ex-nombre {
+    color: var(--text-main);
+}
+
+@media (max-width: 720px) {
+    .ex-encabezado-papelera.gp-papelera,
+    .ex-fila-papelera.gp-papelera {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .gp-papelera .ex-col-acciones {
+        justify-content: flex-start;
+    }
+
+    /* En el teléfono cada registro es una ficha: se ven todos los datos, uno bajo otro */
+    .ex-encabezado-papelera.gp-historial {
+        display: none;
+    }
+
+    .ex-fila-papelera.gp-historial {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        height: auto;
+        padding-block: var(--space-2, 8px);
+    }
+
+    .ex-fila-papelera.gp-historial .ex-col {
+        display: block;
+    }
+}
+
 /* ===== Gestión: Certificados de equipos en arriendo ===== */
 .gestion-pestanas {
     margin-bottom: var(--space-5, 20px);
