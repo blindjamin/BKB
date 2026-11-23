@@ -155,7 +155,7 @@
     {% if proyecto and puede_eliminar %}
     <section class="zona-peligro" aria-labelledby="zona-peligro-titulo">
         <h2 id="zona-peligro-titulo">Zona de peligro</h2>
-        <p>Eliminar el proyecto borra sus archivos, carpetas, hitos y modificaciones del portal. No se puede deshacer.</p>
+        <p>Eliminar el proyecto lo saca del portal para todos, con sus archivos, carpetas, hitos y modificaciones. Queda en la Papelera de Gestión, desde donde se puede restaurar.</p>
         <a href="{% url 'documentos:eliminar_proyecto' proyecto.pk %}" class="btn-peligro">Eliminar proyecto…</a>
     </section>
     {% endif %}

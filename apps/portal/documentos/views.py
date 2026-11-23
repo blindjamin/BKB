@@ -20,6 +20,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.utils import timezone
 
 from . import correos, storage
+from .historial import registrar
 from .carpetas import MAX_NIVELES, Arbol
 from .encargados import obtener_o_invitar
 from .forms import EmpresaForm, HitoFormSet, ProyectoForm, encargados_formset
@@ -41,9 +42,10 @@ from .permisos import (
     puede_editar_proyecto,
     puede_responder_cliente,
     ve_archivos,
+    vivos,
 )
 from .models import (
-    Archivo, DescargaLog, Empresa, EstadoArchivo, EstadoModificacion, EstadoProyecto, Proyecto,
+    Accion, Archivo, DescargaLog, Empresa, EstadoArchivo, EstadoModificacion, EstadoProyecto, Proyecto,
     RechazoRevision)
 from .storage import url_descarga
 from .subidas import EXTENSIONES_PERMITIDAS
@@ -104,7 +106,8 @@ def _separar_anteriores(request, proyectos):
 def lista_proyectos(request):
     if _es_personal(request.user):
         empresas = empresas_visibles(request.user).annotate(
-            proyectos_activos_count=Count('proyectos', filter=Q(proyectos__estado=EstadoProyecto.ACTIVO))
+            proyectos_activos_count=Count('proyectos', filter=Q(proyectos__estado=EstadoProyecto.ACTIVO,
+                                                                  proyectos__eliminado_en__isnull=True))
         ).order_by('-proyectos_activos_count', 'nombre')  # primero las con proyectos activos
         return render(request, 'empresas.html', {'empresas': empresas})
 
@@ -212,7 +215,7 @@ def editar_proyecto(request, pk):
     if not puede_gestionar_estructura(request.user):
         raise PermissionDenied("No tienes permisos para editar proyectos.")
 
-    proyecto = get_object_or_404(Proyecto, pk=pk)
+    proyecto = get_object_or_404(vivos(), pk=pk)
     if not puede_editar_proyecto(request.user, proyecto):
         raise PermissionDenied("Solo los encargados BKB del proyecto pueden editarlo.")  # E3
 
@@ -604,7 +607,7 @@ def descargar_proyecto(request, pk):
     """El proyecto completo (archivos y adjuntos de modificaciones) en un ZIP, con sus carpetas. Solo jefes."""
     if not puede_descargar_proyecto(request.user):
         raise PermissionDenied('Solo los jefes pueden descargar el proyecto completo.')
-    proyecto = get_object_or_404(Proyecto, pk=pk)
+    proyecto = get_object_or_404(vivos(), pk=pk)
     archivos = list(proyecto.archivos.filter(estado=EstadoArchivo.DISPONIBLE, eliminado_en__isnull=True)
                     .select_related('modificacion').order_by('subido_en'))
     # ponytail: se arma en un temporal del servidor antes de enviarlo; un proyecto de varios GB puede pasar el
@@ -637,6 +640,7 @@ def eliminar_archivo(request, pk):
     archivo.eliminado_en = timezone.now()
     archivo.eliminado_por = request.user
     archivo.save()
+    registrar(request.user, Accion.ARCHIVO_PAPELERA, archivo, archivo.proyecto)
     messages.success(request, f'Se eliminó «{archivo.nombre_original}».')
 
     if archivo.modificacion_id:  # M1: vuelve al borrador
@@ -645,8 +649,9 @@ def eliminar_archivo(request, pk):
     return redirect(f'{url}?carpeta={archivo.carpeta_id}' if archivo.carpeta_id else url)  # a la carpeta donde estaba
 
 
-def _confirmar_eliminacion(request, objeto, tipo, perdidas, url_volver, borrar, bloqueo=None):
-    """Página de eliminación: muestra lo que se pierde y exige escribir el nombre exacto (sin JS también)."""
+def _confirmar_eliminacion(request, objeto, tipo, perdidas, url_volver, borrar, bloqueo=None, definitivo=True):
+    """Página de eliminación: muestra lo que se pierde y exige escribir el nombre exacto (sin JS también).
+    `definitivo=False` es mandar a la Papelera: se puede deshacer y la página lo dice."""
     error = None
     if request.method == 'POST' and not bloqueo:
         if request.POST.get('confirmacion', '').strip() != objeto.nombre:
@@ -654,39 +659,59 @@ def _confirmar_eliminacion(request, objeto, tipo, perdidas, url_volver, borrar, 
         else:
             pk = objeto.pk  # después de borrar queda en None
             destino = borrar()
-            logger.warning('%s eliminó %s «%s» (%s).', request.user.email, tipo, objeto.nombre, pk)
-            messages.success(request, f'Se eliminó {tipo} «{objeto.nombre}».')
+            logger.warning('%s eliminó%s %s «%s» (%s).', request.user.email, '' if definitivo else ' (a la Papelera)',
+                           tipo, objeto.nombre, pk)
+            messages.success(request, f'Se eliminó {tipo} «{objeto.nombre}».' if definitivo else
+                             f'{tipo[0].upper()}{tipo[1:]} «{objeto.nombre}» quedó en la Papelera (Gestión → Papelera).')
             return redirect(destino)
     return render(request, 'eliminar_estructura.html', {
         'objeto': objeto, 'tipo': tipo, 'perdidas': perdidas, 'url_volver': url_volver,
-        'bloqueo': bloqueo, 'error': error}, status=400 if error else 200)
+        'bloqueo': bloqueo, 'error': error, 'definitivo': definitivo}, status=400 if error else 200)
 
 
-@login_required
-@require_http_methods(['GET', 'POST'])
-def eliminar_proyecto(request, pk):
-    if not puede_eliminar_estructura(request.user):
-        raise PermissionDenied('Solo el jefe puede eliminar proyectos.')
-    proyecto = get_object_or_404(Proyecto.objects.select_related('empresa'), pk=pk)
-    archivos = Archivo.objects.filter(proyecto=proyecto)
-    perdidas = [
-        (archivos.filter(eliminado_en__isnull=True, estado=EstadoArchivo.DISPONIBLE).count(), 'archivo', 'archivos'),
+def _perdidas_proyecto(proyecto):
+    return [
+        (proyecto.archivos.filter(eliminado_en__isnull=True, estado=EstadoArchivo.DISPONIBLE).count(), 'archivo', 'archivos'),
         (proyecto.carpetas.count(), 'carpeta', 'carpetas'),
         (proyecto.hitos.count(), 'hito con su avance', 'hitos con su avance'),
         (proyecto.modificaciones.count(), 'modificación con sus respuestas', 'modificaciones con sus respuestas'),
         (DescargaLog.objects.filter(archivo__proyecto=proyecto).count(), 'registro de descarga', 'registros de descarga'),
     ]
 
-    def borrar():
-        with transaction.atomic():
-            # Los archivos y sus descargas están protegidos: se borran primero. El Space no se toca.
-            DescargaLog.objects.filter(archivo__proyecto=proyecto).delete()
-            archivos.delete()
-            proyecto.delete()  # carpetas, hitos, modificaciones y rechazos caen con él
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def eliminar_proyecto(request, pk):
+    """Lo manda a la Papelera: desaparece para todos, también para los clientes, pero no se borra nada."""
+    if not puede_eliminar_estructura(request.user):
+        raise PermissionDenied('Solo el jefe puede eliminar proyectos.')
+    proyecto = get_object_or_404(vivos().select_related('empresa'), pk=pk)
+
+    def a_papelera():
+        # Filtrado por "sigue vivo": dos confirmaciones a la vez no lo registran dos veces
+        if Proyecto.objects.filter(pk=proyecto.pk, eliminado_en__isnull=True).update(
+                eliminado_en=timezone.now(), eliminado_por=request.user):
+            registrar(request.user, Accion.PROYECTO_PAPELERA, proyecto, proyecto)
         return reverse('documentos:detalle_empresa', args=[proyecto.empresa_id])
 
-    return _confirmar_eliminacion(request, proyecto, 'el proyecto', perdidas,
-                                  reverse('documentos:editar_proyecto', args=[proyecto.pk]), borrar)
+    return _confirmar_eliminacion(request, proyecto, 'el proyecto', _perdidas_proyecto(proyecto),
+                                  reverse('documentos:editar_proyecto', args=[proyecto.pk]), a_papelera,
+                                  definitivo=False)
+
+
+def borrar_proyecto_definitivo(request, proyecto):
+    """Desde la Papelera: borra el proyecto de verdad. Los archivos del Space no se tocan."""
+    def borrar():
+        with transaction.atomic():
+            # Los archivos y sus descargas están protegidos: se borran primero.
+            DescargaLog.objects.filter(archivo__proyecto=proyecto).delete()
+            Archivo.objects.filter(proyecto=proyecto).delete()
+            registrar(request.user, Accion.PROYECTO_BORRADO, proyecto, proyecto)
+            proyecto.delete()  # carpetas, hitos, modificaciones y rechazos caen con él
+        return reverse('gestion:papelera')
+
+    return _confirmar_eliminacion(request, proyecto, 'el proyecto', _perdidas_proyecto(proyecto),
+                                  reverse('gestion:papelera'), borrar)
 
 
 @login_required
@@ -695,12 +720,19 @@ def eliminar_empresa(request, pk):
     if not puede_eliminar_estructura(request.user):
         raise PermissionDenied('Solo el jefe puede eliminar empresas.')
     empresa = get_object_or_404(Empresa, pk=pk)
-    n = empresa.proyectos.count()
+    n = empresa.proyectos.filter(eliminado_en__isnull=True).count()
+    en_papelera = empresa.proyectos.count() - n
     # Una empresa con proyectos no se borra de una vez: primero se eliminan sus proyectos, uno por uno.
-    bloqueo = (f'Esta empresa tiene {n} proyecto{"s" if n != 1 else ""}. Para eliminarla, primero elimina '
-               f'cada proyecto desde su página de edición.') if n else None
+    bloqueo = None
+    if n:
+        bloqueo = (f'Esta empresa tiene {n} proyecto{"s" if n != 1 else ""}. Para eliminarla, primero elimina '
+                   f'cada proyecto desde su página de edición.')
+    elif en_papelera:
+        bloqueo = (f'Esta empresa tiene {en_papelera} proyecto{"s" if en_papelera != 1 else ""} en la Papelera. '
+                   f'Para eliminarla, primero restáuralos o elimínalos definitivamente desde Gestión → Papelera.')
 
     def borrar():
+        registrar(request.user, Accion.EMPRESA_BORRADA, empresa)
         empresa.delete()
         return reverse('documentos:lista_proyectos')
 

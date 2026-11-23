@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Papelera - BKB Portal{% endblock %}
+
+{% block content %}
+<div class="proyectos-container">
+    <div class="view-header">
+        <div>
+            <h1 class="proyectos-title">Papelera</h1>
+            <p class="view-subtitle">Proyectos eliminados. Nadie los ve, tampoco los clientes, y no envían correos. Se restauran con todo lo suyo.</p>
+        </div>
+    </div>
+
+    {% include 'gestion/_pestanas.html' with activa='papelera' %}
+
+    {% if proyectos %}
+    <div class="ex-tabla">
+        <div class="ex-encabezado ex-encabezado-papelera gp-papelera">
+            <span class="ex-col-nombre">Proyecto</span>
+            <span class="ex-col">Empresa</span>
+            <span class="ex-col">Eliminado por</span>
+            <span class="ex-col">Eliminado</span>
+            <span class="ex-col-acciones" aria-hidden="true"></span>
+        </div>
+        <ul class="ex-lista">
+            {% for p in proyectos %}
+            <li class="ex-fila ex-fila-papelera gp-papelera">
+                <span class="ex-nombre">
+                    <svg class="icono ex-icono-carpeta" aria-hidden="true"><use href="{% static 'icons.svg' %}#carpeta"></use></svg>
+                    <span class="ex-nombre-texto"><span class="archivo-nombre">{{ p.nombre }}</span></span>
+                </span>
+                <span class="ex-col">{{ p.empresa.nombre }}</span>
+                <span class="ex-col">{{ p.eliminado_por.nombre|default:p.eliminado_por.email }}</span>
+                <span class="ex-col">{{ p.eliminado_en|date:"d M Y, H:i" }}</span>
+                <span class="ex-col-acciones">
+                    <form method="post" action="{% url 'gestion:restaurar_proyecto' p.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-link">Restaurar</button>
+                    </form>
+                    <a href="{% url 'gestion:historial' %}?proyecto={{ p.pk }}" class="btn-link">Historial</a>
+                    <a href="{% url 'gestion:eliminar_definitivo' p.pk %}" class="btn-link">Eliminar definitivamente…</a>
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="archivos-empty">
+        <svg class="icono ex-vacio-icono" aria-hidden="true"><use href="{% static 'icons.svg' %}#papelera"></use></svg>
+        <p>La Papelera está vacía.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

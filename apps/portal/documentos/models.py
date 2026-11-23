@@ -56,6 +56,10 @@ class Proyecto(models.Model):
     finalizado_en = models.DateTimeField(null=True, blank=True)  # A5: se llena al aceptar la Revisión
     # Reciben por correo la línea de hitos cada vez que BKB la cambia; no les da acceso al portal. Uno por línea.
     correos_hitos = models.TextField(blank=True, default='')
+    # En la Papelera del jefe (Gestión): nadie lo ve y no envía correos; se restaura o se borra de verdad desde ahí
+    eliminado_en = models.DateTimeField(null=True, blank=True)
+    eliminado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+                                      related_name='proyectos_eliminados')
 
     class Meta:
         ordering = ['nombre']
@@ -246,6 +250,39 @@ class RechazoRevision(models.Model):  # A5: los rechazos no se borran
 
     def __str__(self):
         return f'{self.proyecto.nombre} - rechazo ({self.usuario})'
+
+
+class Accion(models.TextChoices):
+    PROYECTO_PAPELERA = 'proyecto_papelera', 'Envió el proyecto a la Papelera'
+    PROYECTO_RESTAURADO = 'proyecto_restaurado', 'Restauró el proyecto'
+    PROYECTO_BORRADO = 'proyecto_borrado', 'Eliminó el proyecto definitivamente'
+    EMPRESA_BORRADA = 'empresa_borrada', 'Eliminó la empresa'
+    ARCHIVO_PAPELERA = 'archivo_papelera', 'Envió el archivo a la Papelera'
+    ARCHIVO_RESTAURADO = 'archivo_restaurado', 'Restauró el archivo'
+    CARPETA_PAPELERA = 'carpeta_papelera', 'Envió la carpeta a la Papelera'
+    CARPETA_RESTAURADA = 'carpeta_restaurada', 'Restauró la carpeta'
+
+
+class RegistroAccion(models.Model):
+    """Historial de lo que se elimina y se restaura. Nunca se edita ni se borra: guarda nombres como texto y el
+    id del proyecto sin llave, para que sobreviva al borrado definitivo de lo que describe."""
+
+    id = _uuid_pk()
+    fecha = models.DateTimeField(auto_now_add=True, db_index=True)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    accion = models.CharField(max_length=30, choices=Accion.choices)
+    objeto = models.CharField(max_length=300)
+    proyecto_pk = models.UUIDField('id del proyecto', null=True, blank=True, db_index=True)
+    proyecto_nombre = models.CharField('proyecto', max_length=300, blank=True)  # «Nombre (Empresa)» al momento de la acción
+    detalle = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        verbose_name = 'registro del historial'
+        verbose_name_plural = 'historial'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f'{self.fecha:%d-%m-%Y %H:%M} {self.usuario} {self.get_accion_display()}: {self.objeto}'
 
 
 class CertificadoEquipo(models.Model):

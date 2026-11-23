@@ -11,12 +11,7 @@
         </div>
     </div>
 
-    <nav class="ex-pestanas gestion-pestanas" aria-label="Secciones de gestión">
-        {% if es_jefe %}
-        <a href="{% url 'gestion:usuarios' %}" class="ex-pestana">Usuarios</a>
-        {% endif %}
-        <a href="{% url 'gestion:certificados' %}" class="ex-pestana" aria-current="page">Certificados de arriendo</a>
-    </nav>
+    {% include 'gestion/_pestanas.html' with activa='certificados' %}
 
     <div class="usuarios-table-wrapper">
         <table class="usuarios-table">

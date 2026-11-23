@@ -47,8 +47,9 @@ class EliminarEstructuraTests(TestCase):
         r = self.client.get(self.url_proyecto)
         self.assertContains(r, '1 archivo')
         self.assertContains(r, '1 modificación con sus respuestas')
-        self.assertContains(r, 'no se puede deshacer')
-        self.assertTrue(Proyecto.objects.filter(pk=self.proyecto.pk).exists())
+        self.assertContains(r, 'Papelera')
+        self.assertContains(r, 'Enviar a la Papelera')
+        self.assertIsNone(Proyecto.objects.get(pk=self.proyecto.pk).eliminado_en)
 
     def test_nombre_distinto_no_borra(self):
         self.client.force_login(self.jefe)
@@ -56,18 +57,20 @@ class EliminarEstructuraTests(TestCase):
             with self.subTest(escrito=escrito):
                 r = self.client.post(self.url_proyecto, {'confirmacion': escrito})
                 self.assertContains(r, 'El nombre no coincide', status_code=400)
-        self.assertTrue(Proyecto.objects.filter(pk=self.proyecto.pk).exists())
+        self.assertIsNone(Proyecto.objects.get(pk=self.proyecto.pk).eliminado_en)
 
-    def test_nombre_exacto_borra_el_proyecto_y_lo_suyo(self):
+    def test_nombre_exacto_lo_manda_a_la_papelera_sin_borrar_nada(self):
         self.client.force_login(self.jefe)
         with self.assertLogs('documentos.views', 'WARNING') as log:
             r = self.client.post(self.url_proyecto, {'confirmacion': ' NV 28174 '})
         self.assertIn(str(self.proyecto.pk), log.output[0])
         self.assertRedirects(r, reverse('documentos:detalle_empresa', args=[self.empresa.pk]), fetch_redirect_response=False)
-        self.assertFalse(Proyecto.objects.filter(pk=self.proyecto.pk).exists())
+        proyecto = Proyecto.objects.get(pk=self.proyecto.pk)
+        self.assertIsNotNone(proyecto.eliminado_en)
+        self.assertEqual(proyecto.eliminado_por, self.jefe)
         self.assertEqual((Archivo.objects.count(), DescargaLog.objects.count(), Hito.objects.count(),
-                          Modificacion.objects.count()), (0, 0, 0, 0))
-        self.assertTrue(Empresa.objects.filter(pk=self.empresa.pk).exists())  # la empresa queda
+                          Modificacion.objects.count()), (1, 1, 6, 1))  # nada se borra
+        self.assertEqual(self.client.get(self.url_proyecto).status_code, 404)  # ya está en la Papelera
 
     def test_empresa_con_proyectos_no_se_puede_eliminar(self):
         self.client.force_login(self.jefe)
